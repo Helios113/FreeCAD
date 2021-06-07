@@ -171,6 +171,7 @@ Gui::ToolBarItem* Workbench::setupToolBars() const
      Gui::ToolBarItem* solve = new Gui::ToolBarItem(root);
      solve->setCommand("Solve");
      *solve
+        << "FEM_MoFEM"
         << "FEM_SolverCalculixCxxtools"
         << "FEM_SolverCalculiX"
         << "FEM_SolverElmer"
@@ -331,6 +332,7 @@ Gui::MenuItem* Workbench::setupMenuBar() const
     root->insertItem(item, solve);
     solve->setCommand("&Solve");
     *solve
+        << "FEM_MoFEM" 
         << "FEM_SolverCalculixCxxtools"
         << "FEM_SolverCalculiX"
         << "FEM_SolverElmer"
