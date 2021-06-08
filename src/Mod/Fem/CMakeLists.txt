@@ -202,7 +202,7 @@ SET(FemSolverMoFEM_SRCS
     femsolver/mofem/writer.py
 )
 
-SET(FemSolverElmerEquations_SRCS
+SET(FemSolverMoFEMEquations_SRCS
     femsolver/mofem/equations/__init__.py
     femsolver/mofem/equations/electricforce.py
     femsolver/mofem/equations/electrostatic.py

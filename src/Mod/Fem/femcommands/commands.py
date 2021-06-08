@@ -971,7 +971,7 @@ FreeCADGui.addCommand(
 )
 FreeCADGui.addCommand(
     "FEM_SolverMoFEM",
-    _SolverElmer()
+    _SolverMoFEM()
 )
 FreeCADGui.addCommand(
     "FEM_SolverRun",
