@@ -30,7 +30,12 @@
 class TopoDS_Shape;
 class TopoDS_Edge;
 class TopoDS_Face;
+/* 
 
+Some direction header,
+Not needed for solver implementation
+
+*/
 namespace Fem
 {
 

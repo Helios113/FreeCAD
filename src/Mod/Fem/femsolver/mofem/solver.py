@@ -1,4 +1,5 @@
-
+## \addtogroup FEM
+#  @{
 from . import tasks
 from .equations import elasticity
 from .equations import electrostatic
@@ -11,17 +12,16 @@ from .. import solverbase
 from femtools import femutils
 
 
-def create(doc, name="MoFEMSOlver"):
+def create(doc, name="MoFEMSolver"):
     return femutils.createObject(
         doc, name, Proxy, ViewProxy)
 
 
 class Proxy(solverbase.Proxy):
-    """Proxy for FemSolverElmers Document Object."""
-    # Proxy for FemSolverMo
+    """Proxy for FemSolverMo"""
 
-    #Type = "Fem::SolverElmer"
-    Type = "FEM::SolverMo"
+    Type = "FEM::SolverMoFEM" # Name of command which is called
+                              # Has to be the same as in GUI/workbench.cpp
 
     _EQUATIONS = {
         "Heat": heat,
@@ -51,21 +51,7 @@ class Proxy(solverbase.Proxy):
         )
         obj.SteadyStateMinIterations = 0
 
-        obj.addProperty(
-            "App::PropertyLink",
-            "ElmerResult",
-            "Base",
-            "",
-            4 | 8
-        )
-
-        obj.addProperty(
-            "App::PropertyLink",
-            "ElmerOutput",
-            "Base",
-            "",
-            4 | 8
-        )
+        
 
     def createMachine(self, obj, directory, testmode=False):
         return run.Machine(
@@ -84,9 +70,9 @@ class Proxy(solverbase.Proxy):
 
 
 class ViewProxy(solverbase.ViewProxy):
-    """Proxy for FemSolverMos View Provider."""
+    """Proxy for FemSolverMoFEMs View Provider."""
 
     def getIcon(self):
-        return ":/icons/FEM_SolverMo.svg"
+        return ":/icons/FEM_SolverMoFEM.svg"
 
 ##  @}

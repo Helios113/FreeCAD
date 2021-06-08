@@ -763,6 +763,16 @@ class _SolverElmer(CommandManager):
         self.is_active = "with_analysis"
         self.do_activated = "add_obj_on_gui_noset_edit"
 
+class _SolverMoFEM(CommandManager):
+    "The FEM_SolverElmer command definition"
+    def __init__(self):
+        super(_SolverMoFEM, self).__init__()
+        self.menuetext = "Solver MoFEM"
+        self.accel = "S, M"
+        self.tooltip = "Creates a FEM solver MoFEM"
+        self.is_active = "with_analysis"
+        self.do_activated = "add_obj_on_gui_noset_edit"
+
 
 class _SolverRun(CommandManager):
     "The FEM_SolverRun command definition"
@@ -957,6 +967,10 @@ FreeCADGui.addCommand(
 )
 FreeCADGui.addCommand(
     "FEM_SolverElmer",
+    _SolverElmer()
+)
+FreeCADGui.addCommand(
+    "FEM_SolverMoFEM",
     _SolverElmer()
 )
 FreeCADGui.addCommand(

@@ -135,6 +135,12 @@ class CommandManager(object):
                 and self.active_analysis_in_active_doc()
                 and self.solver_elmer_selected()
             )
+        elif self.is_active == "with_solver_mofem":
+            active = (
+                FemGui.getActiveAnalysis() is not None
+                and self.active_analysis_in_active_doc()
+                and self.solver_mofem_selected()
+            )
         elif self.is_active == "with_analysis_without_solver":
             active = (
                 FemGui.getActiveAnalysis() is not None
@@ -265,6 +271,13 @@ class CommandManager(object):
     def solver_elmer_selected(self):
         sel = FreeCADGui.Selection.getSelection()
         if len(sel) == 1 and is_of_type(sel[0], "Fem::SolverElmer"):
+            self.selobj = sel[0]
+            return True
+        else:
+            return False
+    def solver_mofem_selected(self):
+        sel = FreeCADGui.Selection.getSelection()
+        if len(sel) == 1 and is_of_type(sel[0], "Fem::SolverMoFEM"):
             self.selobj = sel[0]
             return True
         else:

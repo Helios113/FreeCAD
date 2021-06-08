@@ -219,6 +219,11 @@ _SOLVER_PARAM = {
         param_path=_PARAM_PATH + "Elmer",
         use_default="UseStandardElmerLocation",
         custom_path="elmerBinaryPath"),
+    "MoFEMSolver": _SolverDlg(
+        default="MoFEMSolver",
+        param_path=_PARAM_PATH + "MoFEM",
+        use_default="UseStandardMoFEMLocation",
+        custom_path="MoFEMBinaryPath"),
     "ElmerGrid": _SolverDlg(
         default="ElmerGrid",
         param_path=_PARAM_PATH + "Elmer",

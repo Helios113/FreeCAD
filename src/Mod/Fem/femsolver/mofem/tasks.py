@@ -21,9 +21,6 @@
 # *                                                                         *
 # ***************************************************************************
 
-__title__ = "FreeCAD FEM solver Elmer tasks"
-__author__ = "Markus Hovorka"
-__url__ = "https://www.freecadweb.org"
 
 ## \addtogroup FEM
 #  @{

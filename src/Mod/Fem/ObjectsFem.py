@@ -783,6 +783,16 @@ def makeSolverElmer(
     obj = femsolver.elmer.solver.create(doc, name)
     return obj
 
+def makeSolverMoFEM(
+    doc,
+    name="SolverMoFEM"
+):
+    """makeSolverMoFEM(document, [name]):
+    makes a MoFEM solver object"""
+    import femsolver.mofem.solver
+    obj = femsolver.mofem.solver.create(doc, name)
+    return obj
+
 
 def makeSolverZ88(
     doc,
