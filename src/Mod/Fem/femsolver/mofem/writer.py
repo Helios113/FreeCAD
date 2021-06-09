@@ -39,7 +39,6 @@ from FreeCAD import Units
 from FreeCAD import ParamGet
 
 import Fem
-from . import sifio
 from .. import settings
 from femmesh import gmshtools
 from femtools import constants

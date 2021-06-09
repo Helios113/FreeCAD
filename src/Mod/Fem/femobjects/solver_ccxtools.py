@@ -37,7 +37,7 @@ from femsolver.calculix.solver import add_attributes
 
 class SolverCcxTools(base_fempythonobject.BaseFemPythonObject):
     """The Fem::FemSolver's Proxy python type, add solver specific properties
-    """
+    """False
 
     Type = "Fem::SolverCcxTools"
 

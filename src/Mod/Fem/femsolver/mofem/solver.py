@@ -12,46 +12,36 @@ from .. import solverbase
 from femtools import femutils
 
 
+"""
+Document object visible in the tree-view.
+Implemented in python via a document proxy and view proxy.
+"""
+
 def create(doc, name="MoFEMSolver"):
     return femutils.createObject(
         doc, name, Proxy, ViewProxy)
 
+# Types of supported analysis
+# For MoFEM these are:
+#TODO get all analysis tipes
+# for not just do linear elastic
+ANALYSIS_TYPES = ["elastic"]
+
 
 class Proxy(solverbase.Proxy):
-    """Proxy for FemSolverMo"""
+    """Proxy for FemSolverMoFEM
+    Define the parameters for anaysis
+    
+    """
 
     Type = "FEM::SolverMoFEM" # Name of command which is called
                               # Has to be the same as in GUI/workbench.cpp
 
-    _EQUATIONS = {
-        "Heat": heat,
-        "Elasticity": elasticity,
-        "Electrostatic": electrostatic,
-        "Flux": flux,
-        "Electricforce": electricforce,
-        "Flow": flow,
-    }
+    # Ad the properties needed to solve the mesh
 
     def __init__(self, obj):
         super(Proxy, self).__init__(obj)
-
-        obj.addProperty(
-            "App::PropertyInteger",
-            "SteadyStateMaxIterations",
-            "Steady State",
-            ""
-        )
-        obj.SteadyStateMaxIterations = 1
-
-        obj.addProperty(
-            "App::PropertyInteger",
-            "SteadyStateMinIterations",
-            "Steady State",
-            ""
-        )
-        obj.SteadyStateMinIterations = 0
-
-        
+        add_attributes(obj)
 
     def createMachine(self, obj, directory, testmode=False):
         return run.Machine(
@@ -67,6 +57,24 @@ class Proxy(solverbase.Proxy):
 
     def isSupported(self, eqId):
         return eqId in self._EQUATIONS
+
+
+def add_attributes(obj):
+    obj.addProperty(
+        "App::PropertyEnumeration",
+        "AnalysisType",
+        "Fem",
+        "Type of the analysis"
+    )
+    obj.AnalysisType = ANALYSIS_TYPES
+
+    obj.addProperty(
+        "App::PropertyIntegerConstraint",
+        "IterationsThermoMechMaximum",
+        "Fem",
+        "Maximum iterations"
+    )
+
 
 
 class ViewProxy(solverbase.ViewProxy):

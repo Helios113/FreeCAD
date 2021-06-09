@@ -42,7 +42,10 @@ from femtools.femutils import is_of_type
 # with type() and identifier instead of class for
 # the commands which add new document objects.
 # see https://www.python-course.eu/python3_classes_and_type.php
-
+"""
+Adds the solver document object to the active document. 
+Required to access the solver object from the GUI.
+"""
 
 class _Analysis(CommandManager):
     "The FEM_Analysis command definition"

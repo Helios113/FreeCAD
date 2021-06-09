@@ -908,7 +908,7 @@ class GmshTools():
         try:
             p = subprocess.Popen(
                 command_list,
-                shell=False,
+                shell=True, # Maybe it will open the shell
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE
             )

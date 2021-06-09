@@ -40,6 +40,12 @@ from femtools import femutils
 from femtools import membertools
 
 
+"""
+Module containing one task class per task required for a solver implementation. 
+Those tasks divide the process of solving a analysis into the following steps: check, prepare, solve, results
+"""
+
+
 class Check(run.Check):
 
     def run(self):
