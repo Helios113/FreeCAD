@@ -44,7 +44,7 @@ from femtools import membertools
 Module containing one task class per task required for a solver implementation. 
 Those tasks divide the process of solving a analysis into the following steps: check, prepare, solve, results
 """
-
+"""
 
 class Check(run.Check):
 
@@ -73,22 +73,64 @@ class Check(run.Check):
                 "Add at least one equation.")
             self.fail()
 
+"""
+#MoFEM Check class
 
-class Prepare(run.Prepare):
+class Check(run.Check):
 
     def run(self):
-        # TODO print working dir to report console
-        self.pushStatus("Preparing input files...\n")
-        if self.testmode:
-            # test mode: neither gmsh, nor elmergrid nor elmersolver binaries needed
-            FreeCAD.Console.PrintMessage("Machine testmode: {}\n".format(self.testmode))
-            w = writer.Writer(self.solver, self.directory, True)
-        else:
-            FreeCAD.Console.PrintLog("Machine testmode: {}\n".format(self.testmode))
-            w = writer.Writer(self.solver, self.directory)
+        self.pushStatus("Checking analysis...\n")
+        if self.checkMesh(): # works for only one mesh if more meshes are needed this check needs to be ammended
+            self.pushStatus("Mesh OK\n")
+            if self.checkMeshType():
+                self.pushStatus("Mesh created with gmsh\n")
+        self.checkMaterial()
+        #self.checkEquations() implements equations - not used for now
+
+    def checkMeshType(self):
+        mesh = membertools.get_single_member(self.analysis, "Fem::FemMeshObject")
+        if not femutils.is_of_type(mesh, "Fem::FemMeshGmsh"):
+            self.report.error(
+                "Unsupported type of mesh. "
+                "Mesh must be created with gmsh.")
+            self.fail()
+            return False
+        return True
+    
+    def checkEquations(self):
+        equations = self.solver.Group
+        if not equations:
+            self.report.error(
+                "Solver has no equations. "
+                "Add at least one equation.")
+            self.fail()
+
+
+
+#TODO
+# Implement Prepare class
+# This class takes the gmsh file, converts it to a med file with boundary conditions
+# and then calls mofem to create a .cfg file
+# I know that we have the gmsh binary used by ccx so should be able to use as well.
+# no GUI work for now
+class Prepare(run.Prepare):
+
+    def run(self): ## the ui calls this class
+        
+
+        FreeCAD.Console.PrintMessage("Preparing files...\n")
+        w = writer.MedWriterMoFEM(
+            self.analysis,
+            self.solver,
+            membertools.get_mesh_to_solve(self.analysis)[0], #This is the mesh to solve, pre check has been done already
+            membertools.AnalysisMember(self.analysis),
+            self.directory
+        )
         try:
-            w.write()
-            self.checkHandled(w)
+            FreeCAD.Console.PrintMessage("Initialising writer\n")
+            w.add_mofem_bcs()
+            #w.write_mesh()
+            #self.checkHandled(w)
         except writer.WriteError as e:
             self.report.error(str(e))
             self.fail()
@@ -110,33 +152,12 @@ class Solve(run.Solve):
         # if the solver fails, the existing result from a former run file will be loaded
         # TODO: delete result file (may be delete all files which will be recreated)
         self.pushStatus("Executing solver...\n")
-        binary = settings.get_binary("ElmerSolver")
-        if binary is not None:
-            # if ELMER_HOME is not set, set it.
-            # Needed if elmer is compiled but not installed on Linux
-            # http://www.elmerfem.org/forum/viewtopic.php?f=2&t=7119
-            # https://stackoverflow.com/questions/1506010/how-to-use-export-with-python-on-linux
-            # TODO move retrieving the param to solver settings module
-            elparams = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Fem/Elmer")
-            elmer_env = elparams.GetBool("SetElmerEnvVariables", False)
-            if elmer_env is True and system() == "Linux" and "ELMER_HOME" not in os.environ:
-                solvpath = os.path.split(binary)[0]
-                if os.path.isdir(solvpath):
-                    os.environ["ELMER_HOME"] = solvpath
-                    os.environ["LD_LIBRARY_PATH"] = "$LD_LIBRARY_PATH:{}/modules".format(solvpath)
-            self._process = subprocess.Popen(
-                [binary], cwd=self.directory,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE)
-            self.signalAbort.add(self._process.terminate)
-            output = self._observeSolver(self._process)
-            self._process.communicate()
-            self.signalAbort.remove(self._process.terminate)
-            if not self.aborted:
-                self._updateOutput(output)
-        else:
-            self.report.error("ElmerSolver executable not found.")
-            self.fail()
+        binary = settings.get_binary("MoFEMSolver")
+        print("MoFEM", binary)
+        binary = settings.get_binary("Calculix")
+        print("Calculix", binary)
+        
+        self.fail()
 
     def _updateOutput(self, output):
         if self.solver.ElmerOutput is None:

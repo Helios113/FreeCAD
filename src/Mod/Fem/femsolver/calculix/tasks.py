@@ -63,7 +63,7 @@ class Prepare(run.Prepare):
         w = writer.FemInputWriterCcx(
             self.analysis,
             self.solver,
-            membertools.get_mesh_to_solve(self.analysis)[0],  # pre check has been done already
+            membertools.get_mesh_to_solve(self.analysis)[0], #This is the mesh to solve # pre check has been done already
             membertools.AnalysisMember(self.analysis),
             self.directory
         )

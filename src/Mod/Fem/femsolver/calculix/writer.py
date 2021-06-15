@@ -228,7 +228,7 @@ class FemInputWriterCcx(writerbase.FemInputWriter):
             write_name = "femesh"
             file_name_splitt = self.mesh_name + "_" + write_name + ".inp"
             split_mesh_file_path = join(self.dir_name, file_name_splitt)
-
+            
             self.femmesh.writeABAQUS(
                 split_mesh_file_path,
                 element_param,

@@ -109,7 +109,8 @@ class FemInputWriter():
                 )
                 # ATM only used in meshtools.get_femelement_direction1D_set
                 # TODO somehow this is not smart, rare meshes might be used often
-            self.femmesh = self.mesh_object.FemMesh
+                
+            self.femmesh = self.mesh_object.FemMesh # this is our shit
         else:
             FreeCAD.Console.PrintWarning(
                 "No finite element mesh object was given to the writer class. "

@@ -55,6 +55,7 @@ class Proxy(solverbase.Proxy):
 
     Type = "Fem::SolverCalculix"
 
+
     def __init__(self, obj):
         super(Proxy, self).__init__(obj)
         obj.Proxy = self

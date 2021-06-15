@@ -10,6 +10,7 @@ from .equations import heat
 from .. import run
 from .. import solverbase
 from femtools import femutils
+import FreeCAD
 
 
 """
@@ -41,6 +42,7 @@ class Proxy(solverbase.Proxy):
 
     def __init__(self, obj):
         super(Proxy, self).__init__(obj)
+        ccx_prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Fem/MoFEM")
         add_attributes(obj)
 
     def createMachine(self, obj, directory, testmode=False):
