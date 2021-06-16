@@ -26,7 +26,7 @@ __title__ = "FreeCAD FEM solver Elmer writer"
 __author__ = "Markus Hovorka"
 __url__ = "https://www.freecadweb.org"
 
-## \addtogroup FEM
+# \addtogroup FEM
 #  @{
 
 import os
@@ -53,7 +53,10 @@ from femtools import femutils
 from femtools import membertools
 
 
-#Write the .med file to a usable directory
+# Generate .geo file
+# Change the physical group names
+# Generate .unv and write as .med
+# Write the .med file to a usable directory
 class MedWriterMoFEM(writerbase.FemInputWriter):
     def __init__(
         self,
@@ -64,21 +67,22 @@ class MedWriterMoFEM(writerbase.FemInputWriter):
         dir_name=None
     ):
         self.mesh_obj = mesh_obj
-        self.member = member # Analysis class?
+        self.member = member  # Analysis class?
         print("Mesh object", self.mesh_obj)
         self.mesh_name = self.mesh_obj.Name
         self.dir_name = dir_name
         self.include = join(self.dir_name, self.mesh_name)
+        self.med_path = join(self.include, "_med.med")
+        self.cfg_path = join(self.include, "_med.config")
         writerbase.FemInputWriter.__init__(
-                self,
-                analysis_obj,
-                solver_obj,
-                mesh_obj,
-                member,
-                dir_name
-            )
-        
-    # def _exportToUnv(self, groups, mesh, meshPath):
+            self,
+            analysis_obj,
+            solver_obj,
+            mesh_obj,
+            member,
+            dir_name
+        )
+
     def add_mofem_bcs(self):
         print("Fixed obj", self.member.cons_fixed)
         print("Fixed Disp", self.member.cons_displacement)
@@ -89,12 +93,13 @@ class MedWriterMoFEM(writerbase.FemInputWriter):
         os.close(geoFd)
         os.close(unvGmshFd)
 
-        tools = gmshtools.GmshTools(self.mesh_obj,analysis=self.analysis)
+        tools = gmshtools.GmshTools(self.mesh_obj, analysis=self.analysis)
 
-        tools.get_group_data() # Try to get group data
+        tools.get_group_data()  # Try to get group data
 
-        #print(tools.group_elements) # print to see if we have it
-        tools.group_elements['FIX_ALL'] = tools.group_elements.pop('ConstraintFixed')
+        # print(tools.group_elements) # print to see if we have it
+        tools.group_elements['FIX_ALL'] = tools.group_elements.pop(
+            'ConstraintFixed')
         tools.group_nodes_export = False
         tools.ele_length_map = {}
         tools.temp_file_geometry = brepPath
@@ -112,7 +117,8 @@ class MedWriterMoFEM(writerbase.FemInputWriter):
                 "It might not be installed.\n"
             )
             import shutil
-            shutil.copyfile(geoPath, os.path.join(self.directory, "group_mesh.geo"))
+            shutil.copyfile(geoPath, os.path.join(
+                self.directory, "group_mesh.geo"))
         else:
             tools.get_gmsh_command()
             tools.run_gmsh_with_geo()
@@ -120,28 +126,15 @@ class MedWriterMoFEM(writerbase.FemInputWriter):
             ioMesh = Fem.FemMesh()
             ioMesh.read(unvGmshPath)
 
-
-            write_name = "med_mesh"
-            file_name_splitt = self.mesh_name + "_" + write_name + ".med"
-            meshPath = join(self.dir_name, file_name_splitt)
-            print("MED file path", meshPath)
-            ioMesh.write(meshPath)
+            print("MED file path", self.med_path)
+            ioMesh.write(self.med_path)
 
         os.remove(brepPath)
         os.remove(geoPath)
         os.remove(unvGmshPath)
 
 
-
-    def write_mesh(self):
-        write_name = "med_mesh"
-        file_name_splitt = self.mesh_name + "_" + write_name + ".med"
-        split_mesh_file_path = join(self.dir_name, file_name_splitt)
-        print("Path is ", split_mesh_file_path, "\n")
-        self.femmesh.write(
-            split_mesh_file_path
-        )
-class WriteError(Exception):
+class MedWriterMoFEMError(Exception):
     pass
 
-##  @}
+# @}

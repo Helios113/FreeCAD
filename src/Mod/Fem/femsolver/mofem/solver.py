@@ -1,4 +1,4 @@
-## \addtogroup FEM
+# \addtogroup FEM
 #  @{
 from . import tasks
 from .equations import elasticity
@@ -18,31 +18,37 @@ Document object visible in the tree-view.
 Implemented in python via a document proxy and view proxy.
 """
 
+
 def create(doc, name="MoFEMSolver"):
     return femutils.createObject(
         doc, name, Proxy, ViewProxy)
 
+
 # Types of supported analysis
 # For MoFEM these are:
-#TODO get all analysis tipes
+# TODO get all analysis tipes
 # for not just do linear elastic
 ANALYSIS_TYPES = ["elastic"]
 
 
+# Implementation of the Proxy class
+# This class is called from the GUI
+# to create a solver object
+# It defines all parameters that the user
+# can amend through addAttribute
 class Proxy(solverbase.Proxy):
     """Proxy for FemSolverMoFEM
     Define the parameters for anaysis
-    
+
     """
 
-    Type = "FEM::SolverMoFEM" # Name of command which is called
-                              # Has to be the same as in GUI/workbench.cpp
+    Type = "FEM::SolverMoFEM"  # Name of command which is called
+    # Has to be the same as in GUI/workbench.cpp
 
     # Ad the properties needed to solve the mesh
 
     def __init__(self, obj):
         super(Proxy, self).__init__(obj)
-        ccx_prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Fem/MoFEM")
         add_attributes(obj)
 
     def createMachine(self, obj, directory, testmode=False):
@@ -78,11 +84,14 @@ def add_attributes(obj):
     )
 
 
-
+# Implementation of the ViewProxy class
+# This class is called from the GUI
+# to create a solver object
+# It gives the solver icon
 class ViewProxy(solverbase.ViewProxy):
     """Proxy for FemSolverMoFEMs View Provider."""
 
     def getIcon(self):
         return ":/icons/FEM_SolverMoFEM.svg"
 
-##  @}
+# @}

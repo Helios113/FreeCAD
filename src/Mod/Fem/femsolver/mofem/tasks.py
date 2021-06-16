@@ -22,11 +22,12 @@
 # ***************************************************************************
 
 
-## \addtogroup FEM
+# \addtogroup FEM
 #  @{
 
 import os
 import os.path
+from posixpath import join
 import subprocess
 import sys
 from platform import system
@@ -74,21 +75,27 @@ class Check(run.Check):
             self.fail()
 
 """
-#MoFEM Check class
 
+
+# Implementation of the Check class
+# This class checks to see if:
+# 1. there is only one fem mesh
+# 2. the mesh is created with gmsh
+# 3. a material has been assigned
 class Check(run.Check):
 
     def run(self):
         self.pushStatus("Checking analysis...\n")
-        if self.checkMesh(): # works for only one mesh if more meshes are needed this check needs to be ammended
+        if self.checkMesh():  # works for only one mesh if more meshes are needed this check needs to be amended
             self.pushStatus("Mesh OK\n")
             if self.checkMeshType():
                 self.pushStatus("Mesh created with gmsh\n")
         self.checkMaterial()
-        #self.checkEquations() implements equations - not used for now
+        # self.checkEquations() implements equations - not used for now
 
     def checkMeshType(self):
-        mesh = membertools.get_single_member(self.analysis, "Fem::FemMeshObject")
+        mesh = membertools.get_single_member(
+            self.analysis, "Fem::FemMeshObject")
         if not femutils.is_of_type(mesh, "Fem::FemMeshGmsh"):
             self.report.error(
                 "Unsupported type of mesh. "
@@ -96,7 +103,7 @@ class Check(run.Check):
             self.fail()
             return False
         return True
-    
+
     def checkEquations(self):
         equations = self.solver.Group
         if not equations:
@@ -106,45 +113,70 @@ class Check(run.Check):
             self.fail()
 
 
-
-#TODO
-# Implement Prepare class
-# This class takes the gmsh file, converts it to a med file with boundary conditions
-# and then calls mofem to create a .cfg file
-# I know that we have the gmsh binary used by ccx so should be able to use as well.
-# no GUI work for now
+# Implementation of the Prepare class
+# This class takes a gmsh file, converts it to a med file
+# with MoFEM boundary conditions
+# through the use of a .geo file,
+# then calls read_med to create a .config file,
+# then calls read_med to create a .h5m file
+# which can be used by mofem for analysis
 class Prepare(run.Prepare):
 
-    def run(self): ## the ui calls this class
-        
+    def run(self):  # called by GUI
 
         FreeCAD.Console.PrintMessage("Preparing files...\n")
+
+        # Gets the read med binary
+        read_med = FreeCAD.ParamGet(
+            "User parameter:BaseApp/Preferences/Mod/Fem/MoFEM").GetString("MoFEMMedPath")
+
         w = writer.MedWriterMoFEM(
             self.analysis,
             self.solver,
-            membertools.get_mesh_to_solve(self.analysis)[0], #This is the mesh to solve, pre check has been done already
+            # This is the mesh to solve, pre check has been done already
+            membertools.get_mesh_to_solve(self.analysis)[0],
             membertools.AnalysisMember(self.analysis),
             self.directory
         )
-        try:
-            FreeCAD.Console.PrintMessage("Initialising writer\n")
-            w.add_mofem_bcs()
-            #w.write_mesh()
-            #self.checkHandled(w)
-        except writer.WriteError as e:
+        try:  # Generate MoFEM .config file
+            FreeCAD.Console.PrintMessage("Initializing writer\n")
+            w.add_mofem_bcs()  # amends the .geo file with mofem bcs
+            task = [read_med, "-med_file",  w.med_path]
+            self._process = subprocess.Popen(
+                task, cwd=self.directory,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE)
+        except writer.MedWriterMoFEMError as e:
             self.report.error(str(e))
             self.fail()
         except IOError:
             self.report.error("Can't access working directory.")
             self.fail()
 
+        try:  # Generate MoFEM-compatible mesh
+            FreeCAD.Console.PrintMessage("Generating MoFEM-compatible mesh\n")
+            task = [read_med, "-med_file",  w.med_path,
+                    "-meshsets_config", w.cfg_path,
+                    "-output_file", join(self.directory, w.mesh_name, ".h5m")]  # the join points towards the mesh file
+            self._process = subprocess.Popen(  # creates the mofem readable mesh
+                task, cwd=self.directory,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE)
+        except IOError:
+            self.report.error("Can't access working directory.")
+            self.fail()
+
     def checkHandled(self, w):
         handled = w.getHandledConstraints()
-        allConstraints = membertools.get_member(self.analysis, "Fem::Constraint")
+        allConstraints = membertools.get_member(
+            self.analysis, "Fem::Constraint")
         for obj in set(allConstraints) - handled:
             self.report.warning("Ignored constraint %s." % obj.Label)
 
 
+# Implementation of the Solve class
+# This class gets the mofem binary
+# and runs the analysis
 class Solve(run.Solve):
 
     def run(self):
@@ -154,28 +186,26 @@ class Solve(run.Solve):
         self.pushStatus("Executing solver...\n")
         binary = settings.get_binary("MoFEMSolver")
         print("MoFEM", binary)
-        binary = settings.get_binary("Calculix")
-        print("Calculix", binary)
-        
-        self.fail()
 
-    def _updateOutput(self, output):
-        if self.solver.ElmerOutput is None:
-            self._createOutput()
-        if sys.version_info.major >= 3:
-            self.solver.ElmerOutput.Text = output
+        if binary is not None:
+            # if ELMER_HOME is not set, set it.
+            # Needed if elmer is compiled but not installed on Linux
+            # http://www.elmerfem.org/forum/viewtopic.php?f=2&t=7119
+            # https://stackoverflow.com/questions/1506010/how-to-use-export-with-python-on-linux
+            # TODO move retrieving the param to solver settings module
+            self._process = subprocess.Popen(
+                [binary], cwd=self.directory,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE)
+            self.signalAbort.add(self._process.terminate)
+            output = self._observeSolver(self._process)
+            self._process.communicate()
+            self.signalAbort.remove(self._process.terminate)
+            if not self.aborted:
+                self._updateOutput(output)
         else:
-            self.solver.ElmerOutput.Text = output.decode("utf-8")
-
-    def _createOutput(self):
-        self.solver.ElmerOutput = self.analysis.Document.addObject(
-            "App::TextDocument", self.solver.Name + "Output")
-        self.solver.ElmerOutput.Label = self.solver.Label + "Output"
-        # App::TextDocument has no Attribute ReadOnly
-        # TODO check if the attribute has been removed from App::TextDocument
-        # self.solver.ElmerOutput.ReadOnly = True
-        self.analysis.addObject(self.solver.ElmerOutput)
-        self.solver.Document.recompute()
+            self.report.error("MoFEM executable not found.")
+            self.fail()
 
 
 class Results(run.Results):
@@ -210,4 +240,4 @@ class Results(run.Results):
             self.fail()
         return postPath
 
-##  @}
+# @}

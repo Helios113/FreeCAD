@@ -93,7 +93,8 @@ def get_binary(name):
     """
     if name in _SOLVER_PARAM:
         binary = _SOLVER_PARAM[name].get_binary()
-        FreeCAD.Console.PrintMessage('Solver binary path: {} \n'.format(binary))
+        FreeCAD.Console.PrintMessage(
+            'Solver binary path: {} \n'.format(binary))
         return binary
     else:
         FreeCAD.Console.PrintError(
