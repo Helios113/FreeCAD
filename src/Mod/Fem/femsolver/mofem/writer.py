@@ -72,8 +72,8 @@ class MedWriterMoFEM(writerbase.FemInputWriter):
         self.mesh_name = self.mesh_obj.Name
         self.dir_name = dir_name
         self.include = join(self.dir_name, self.mesh_name)
-        self.med_path = join(self.include, "_med.med")
-        self.cfg_path = join(self.include, "_med.config")
+        self.med_path = self.include+"_med.med"
+        self.cfg_path = self.include+"_med.config"
         writerbase.FemInputWriter.__init__(
             self,
             analysis_obj,
