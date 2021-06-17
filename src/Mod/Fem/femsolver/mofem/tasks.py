@@ -42,7 +42,7 @@ from femtools import membertools
 
 
 """
-Module containing one task class per task required for a solver implementation. 
+Module containing one task class per task required for a solver implementation.
 Those tasks divide the process of solving a analysis into the following steps: check, prepare, solve, results
 """
 """
@@ -57,7 +57,8 @@ class Check(run.Check):
         self.checkEquations()
 
     def checkMeshType(self):
-        mesh = membertools.get_single_member(self.analysis, "Fem::FemMeshObject")
+        mesh = membertools.get_single_member(
+            self.analysis, "Fem::FemMeshObject")
         if not femutils.is_of_type(mesh, "Fem::FemMeshGmsh"):
             self.report.error(
                 "Unsupported type of mesh. "
@@ -94,8 +95,7 @@ class Check(run.Check):
         # self.checkEquations() implements equations - not used for now
 
     def checkMeshType(self):
-        mesh = membertools.get_single_member(
-            self.analysis, "Fem::FemMeshObject")
+        mesh = membertools.get_mesh_to_solve(self.analysis)[0]
         if not femutils.is_of_type(mesh, "Fem::FemMeshGmsh"):
             self.report.error(
                 "Unsupported type of mesh. "
@@ -184,10 +184,10 @@ class Solve(run.Solve):
         # if the solver fails, the existing result from a former run file will be loaded
         # TODO: delete result file (may be delete all files which will be recreated)
         self.pushStatus("Executing solver...\n")
-        binary = settings.get_binary("MoFEMSolver")
-        print("MoFEM", binary)
-
-        if binary is not None:
+        analysis_type = self.solver.AnalysisType
+        binary = settings.get_binary(analysis_type)
+        print(analysis_type, binary)
+        if False:  # if binary is not None:
             # if ELMER_HOME is not set, set it.
             # Needed if elmer is compiled but not installed on Linux
             # http://www.elmerfem.org/forum/viewtopic.php?f=2&t=7119
@@ -204,25 +204,25 @@ class Solve(run.Solve):
             if not self.aborted:
                 self._updateOutput(output)
         else:
-            self.report.error("MoFEM executable not found.")
+            self.report.error(analysis_type+" executable not found.")
             self.fail()
 
 
 class Results(run.Results):
 
     def run(self):
-        if self.solver.ElmerResult is None:
+        if self.solver.MoFEMResult is None:
             self._createResults()
         postPath = self._getResultFile()
-        self.solver.ElmerResult.read(postPath)
-        self.solver.ElmerResult.getLastPostObject().touch()
+        self.solver.MoFEMResult.read(postPath)
+        self.solver.MoFEMResult.getLastPostObject().touch()
         self.solver.Document.recompute()
 
     def _createResults(self):
-        self.solver.ElmerResult = self.analysis.Document.addObject(
+        self.solver.MoFEMResult = self.analysis.Document.addObject(
             "Fem::FemPostPipeline", self.solver.Name + "Result")
         self.solver.ElmerResult.Label = self.solver.Label + "Result"
-        self.analysis.addObject(self.solver.ElmerResult)
+        self.analysis.addObject(self.solver.MoFEMResult)
 
     def _getResultFile(self):
         postPath = None

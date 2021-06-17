@@ -48,15 +48,27 @@ DlgSettingsFemMoFEMImp::~DlgSettingsFemMoFEMImp()
 void DlgSettingsFemMoFEMImp::saveSettings()
 {
     ui->cb_mofem_binary_std->onSave();
+    ui->cb_bone_std->onSave();
+    ui->cb_elasticity_std->onSave();
+
+
     ui->fc_mofem_binary_path->onSave();
     ui->fc_mofem_readmed_path->onSave();
+    ui->fc_bone_path->onSave();
+    ui->fc_elasticity_path->onSave();
 }
 
 void DlgSettingsFemMoFEMImp::loadSettings()
 {
     ui->cb_mofem_binary_std->onRestore();
+    ui->cb_bone_std->onRestore();
+    ui->cb_elasticity_std->onRestore();
+
+
     ui->fc_mofem_binary_path->onRestore();
     ui->fc_mofem_readmed_path->onRestore();
+    ui->fc_bone_path->onRestore();
+    ui->fc_elasticity_path->onRestore();
 }
 
 /**

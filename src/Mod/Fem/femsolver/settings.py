@@ -235,4 +235,14 @@ _SOLVER_PARAM = {
         param_path=_PARAM_PATH + "Z88",
         use_default="UseStandardZ88Location",
         custom_path="z88BinaryPath"),
+    "Linear Elasticity": _SolverDlg(
+        default="Linear Elasticity",
+        param_path=_PARAM_PATH + "elasticity",
+        use_default="UseStandardElasticityLocation",
+        custom_path="Linear_elasticityPath"),
+    "Bone remodeling": _SolverDlg(
+        default="Bone remodeling",
+        param_path=_PARAM_PATH + "bone_adaptation",
+        use_default="UseStandardBoneLocation",
+        custom_path="Bone_remodelingPath"),
 }

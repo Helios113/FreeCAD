@@ -67,7 +67,7 @@ class MedWriterMoFEM(writerbase.FemInputWriter):
         dir_name=None
     ):
         self.mesh_obj = mesh_obj
-        self.member = member  # Analysis class?
+        self.member = member
         print("Mesh object", self.mesh_obj)
         self.mesh_name = self.mesh_obj.Name
         self.dir_name = dir_name
@@ -127,6 +127,7 @@ class MedWriterMoFEM(writerbase.FemInputWriter):
             ioMesh.read(unvGmshPath)
 
             print("MED file path", self.med_path)
+
             ioMesh.write(self.med_path)
 
         os.remove(brepPath)

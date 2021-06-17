@@ -28,7 +28,8 @@ def create(doc, name="MoFEMSolver"):
 # For MoFEM these are:
 # TODO get all analysis tipes
 # for not just do linear elastic
-ANALYSIS_TYPES = ["elastic"]
+ANALYSIS_TYPES = ["Linear Elasticity",
+                  "Linear Thermoelasticity", "Bone remodeling"]
 
 
 # Implementation of the Proxy class
@@ -36,9 +37,11 @@ ANALYSIS_TYPES = ["elastic"]
 # to create a solver object
 # It defines all parameters that the user
 # can amend through addAttribute
+
+
 class Proxy(solverbase.Proxy):
     """Proxy for FemSolverMoFEM
-    Define the parameters for anaysis
+    Define the parameters for analysis
 
     """
 
@@ -75,13 +78,7 @@ def add_attributes(obj):
         "Type of the analysis"
     )
     obj.AnalysisType = ANALYSIS_TYPES
-
-    obj.addProperty(
-        "App::PropertyIntegerConstraint",
-        "IterationsThermoMechMaximum",
-        "Fem",
-        "Maximum iterations"
-    )
+    obj.AnalysisType = ANALYSIS_TYPES[0]
 
 
 # Implementation of the ViewProxy class
