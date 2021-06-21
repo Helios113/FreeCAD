@@ -22,8 +22,22 @@
 # *                                                                         *
 # ***************************************************************************
 
-__title__ = "FreeCAD FEM solver Elmer writer"
-__author__ = "Markus Hovorka"
+from femtools import membertools
+from femtools import femutils
+from femtools import constants
+from femmesh import meshtools
+from femmesh import gmshtools
+from .. import settings
+from femtools import geomtools
+from .. import writerbase
+from os.path import join
+import FreeCAD
+import Fem
+from FreeCAD import ParamGet
+from FreeCAD import Units
+from FreeCAD import Console
+__title__ = "FreeCAD FEM MoFEM writer"
+__author__ = "Preslav Aleksandrov"
 __url__ = "https://www.freecadweb.org"
 
 # \addtogroup FEM
@@ -33,24 +47,7 @@ import os
 import os.path
 import subprocess
 import tempfile
-
-from FreeCAD import Console
-from FreeCAD import Units
-from FreeCAD import ParamGet
-
-import Fem
-import FreeCAD
-from os.path import join
-
-from .. import writerbase
-from femtools import geomtools
-
-from .. import settings
-from femmesh import gmshtools
-from femmesh import meshtools
-from femtools import constants
-from femtools import femutils
-from femtools import membertools
+from collections import defaultdict
 
 
 # Generate .geo file
@@ -83,9 +80,54 @@ class MedWriterMoFEM(writerbase.FemInputWriter):
             dir_name
         )
 
+    def get_mofem_bcs(self, tools):
+        new_group_data = {}
+
+        if self.fixed_objects:
+            new_group_data['FIX_ALL'] = []
+            for fix in self.fixed_objects:
+                work_obj = fix['Object']
+                print("Object refrence", type(work_obj.References[0][1][0]))
+                new_group_data['FIX_ALL'].append(work_obj.References[0][1][0])
+        if self.displacement_objects:
+            new_group_data['FIX_X'] = []
+            new_group_data['FIX_Y'] = []
+            new_group_data['FIX_Z'] = []
+            for disp in self.displacement_objects:
+                work_obj = disp['Object']
+                if work_obj.xFix:
+                    print("Object refrence", type(
+                        work_obj.References[0][1][0]))
+                    new_group_data['FIX_X'].append(
+                        work_obj.References[0][1][0])
+                elif work_obj.yFix:
+                    print("Object refrence", type(
+                        work_obj.References[0][1][0]))
+                    new_group_data['FIX_Y'].append(
+                        work_obj.References[0][1][0])
+                elif work_obj.zFix:
+                    print("Object refrence", type(
+                        work_obj.References[0][1][0]))
+                    new_group_data['FIX_Z'].append(
+                        work_obj.References[0][1][0])
+            new_group_data = {k: v for k,
+                              v in new_group_data.items() if v != []}
+        """
+        print("disp group", tools.group_elements['ConstraintDisplacement'])
+        print(self.displacement_objects)
+        for disp in self.displacement_objects:
+            print("Disp object is")
+            print(disp)
+            print(disp['Object'])
+            print(disp['Object'].xFix)
+            print(disp['Object'].Name)
+            print(disp['Object'].References)
+        """
+        return new_group_data
+
     def add_mofem_bcs(self):
-        print("Fixed obj", self.member.cons_fixed)
-        print("Fixed Disp", self.member.cons_displacement)
+        # print("Fixed obj", self.member.cons_fixed)
+        # print("Fixed Disp", self.member.cons_displacement)
         unvGmshFd, unvGmshPath = tempfile.mkstemp(suffix=".unv")
         brepFd, brepPath = tempfile.mkstemp(suffix=".brep")
         geoFd, geoPath = tempfile.mkstemp(suffix=".geo")
@@ -96,10 +138,10 @@ class MedWriterMoFEM(writerbase.FemInputWriter):
         tools = gmshtools.GmshTools(self.mesh_obj, analysis=self.analysis)
 
         tools.get_group_data()  # Try to get group data
+        print("At line 117")
+        tools.group_elements = self.get_mofem_bcs(tools)
+        print(tools.group_elements)  # print to see if we have it
 
-        # print(tools.group_elements) # print to see if we have it
-        tools.group_elements['FIX_ALL'] = tools.group_elements.pop(
-            'ConstraintFixed')
         tools.group_nodes_export = False
         tools.ele_length_map = {}
         tools.temp_file_geometry = brepPath

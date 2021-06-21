@@ -288,7 +288,8 @@ def getBoundBoxOfAllDocumentShapes(doc):
 
         if bb is None:
             try:
-                FreeCAD.Console.PrintMessage("trying: {}: FemMesh\n".format(o.Label))  # debug only
+                FreeCAD.Console.PrintMessage(
+                    "trying: {}: FemMesh\n".format(o.Label))  # debug only
                 bb = o.FemMesh.BoundBox
                 FreeCAD.Console.PrintMessage("{}\n".format(bb))  # debug only
             except Exception:
@@ -301,9 +302,11 @@ def getBoundBoxOfAllDocumentShapes(doc):
                 else:
                     overallboundbox.add(bb)
         else:                                                                   # debug only
-            FreeCAD.Console.PrintMessage("no bb\n")                             # debug only
+            FreeCAD.Console.PrintMessage(
+                "no bb\n")                             # debug only
 
-    FreeCAD.Console.PrintMessage("overallBB:" + str(overallboundbox) + "\n")    # debug only
+    FreeCAD.Console.PrintMessage(
+        "overallBB:" + str(overallboundbox) + "\n")    # debug only
     return overallboundbox
 
 
@@ -364,12 +367,14 @@ def get_refshape_type(fem_doc_object):
         first_ref_shape = get_element(first_ref_obj[0], first_ref_obj[1][0])
         st = first_ref_shape.ShapeType
         FreeCAD.Console.PrintMessage(
-            "References: {} in {}, {}\n". format(st, fem_doc_object.Name, fem_doc_object.Label)
+            "References: {} in {}, {}\n". format(
+                st, fem_doc_object.Name, fem_doc_object.Label)
         )
         return st
     else:
         FreeCAD.Console.PrintMessage(
-            "References: empty in {}, {}\n". format(fem_doc_object.Name, fem_doc_object.Label)
+            "References: empty in {}, {}\n". format(
+                fem_doc_object.Name, fem_doc_object.Label)
         )
         return ""
 

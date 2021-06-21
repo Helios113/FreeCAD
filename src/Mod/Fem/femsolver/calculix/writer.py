@@ -26,7 +26,7 @@ __title__ = "FreeCAD FEM solver CalculiX writer"
 __author__ = "Przemo Firszt, Bernd Hahnebach"
 __url__ = "https://www.freecadweb.org"
 
-## \addtogroup FEM
+# \addtogroup FEM
 #  @{
 
 # import io
@@ -102,14 +102,16 @@ class FemInputWriterCcx(writerbase.FemInputWriter):
         )
         from femtools import constants
         from FreeCAD import Units
-        self.gravity = int(Units.Quantity(constants.gravity()).getValueAs("mm/s^2"))  # 9820 mm/s2
+        self.gravity = int(Units.Quantity(
+            constants.gravity()).getValueAs("mm/s^2"))  # 9820 mm/s2
 
     # ********************************************************************************************
     # write calculix input
     def write_calculix_input_file(self):
         timestart = time.process_time()
         FreeCAD.Console.PrintMessage("Start writing CalculiX input file\n")
-        FreeCAD.Console.PrintMessage("Write ccx input file to: {}\n".format(self.file_name))
+        FreeCAD.Console.PrintMessage(
+            "Write ccx input file to: {}\n".format(self.file_name))
         FreeCAD.Console.PrintLog(
             "writerbaseCcx --> self.mesh_name  -->  " + self.mesh_name + "\n"
         )
@@ -153,13 +155,19 @@ class FemInputWriterCcx(writerbase.FemInputWriter):
 
         # node sets and surface sets
         self.write_node_sets_constraints_fixed(inpfileMain, self.split_inpfile)
-        self.write_node_sets_constraints_displacement(inpfileMain, self.split_inpfile)
-        self.write_node_sets_constraints_planerotation(inpfileMain, self.split_inpfile)
-        self.write_surfaces_constraints_contact(inpfileMain, self.split_inpfile)
+        self.write_node_sets_constraints_displacement(
+            inpfileMain, self.split_inpfile)
+        self.write_node_sets_constraints_planerotation(
+            inpfileMain, self.split_inpfile)
+        self.write_surfaces_constraints_contact(
+            inpfileMain, self.split_inpfile)
         self.write_surfaces_constraints_tie(inpfileMain, self.split_inpfile)
-        self.write_surfaces_constraints_sectionprint(inpfileMain, self.split_inpfile)
-        self.write_node_sets_constraints_transform(inpfileMain, self.split_inpfile)
-        self.write_node_sets_constraints_temperature(inpfileMain, self.split_inpfile)
+        self.write_surfaces_constraints_sectionprint(
+            inpfileMain, self.split_inpfile)
+        self.write_node_sets_constraints_transform(
+            inpfileMain, self.split_inpfile)
+        self.write_node_sets_constraints_temperature(
+            inpfileMain, self.split_inpfile)
 
         # materials and fem element types
         self.write_materials(inpfileMain)
@@ -188,7 +196,8 @@ class FemInputWriterCcx(writerbase.FemInputWriter):
                         self.fluid_inout_nodes_file
                     )
                     # inpfileMain = io.open(self.file_name, "a", encoding="utf-8")
-                    inpfileMain = codecs.open(self.file_name, "a", encoding="utf-8")
+                    inpfileMain = codecs.open(
+                        self.file_name, "a", encoding="utf-8")
 
         # constraints independent from steps
         self.write_constraints_planerotation(inpfileMain)
@@ -228,7 +237,7 @@ class FemInputWriterCcx(writerbase.FemInputWriter):
             write_name = "femesh"
             file_name_splitt = self.mesh_name + "_" + write_name + ".inp"
             split_mesh_file_path = join(self.dir_name, file_name_splitt)
-            
+
             self.femmesh.writeABAQUS(
                 split_mesh_file_path,
                 element_param,
@@ -237,11 +246,13 @@ class FemInputWriterCcx(writerbase.FemInputWriter):
 
             # Check to see if fluid sections are in analysis and use D network element type
             if self.fluidsection_objects:
-                meshtools.write_D_network_element_to_inputfile(split_mesh_file_path)
+                meshtools.write_D_network_element_to_inputfile(
+                    split_mesh_file_path)
 
             # inpfile = io.open(self.file_name, "w", encoding="utf-8")
             inpfile = codecs.open(self.file_name, "w", encoding="utf-8")
-            inpfile.write("***********************************************************\n")
+            inpfile.write(
+                "***********************************************************\n")
             inpfile.write("** {}\n".format(write_name))
             inpfile.write("*INCLUDE,INPUT={}\n".format(file_name_splitt))
 
@@ -404,29 +415,35 @@ class FemInputWriterCcx(writerbase.FemInputWriter):
             if disp_obj.xFix:
                 f.write(disp_obj_name + ",1\n")
             elif not disp_obj.xFree:
-                f.write(disp_obj_name + ",1,1," + str(disp_obj.xDisplacement) + "\n")
+                f.write(disp_obj_name + ",1,1," +
+                        str(disp_obj.xDisplacement) + "\n")
             if disp_obj.yFix:
                 f.write(disp_obj_name + ",2\n")
             elif not disp_obj.yFree:
-                f.write(disp_obj_name + ",2,2," + str(disp_obj.yDisplacement) + "\n")
+                f.write(disp_obj_name + ",2,2," +
+                        str(disp_obj.yDisplacement) + "\n")
             if disp_obj.zFix:
                 f.write(disp_obj_name + ",3\n")
             elif not disp_obj.zFree:
-                f.write(disp_obj_name + ",3,3," + str(disp_obj.zDisplacement) + "\n")
+                f.write(disp_obj_name + ",3,3," +
+                        str(disp_obj.zDisplacement) + "\n")
 
             if self.beamsection_objects or self.shellthickness_objects:
                 if disp_obj.rotxFix:
                     f.write(disp_obj_name + ",4\n")
                 elif not disp_obj.rotxFree:
-                    f.write(disp_obj_name + ",4,4," + str(disp_obj.xRotation) + "\n")
+                    f.write(disp_obj_name + ",4,4," +
+                            str(disp_obj.xRotation) + "\n")
                 if disp_obj.rotyFix:
                     f.write(disp_obj_name + ",5\n")
                 elif not disp_obj.rotyFree:
-                    f.write(disp_obj_name + ",5,5," + str(disp_obj.yRotation) + "\n")
+                    f.write(disp_obj_name + ",5,5," +
+                            str(disp_obj.yRotation) + "\n")
                 if disp_obj.rotzFix:
                     f.write(disp_obj_name + ",6\n")
                 elif not disp_obj.rotzFree:
-                    f.write(disp_obj_name + ",6,6," + str(disp_obj.zRotation) + "\n")
+                    f.write(disp_obj_name + ",6,6," +
+                            str(disp_obj.zRotation) + "\n")
         f.write("\n")
 
     # ********************************************************************************************
@@ -449,7 +466,8 @@ class FemInputWriterCcx(writerbase.FemInputWriter):
             f.write("** {}\n".format(write_name.replace("_", " ")))
             f.write("*INCLUDE,INPUT={}\n".format(file_name_splitt))
             inpfile_splitt = open(join(self.dir_name, file_name_splitt), "w")
-            self.write_node_sets_nodes_constraints_planerotation(inpfile_splitt)
+            self.write_node_sets_nodes_constraints_planerotation(
+                inpfile_splitt)
             inpfile_splitt.close()
         else:
             self.write_node_sets_nodes_constraints_planerotation(f)
@@ -480,7 +498,8 @@ class FemInputWriterCcx(writerbase.FemInputWriter):
                     self.femnodes_mesh[node].y,
                     self.femnodes_mesh[node].z
                 ))
-            node_planerotation = meshtools.get_three_non_colinear_nodes(nodes_coords)
+            node_planerotation = meshtools.get_three_non_colinear_nodes(
+                nodes_coords)
             for i in range(len(l_nodes)):
                 if l_nodes[i] not in node_planerotation:
                     node_planerotation.append(l_nodes[i])
@@ -682,7 +701,8 @@ class FemInputWriterCcx(writerbase.FemInputWriter):
                         name = "SECTIONFACE" + str(obj)
                         f.write("*SURFACE, NAME=" + name + "\n")
 
-                        v = self.mesh_object.FemMesh.getccxVolumesByFace(ref_shape)
+                        v = self.mesh_object.FemMesh.getccxVolumesByFace(
+                            ref_shape)
                         if len(v) > 0:
                             # volume elements found
                             FreeCAD.Console.PrintLog(
@@ -847,7 +867,8 @@ class FemInputWriterCcx(writerbase.FemInputWriter):
             NumberOfNodes = len(ftobj["Nodes"])
             if fixedtemp_obj.ConstraintType == "Temperature":
                 f.write("*BOUNDARY\n")
-                f.write("{},11,11,{}\n".format(fixedtemp_obj.Name, fixedtemp_obj.Temperature))
+                f.write("{},11,11,{}\n".format(
+                    fixedtemp_obj.Name, fixedtemp_obj.Temperature))
                 f.write("\n")
             elif fixedtemp_obj.ConstraintType == "CFlux":
                 f.write("*CFLUX\n")
@@ -873,7 +894,8 @@ class FemInputWriterCcx(writerbase.FemInputWriter):
         for itobj in self.initialtemperature_objects:  # Should only be one
             inittemp_obj = itobj["Object"]
             # OvG: Initial temperature
-            f.write("{0},{1}\n".format(self.ccx_nall, inittemp_obj.initialTemperature))
+            f.write("{0},{1}\n".format(self.ccx_nall,
+                    inittemp_obj.initialTemperature))
 
     # ********************************************************************************************
     # constraints selfweight
@@ -999,15 +1021,18 @@ class FemInputWriterCcx(writerbase.FemInputWriter):
                 f.write("** " + ref_shape[0] + "\n")
                 for face, fno in ref_shape[1]:
                     if fno > 0:  # solid mesh face
-                        f.write("{},P{},{}\n".format(face, fno, rev * prs_obj.Pressure))
+                        f.write("{},P{},{}\n".format(
+                            face, fno, rev * prs_obj.Pressure))
                     # on shell mesh face: fno == 0
                     # normal of element face == face normal
                     elif fno == 0:
-                        f.write("{},P,{}\n".format(face, rev * prs_obj.Pressure))
+                        f.write("{},P,{}\n".format(
+                            face, rev * prs_obj.Pressure))
                     # on shell mesh face: fno == -1
                     # normal of element face opposite direction face normal
                     elif fno == -1:
-                        f.write("{},P,{}\n".format(face, -1 * rev * prs_obj.Pressure))
+                        f.write("{},P,{}\n".format(
+                            face, -1 * rev * prs_obj.Pressure))
 
     # ********************************************************************************************
     # constraints heatflux
@@ -1043,7 +1068,8 @@ class FemInputWriterCcx(writerbase.FemInputWriter):
                     for elem in elem_tup:
                         ho = o.Shape.getElement(elem)
                         if ho.ShapeType == "Face":
-                            v = self.mesh_object.FemMesh.getccxVolumesByFace(ho)
+                            v = self.mesh_object.FemMesh.getccxVolumesByFace(
+                                ho)
                             f.write("** Heat flux on face {}\n".format(elem))
                             for i in v:
                                 # SvdW: add factor to force heatflux to units system of t/mm/s/K
@@ -1060,7 +1086,8 @@ class FemInputWriterCcx(writerbase.FemInputWriter):
                     for elem in elem_tup:
                         ho = o.Shape.getElement(elem)
                         if ho.ShapeType == "Face":
-                            v = self.mesh_object.FemMesh.getccxVolumesByFace(ho)
+                            v = self.mesh_object.FemMesh.getccxVolumesByFace(
+                                ho)
                             f.write("** Heat flux on face {}\n".format(elem))
                             for i in v:
                                 f.write("{},S{},{}\n".format(
@@ -1160,7 +1187,8 @@ class FemInputWriterCcx(writerbase.FemInputWriter):
     # step begin and end
     def write_step_begin(self, f):
         f.write("\n***********************************************************\n")
-        f.write("** At least one step is needed to run an CalculiX analysis of FreeCAD\n")
+        f.write(
+            "** At least one step is needed to run an CalculiX analysis of FreeCAD\n")
         f.write("** written by {} function\n".format(sys._getframe().f_code.co_name))
         # STEP line
         step = "*STEP"
@@ -1175,7 +1203,8 @@ class FemInputWriterCcx(writerbase.FemInputWriter):
                 )
         if self.solver_obj.IterationsThermoMechMaximum:
             if self.analysis_type == "thermomech":
-                step += ", INC=" + str(self.solver_obj.IterationsThermoMechMaximum)
+                step += ", INC=" + \
+                    str(self.solver_obj.IterationsThermoMechMaximum)
             elif self.analysis_type == "static" or self.analysis_type == "frequency":
                 # parameter is for thermomechanical analysis only, see ccx manual *STEP
                 pass
@@ -1242,7 +1271,8 @@ class FemInputWriterCcx(writerbase.FemInputWriter):
         elif self.analysis_type == "frequency":
             if self.solver_obj.EigenmodeLowLimit == 0.0 \
                     and self.solver_obj.EigenmodeHighLimit == 0.0:
-                analysis_parameter = "{}\n".format(self.solver_obj.EigenmodesCount)
+                analysis_parameter = "{}\n".format(
+                    self.solver_obj.EigenmodesCount)
             else:
                 analysis_parameter = "{},{},{}\n".format(
                     self.solver_obj.EigenmodesCount,
@@ -1301,7 +1331,8 @@ class FemInputWriterCcx(writerbase.FemInputWriter):
                 for femobj in self.fixed_objects:
                     # femobj --> dict, FreeCAD document object is femobj["Object"]
                     fix_obj_name = femobj["Object"].Name
-                    f.write("*NODE PRINT, NSET={}, TOTALS=ONLY\n".format(fix_obj_name))
+                    f.write(
+                        "*NODE PRINT, NSET={}, TOTALS=ONLY\n".format(fix_obj_name))
                     f.write("RF\n")
                 # TODO: add Constraint Displacement if nodes are restrained
                 f.write("\n")
@@ -1345,7 +1376,8 @@ class FemInputWriterCcx(writerbase.FemInputWriter):
     # material and fem element type
     def write_element_sets_material_and_femelement_type(self, f):
         f.write("\n***********************************************************\n")
-        f.write("** Element sets for materials and FEM element type (solid, shell, beam, fluid)\n")
+        f.write(
+            "** Element sets for materials and FEM element type (solid, shell, beam, fluid)\n")
         f.write("** written by {} function\n".format(sys._getframe().f_code.co_name))
 
         # in any case if we have beams, we're going to need the element ids for the rotation elsets
@@ -1417,7 +1449,7 @@ class FemInputWriterCcx(writerbase.FemInputWriter):
             # use six to be sure to be Python 2.7 and 3.x compatible
             if ccx_elset["ccx_elset"] \
                     and not isinstance(ccx_elset["ccx_elset"], six.string_types):
-                if "fluidsection_obj"in ccx_elset:
+                if "fluidsection_obj" in ccx_elset:
                     fluidsec_obj = ccx_elset["fluidsection_obj"]
                     if fluidsec_obj.SectionType == "Liquid":
                         if (fluidsec_obj.LiquidSectionType == "PIPE INLET") \
@@ -1498,7 +1530,8 @@ class FemInputWriterCcx(writerbase.FemInputWriter):
             for i, beamdirection in enumerate(beamrot_data["FEMRotations1D"]):
                 beamdir_ids = set(beamdirection["ids"])
                 # empty intersection sets possible
-                elset_data = list(sorted(beamsec_ids.intersection(beamdir_ids)))
+                elset_data = list(
+                    sorted(beamsec_ids.intersection(beamdir_ids)))
                 if elset_data:
                     names = [
                         {"short": "M0"},
@@ -1508,7 +1541,8 @@ class FemInputWriterCcx(writerbase.FemInputWriter):
                     ]
                     ccx_elset = {}
                     ccx_elset["ccx_elset"] = elset_data
-                    ccx_elset["ccx_elset_name"] = get_ccx_elset_name_short(names)
+                    ccx_elset["ccx_elset_name"] = get_ccx_elset_name_short(
+                        names)
                     ccx_elset["mat_obj_name"] = mat_obj.Name
                     ccx_elset["ccx_mat_name"] = mat_obj.Material["Name"]
                     ccx_elset["beamsection_obj"] = beamsec_obj
@@ -1534,7 +1568,8 @@ class FemInputWriterCcx(writerbase.FemInputWriter):
                     ]
                     ccx_elset = {}
                     ccx_elset["ccx_elset"] = elset_data
-                    ccx_elset["ccx_elset_name"] = get_ccx_elset_name_short(names)
+                    ccx_elset["ccx_elset_name"] = get_ccx_elset_name_short(
+                        names)
                     ccx_elset["mat_obj_name"] = mat_obj.Name
                     ccx_elset["ccx_mat_name"] = mat_obj.Material["Name"]
                     ccx_elset["beamsection_obj"] = beamsec_obj
@@ -1554,7 +1589,8 @@ class FemInputWriterCcx(writerbase.FemInputWriter):
                     beamdir_ids = set(beamdirection["ids"])
                     # empty intersection sets possible
                     elset_data = list(sorted(
-                        beamsec_ids.intersection(mat_ids).intersection(beamdir_ids)
+                        beamsec_ids.intersection(
+                            mat_ids).intersection(beamdir_ids)
                     ))
                     if elset_data:
                         names = [
@@ -1565,7 +1601,8 @@ class FemInputWriterCcx(writerbase.FemInputWriter):
                         ]
                         ccx_elset = {}
                         ccx_elset["ccx_elset"] = elset_data
-                        ccx_elset["ccx_elset_name"] = get_ccx_elset_name_short(names)
+                        ccx_elset["ccx_elset_name"] = get_ccx_elset_name_short(
+                            names)
                         ccx_elset["mat_obj_name"] = mat_obj.Name
                         ccx_elset["ccx_mat_name"] = mat_obj.Material["Name"]
                         ccx_elset["beamsection_obj"] = beamsec_obj
@@ -1631,7 +1668,8 @@ class FemInputWriterCcx(writerbase.FemInputWriter):
                     ]
                     ccx_elset = {}
                     ccx_elset["ccx_elset"] = elset_data
-                    ccx_elset["ccx_elset_name"] = get_ccx_elset_name_short(names)
+                    ccx_elset["ccx_elset_name"] = get_ccx_elset_name_short(
+                        names)
                     ccx_elset["mat_obj_name"] = mat_obj.Name
                     ccx_elset["ccx_mat_name"] = mat_obj.Material["Name"]
                     ccx_elset["fluidsection_obj"] = fluidsec_obj
@@ -1700,11 +1738,13 @@ class FemInputWriterCcx(writerbase.FemInputWriter):
                 if elset_data:
                     names = [
                         {"long": mat_obj.Name, "short": mat_data["ShortName"]},
-                        {"long": shellth_obj.Name, "short": shellth_data["ShortName"]}
+                        {"long": shellth_obj.Name,
+                            "short": shellth_data["ShortName"]}
                     ]
                     ccx_elset = {}
                     ccx_elset["ccx_elset"] = elset_data
-                    ccx_elset["ccx_elset_name"] = get_ccx_elset_name_standard(names)
+                    ccx_elset["ccx_elset_name"] = get_ccx_elset_name_standard(
+                        names)
                     ccx_elset["mat_obj_name"] = mat_obj.Name
                     ccx_elset["ccx_mat_name"] = mat_obj.Material["Name"]
                     ccx_elset["shellthickness_obj"] = shellth_obj
@@ -1775,7 +1815,8 @@ class FemInputWriterCcx(writerbase.FemInputWriter):
                 density = FreeCAD.Units.Quantity(mat_obj.Material["Density"])
                 density_in_tonne_per_mm3 = float(density.getValueAs("t/mm^3"))
             if self.analysis_type == "thermomech":
-                TC = FreeCAD.Units.Quantity(mat_obj.Material["ThermalConductivity"])
+                TC = FreeCAD.Units.Quantity(
+                    mat_obj.Material["ThermalConductivity"])
                 # SvdW: Add factor to force units to results base units
                 # of t/mm/s/K - W/m/K results in no factor needed
                 TC_in_WmK = float(TC.getValueAs("W/m/K"))
@@ -1783,10 +1824,12 @@ class FemInputWriterCcx(writerbase.FemInputWriter):
                 # SvdW: Add factor to force units to results base units of t/mm/s/K
                 SH_in_JkgK = float(SH.getValueAs("J/kg/K")) * 1e+06
                 if mat_obj.Category == "Solid":
-                    TEC = FreeCAD.Units.Quantity(mat_obj.Material["ThermalExpansionCoefficient"])
+                    TEC = FreeCAD.Units.Quantity(
+                        mat_obj.Material["ThermalExpansionCoefficient"])
                     TEC_in_mmK = float(TEC.getValueAs("mm/mm/K"))
                 elif mat_obj.Category == "Fluid":
-                    DV = FreeCAD.Units.Quantity(mat_obj.Material["DynamicViscosity"])
+                    DV = FreeCAD.Units.Quantity(
+                        mat_obj.Material["DynamicViscosity"])
                     DV_in_tmms = float(DV.getValueAs("t/mm/s"))
             # write material properties
             f.write("** FreeCAD material name: " + mat_info_name + "\n")
@@ -1814,7 +1857,8 @@ class FemInputWriterCcx(writerbase.FemInputWriter):
                     f.write("{0:.3e}\n".format(SH_in_JkgK))
                 elif mat_obj.Category == "Fluid":
                     f.write("*FLUID CONSTANTS\n")
-                    f.write("{0:.3e}, {1:.3e}\n".format(SH_in_JkgK, DV_in_tmms))
+                    f.write("{0:.3e}, {1:.3e}\n".format(
+                        SH_in_JkgK, DV_in_tmms))
 
             # nonlinear material properties
             if self.solver_obj.MaterialNonlinearity == "nonlinear":
@@ -1838,7 +1882,7 @@ class FemInputWriterCcx(writerbase.FemInputWriter):
         f.write("** written by {} function\n".format(sys._getframe().f_code.co_name))
         for ccx_elset in self.ccx_elsets:
             if ccx_elset["ccx_elset"]:
-                if "beamsection_obj"in ccx_elset:  # beam mesh
+                if "beamsection_obj" in ccx_elset:  # beam mesh
                     beamsec_obj = ccx_elset["beamsection_obj"]
                     elsetdef = "ELSET=" + ccx_elset["ccx_elset_name"] + ", "
                     material = "MATERIAL=" + ccx_elset["mat_obj_name"]
@@ -1854,7 +1898,8 @@ class FemInputWriterCcx(writerbase.FemInputWriter):
                             section_type
                         )
                     elif beamsec_obj.SectionType == "Circular":
-                        radius = 0.5 * beamsec_obj.CircDiameter.getValueAs("mm")
+                        radius = 0.5 * \
+                            beamsec_obj.CircDiameter.getValueAs("mm")
                         section_type = ", SECTION=CIRC"
                         section_geo = str(radius) + "\n"
                         section_def = "*BEAM SECTION, {}{}{}\n".format(
@@ -1863,10 +1908,12 @@ class FemInputWriterCcx(writerbase.FemInputWriter):
                             section_type
                         )
                     elif beamsec_obj.SectionType == "Pipe":
-                        radius = 0.5 * beamsec_obj.PipeDiameter.getValueAs("mm")
+                        radius = 0.5 * \
+                            beamsec_obj.PipeDiameter.getValueAs("mm")
                         thickness = beamsec_obj.PipeThickness.getValueAs("mm")
                         section_type = ", SECTION=PIPE"
-                        section_geo = str(radius) + ", " + str(thickness) + "\n"
+                        section_geo = str(radius) + ", " + \
+                            str(thickness) + "\n"
                         section_def = "*BEAM GENERAL SECTION, {}{}{}\n".format(
                             elsetdef,
                             material,
@@ -1882,7 +1929,7 @@ class FemInputWriterCcx(writerbase.FemInputWriter):
                     f.write(section_def)
                     f.write(section_geo)
                     f.write(section_nor)
-                elif "fluidsection_obj"in ccx_elset:  # fluid mesh
+                elif "fluidsection_obj" in ccx_elset:  # fluid mesh
                     fluidsec_obj = ccx_elset["fluidsection_obj"]
                     elsetdef = "ELSET=" + ccx_elset["ccx_elset_name"] + ", "
                     material = "MATERIAL=" + ccx_elset["mat_obj_name"]
@@ -1895,7 +1942,8 @@ class FemInputWriterCcx(writerbase.FemInputWriter):
                             section_type,
                             material
                         )
-                        section_geo = liquid_section_def(fluidsec_obj, section_type)
+                        section_geo = liquid_section_def(
+                            fluidsec_obj, section_type)
                     """
                     # deactivate as it would result in section_def and section_geo not defined
                     # deactivated in the App and Gui object and thus in the task panel as well
@@ -1906,12 +1954,13 @@ class FemInputWriterCcx(writerbase.FemInputWriter):
                     """
                     f.write(section_def)
                     f.write(section_geo)
-                elif "shellthickness_obj"in ccx_elset:  # shell mesh
+                elif "shellthickness_obj" in ccx_elset:  # shell mesh
                     shellth_obj = ccx_elset["shellthickness_obj"]
                     elsetdef = "ELSET=" + ccx_elset["ccx_elset_name"] + ", "
                     material = "MATERIAL=" + ccx_elset["mat_obj_name"]
                     section_def = "*SHELL SECTION, " + elsetdef + material + "\n"
-                    section_geo = str(shellth_obj.Thickness.getValueAs("mm")) + "\n"
+                    section_geo = str(
+                        shellth_obj.Thickness.getValueAs("mm")) + "\n"
                     f.write(section_def)
                     f.write(section_geo)
                 else:  # solid mesh
@@ -1988,7 +2037,8 @@ def liquid_section_def(obj, section_type):
         manning_area = str(obj.ManningArea.getValueAs("mm^2").Value)
         manning_radius = str(obj.ManningRadius.getValueAs("mm"))
         manning_coefficient = str(obj.ManningCoefficient)
-        section_geo = manning_area + "," + manning_radius + "," + manning_coefficient + "\n"
+        section_geo = manning_area + "," + \
+            manning_radius + "," + manning_coefficient + "\n"
         return section_geo
     elif section_type == "PIPE ENLARGEMENT":
         enlarge_area1 = str(obj.EnlargeArea1.getValueAs("mm^2").Value)
@@ -2006,7 +2056,8 @@ def liquid_section_def(obj, section_type):
         section_geo = entrance_pipe_area + "," + entrance_area + "\n"
         return section_geo
     elif section_type == "PIPE DIAPHRAGM":
-        diaphragm_pipe_area = str(obj.DiaphragmPipeArea.getValueAs("mm^2").Value)
+        diaphragm_pipe_area = str(
+            obj.DiaphragmPipeArea.getValueAs("mm^2").Value)
         diaphragm_area = str(obj.DiaphragmArea.getValueAs("mm^2").Value)
         section_geo = diaphragm_pipe_area + "," + diaphragm_area + "\n"
         return section_geo
@@ -2023,14 +2074,16 @@ def liquid_section_def(obj, section_type):
         ))
         return section_geo
     elif section_type == "PIPE GATE VALVE":
-        gatevalve_pipe_area = str(obj.GateValvePipeArea.getValueAs("mm^2").Value)
+        gatevalve_pipe_area = str(
+            obj.GateValvePipeArea.getValueAs("mm^2").Value)
         gatevalve_closing_coeff = str(obj.GateValveClosingCoeff)
         section_geo = gatevalve_pipe_area + "," + gatevalve_closing_coeff + "\n"
         return section_geo
     elif section_type == "PIPE WHITE-COLEBROOK":
         colebrooke_area = str(obj.ColebrookeArea.getValueAs("mm^2").Value)
         colebrooke_diameter = str(2 * obj.ColebrookeRadius.getValueAs("mm"))
-        colebrooke_grain_diameter = str(obj.ColebrookeGrainDiameter.getValueAs("mm"))
+        colebrooke_grain_diameter = str(
+            obj.ColebrookeGrainDiameter.getValueAs("mm"))
         colebrooke_form_factor = str(obj.ColebrookeFormFactor)
         section_geo = ("{},{},{},{},{}\n".format(
             colebrooke_area,
@@ -2050,4 +2103,4 @@ def liquid_section_def(obj, section_type):
         return section_geo
     else:
         return ""
-##  @}
+# @}

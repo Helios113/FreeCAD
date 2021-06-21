@@ -182,6 +182,8 @@ Gui::ToolBarItem* Workbench::setupToolBars() const
         << "FEM_EquationFlow"
         << "FEM_EquationFlux"
         << "FEM_EquationHeat"
+        << "MoFEM_Elasticity"
+        << "MoFEM_Bone"
         << "Separator"
         << "FEM_SolverControl"
         << "FEM_SolverRun";
@@ -344,6 +346,8 @@ Gui::MenuItem* Workbench::setupMenuBar() const
         << "FEM_EquationFlow"
         << "FEM_EquationFlux"
         << "FEM_EquationHeat"
+        << "MoFEM_Elasticity"
+        << "MoFEM_Bone"
         << "Separator"
         << "FEM_SolverControl"
         << "FEM_SolverRun";

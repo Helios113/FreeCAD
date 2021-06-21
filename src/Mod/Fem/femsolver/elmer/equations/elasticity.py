@@ -25,7 +25,7 @@ __title__ = "FreeCAD FEM solver Elmer equation object Elasticity"
 __author__ = "Markus Hovorka"
 __url__ = "https://www.freecadweb.org"
 
-## \addtogroup FEM
+# \addtogroup FEM
 #  @{
 
 from femtools import femutils
@@ -87,4 +87,4 @@ class Proxy(linear.Proxy, equationbase.ElasticityProxy):
 class ViewProxy(linear.ViewProxy, equationbase.ElasticityViewProxy):
     pass
 
-##  @}
+# @}

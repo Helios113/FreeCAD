@@ -21,11 +21,11 @@
 # *                                                                         *
 # ***************************************************************************
 
-__title__ = "FreeCAD FEM solver Elmer equation object Elasticity"
-__author__ = "Markus Hovorka"
+__title__ = "FreeCAD FEM solver MoFEM analysis type object Elasticity"
+__author__ = "Preslav Aleksandrov"
 __url__ = "https://www.freecadweb.org"
 
-## \addtogroup FEM
+# \addtogroup FEM
 #  @{
 
 from femtools import femutils
@@ -38,9 +38,9 @@ def create(doc, name="Elasticity"):
         doc, name, Proxy, ViewProxy)
 
 
-class Proxy(linear.Proxy, equationbase.ElasticityProxy):
+class Proxy(equationbase.TypeElasticityProxy):  # add linear proxy later
 
-    Type = "Fem::EquationElmerElasticity"
+    Type = "Fem::TypeMoFEMElasticity"
 
     def __init__(self, obj):
         super(Proxy, self).__init__(obj)
@@ -80,11 +80,9 @@ class Proxy(linear.Proxy, equationbase.ElasticityProxy):
             "Elasticity",
             ""
         )
-        obj.EigenmodesCount = 5
-        obj.Priority = 10
 
 
-class ViewProxy(linear.ViewProxy, equationbase.ElasticityViewProxy):
+class ViewProxy(equationbase.TypeElasticityViewProxy):
     pass
 
-##  @}
+# @}

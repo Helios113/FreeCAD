@@ -26,7 +26,7 @@ __title__ = "FreeCAD FEM solver Elmer writer"
 __author__ = "Markus Hovorka"
 __url__ = "https://www.freecadweb.org"
 
-## \addtogroup FEM
+# \addtogroup FEM
 #  @{
 
 import os
@@ -68,7 +68,8 @@ class Writer(object):
         self.analysis = solver.getParentGroup()
         self.solver = solver
         self.directory = directory
-        Console.PrintMessage("Write elmer input files to: {}\n".format(self.directory))
+        Console.PrintMessage(
+            "Write elmer input files to: {}\n".format(self.directory))
         self.testmode = testmode
         self._usedVarNames = set()
         self._builder = sifio.Builder()
@@ -191,7 +192,8 @@ class Writer(object):
         # TODO without method directly use self.constsdef[name]
         if name == "PermittivityOfVacuum":
             theUnit = "s^4*A^2 / (m^3*kg)"
-            self.constsdef[name] = "{} {}".format(self._convert(quantityStr, theUnit), theUnit)
+            self.constsdef[name] = "{} {}".format(
+                self._convert(quantityStr, theUnit), theUnit)
         return True
 
     def _writeMesh(self):
@@ -249,7 +251,8 @@ class Writer(object):
                 "It might not be installed.\n"
             )
             import shutil
-            shutil.copyfile(geoPath, os.path.join(self.directory, "group_mesh.geo"))
+            shutil.copyfile(geoPath, os.path.join(
+                self.directory, "group_mesh.geo"))
         else:
             tools.get_gmsh_command()
             tools.run_gmsh_with_geo()
@@ -269,7 +272,8 @@ class Writer(object):
         permittivity_objs = self._getMember("Fem::ConstantVacuumPermittivity")
         if len(permittivity_objs) == 1:
             Console.PrintLog("Constand permittivity overwriting.\n")
-            self._setConstant("PermittivityOfVacuum", permittivity_objs[0].VacuumPermittivity)
+            self._setConstant("PermittivityOfVacuum",
+                              permittivity_objs[0].VacuumPermittivity)
         elif len(permittivity_objs) > 1:
             Console.PrintError(
                 "More than one permittivity constant overwriting objects ({} objs). "
@@ -340,14 +344,16 @@ class Writer(object):
                         temp = self._getFromUi(obj.Temperature, "K", "O")
                         self._boundary(name, "Temperature", temp)
                     elif obj.ConstraintType == "CFlux":
-                        flux = self._getFromUi(obj.CFlux, "kg*mm^2*s^-3", "M*L^2*T^-3")
+                        flux = self._getFromUi(
+                            obj.CFlux, "kg*mm^2*s^-3", "M*L^2*T^-3")
                         self._boundary(name, "Temperature Load", flux)
                 self._handled(obj)
         for obj in self._getMember("Fem::ConstraintHeatflux"):
             if obj.References:
                 for name in obj.References[0][1]:
                     if obj.ConstraintType == "Convection":
-                        film = self._getFromUi(obj.FilmCoef, "W/(m^2*K)", "M/(T^3*O)")
+                        film = self._getFromUi(
+                            obj.FilmCoef, "W/(m^2*K)", "M/(T^3*O)")
                         temp = self._getFromUi(obj.AmbientTemp, "K", "O")
                         self._boundary(name, "Heat Transfer Coefficient", film)
                         self._boundary(name, "External Temperature", temp)
@@ -369,7 +375,8 @@ class Writer(object):
         obj = self._getSingleMember("Fem::ConstraintBodyHeatSource")
         if obj is not None:
             for name in bodies:
-                heatSource = self._getFromUi(obj.HeatSource, "W/kg", "L^2*T^-3")
+                heatSource = self._getFromUi(
+                    obj.HeatSource, "W/kg", "L^2*T^-3")
                 # according Elmer forum W/kg is correct
                 # http://www.elmerfem.org/forum/viewtopic.php?f=7&t=1765
                 # 1 watt = kg * m2 / s3 ... W/kg = m2 / s3
@@ -463,7 +470,8 @@ class Writer(object):
                     # https://forum.freecadweb.org/viewtopic.php?f=18&t=41488&start=10#p369454  ff
                     if obj.PotentialEnabled:
                         if hasattr(obj, "Potential"):
-                            potential = self._getFromUi(obj.Potential, "V", "M*L^2/(T^3 * I)")
+                            potential = self._getFromUi(
+                                obj.Potential, "V", "M*L^2/(T^3 * I)")
                             self._boundary(name, "Potential", potential)
                     if obj.PotentialConstant:
                         self._boundary(name, "Potential Constant", True)
@@ -473,7 +481,8 @@ class Writer(object):
                         self._boundary(name, "Calculate Electric Force", True)
                     if obj.CapacitanceBodyEnabled:
                         if hasattr(obj, "CapacitanceBody"):
-                            self._boundary(name, "Capacitance Body", obj.CapacitanceBody)
+                            self._boundary(
+                                name, "Capacitance Body", obj.CapacitanceBody)
                 self._handled(obj)
 
     def _handleFlux(self):
@@ -559,7 +568,8 @@ class Writer(object):
         for obj in self._getMember("Fem::ConstraintPressure"):
             if obj.References:
                 for name in obj.References[0][1]:
-                    pressure = self._getFromUi(obj.Pressure, "MPa", "M/(L*T^2)")
+                    pressure = self._getFromUi(
+                        obj.Pressure, "MPa", "M/(L*T^2)")
                     if not obj.Reversed:
                         pressure *= -1
                     self._boundary(name, "Normal Force", pressure)
@@ -575,9 +585,12 @@ class Writer(object):
             if obj.References:
                 for name in obj.References[0][1]:
                     force = self._getFromUi(obj.Force, "N", "M*L*T^-2")
-                    self._boundary(name, "Force 1", obj.DirectionVector.x * force)
-                    self._boundary(name, "Force 2", obj.DirectionVector.y * force)
-                    self._boundary(name, "Force 3", obj.DirectionVector.z * force)
+                    self._boundary(name, "Force 1",
+                                   obj.DirectionVector.x * force)
+                    self._boundary(name, "Force 2",
+                                   obj.DirectionVector.y * force)
+                    self._boundary(name, "Force 3",
+                                   obj.DirectionVector.z * force)
                     self._boundary(name, "Force 1 Normalize by Area", True)
                     self._boundary(name, "Force 2 Normalize by Area", True)
                     self._boundary(name, "Force 3 Normalize by Area", True)
@@ -753,16 +766,19 @@ class Writer(object):
                     )
                 if "KinematicViscosity" in m:
                     density = self._getDensity(m)
-                    kViscosity = self._convert(m["KinematicViscosity"], "L^2/T")
+                    kViscosity = self._convert(
+                        m["KinematicViscosity"], "L^2/T")
                     self._material(
                         name, "Viscosity", kViscosity * density)
                 if "ThermalExpansionCoefficient" in m:
-                    value = self._convert(m["ThermalExpansionCoefficient"], "O^-1")
+                    value = self._convert(
+                        m["ThermalExpansionCoefficient"], "O^-1")
                     if value > 0:
                         self._material(
                             name, "Heat expansion Coefficient", value)
                 if "ReferencePressure" in m:
-                    pressure = self._convert(m["ReferencePressure"], "M/(L*T^2)")
+                    pressure = self._convert(
+                        m["ReferencePressure"], "M/(L*T^2)")
                     self._material(name, "Reference Pressure", pressure)
                 if "SpecificHeatRatio" in m:
                     self._material(
@@ -803,7 +819,8 @@ class Writer(object):
                         velocity = self._getFromUi(obj.VelocityZ, "m/s", "L/T")
                         self._boundary(name, "Velocity 3", velocity)
                     if obj.NormalToBoundary:
-                        self._boundary(name, "Normal-Tangential Velocity", True)
+                        self._boundary(
+                            name, "Normal-Tangential Velocity", True)
                 self._handled(obj)
 
     def _handleFlowEquation(self, bodies):
@@ -951,4 +968,4 @@ class Writer(object):
 class WriteError(Exception):
     pass
 
-##  @}
+# @}

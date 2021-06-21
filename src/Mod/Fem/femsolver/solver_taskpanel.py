@@ -25,7 +25,7 @@ __title__ = "FreeCAD FEM solver job control task panel"
 __author__ = "Markus Hovorka"
 __url__ = "https://www.freecadweb.org"
 
-## \addtogroup FEM
+# \addtogroup FEM
 #  @{
 
 from PySide import QtCore
@@ -340,4 +340,4 @@ class ControlWidget(QtGui.QWidget):
                 or machine.state < femsolver.run.PREPARE
             )
 
-##  @}
+# @}

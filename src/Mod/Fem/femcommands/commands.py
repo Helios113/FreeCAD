@@ -25,7 +25,7 @@ __title__ = "FreeCAD FEM command definitions"
 __author__ = "Bernd Hahnebach"
 __url__ = "https://www.freecadweb.org"
 
-## @package commands
+# @package commands
 #  \ingroup FEM
 #  \brief FreeCAD FEM command definitions
 
@@ -47,6 +47,7 @@ Adds the solver document object to the active document.
 Required to access the solver object from the GUI.
 """
 
+
 class _Analysis(CommandManager):
     "The FEM_Analysis command definition"
 
@@ -61,11 +62,14 @@ class _Analysis(CommandManager):
         FreeCAD.ActiveDocument.openTransaction("Create Analysis")
         FreeCADGui.addModule("FemGui")
         FreeCADGui.addModule("ObjectsFem")
-        FreeCADGui.doCommand("ObjectsFem.makeAnalysis(FreeCAD.ActiveDocument, 'Analysis')")
-        FreeCADGui.doCommand("FemGui.setActiveAnalysis(FreeCAD.ActiveDocument.ActiveObject)")
+        FreeCADGui.doCommand(
+            "ObjectsFem.makeAnalysis(FreeCAD.ActiveDocument, 'Analysis')")
+        FreeCADGui.doCommand(
+            "FemGui.setActiveAnalysis(FreeCAD.ActiveDocument.ActiveObject)")
         # create a CalculiX ccx tools solver for any new analysis
         # to be on the safe side for new users
-        FreeCADGui.doCommand("ObjectsFem.makeSolverCalculixCcxTools(FreeCAD.ActiveDocument)")
+        FreeCADGui.doCommand(
+            "ObjectsFem.makeSolverCalculixCcxTools(FreeCAD.ActiveDocument)")
         FreeCADGui.doCommand(
             "FemGui.getActiveAnalysis().addObject(FreeCAD.ActiveDocument.ActiveObject)"
         )
@@ -86,7 +90,8 @@ class _ClippingPlaneAdd(CommandManager):
         from femtools.femutils import getBoundBoxOfAllDocumentShapes
         from femtools.femutils import getSelectedFace
 
-        overallboundbox = getBoundBoxOfAllDocumentShapes(FreeCAD.ActiveDocument)
+        overallboundbox = getBoundBoxOfAllDocumentShapes(
+            FreeCAD.ActiveDocument)
         # print(overallboundbox)
         if overallboundbox:
             min_bb_length = (min(set([
@@ -102,13 +107,15 @@ class _ClippingPlaneAdd(CommandManager):
         aFace = getSelectedFace(FreeCADGui.Selection.getSelectionEx())
         if aFace:
             f_CoM = aFace.CenterOfMass
-            f_uvCoM = aFace.Surface.parameter(f_CoM)  # u,v at CoM for normalAt calculation
+            # u,v at CoM for normalAt calculation
+            f_uvCoM = aFace.Surface.parameter(f_CoM)
             f_normal = aFace.normalAt(f_uvCoM[0], f_uvCoM[1])
         else:
             f_CoM = FreeCAD.Vector(0, 0, 0)
             f_normal = FreeCAD.Vector(0, 0, 1)
 
-        coin_normal_vector = coin.SbVec3f(-f_normal.x, -f_normal.y, -f_normal.z)
+        coin_normal_vector = coin.SbVec3f(-f_normal.x, -
+                                          f_normal.y, -f_normal.z)
         coin_bound_box = coin.SbBox3f(
             f_CoM.x - dbox, f_CoM.y - dbox,
             f_CoM.z - dbox * 0.15,
@@ -135,7 +142,8 @@ class _ClippingPlaneRemoveAll(CommandManager):
         line2 = "    if isinstance(node, coin.SoClipPlane):\n"
         line3 = "        sg.removeChild(node)"
         FreeCADGui.doCommand("from pivy import coin")
-        FreeCADGui.doCommand("sg = Gui.ActiveDocument.ActiveView.getSceneGraph()")
+        FreeCADGui.doCommand(
+            "sg = Gui.ActiveDocument.ActiveView.getSceneGraph()")
         FreeCADGui.doCommand("nodes = sg.getChildren()")
         FreeCADGui.doCommand(line1 + line2 + line3)
 
@@ -341,6 +349,28 @@ class _EquationHeat(CommandManager):
         self.do_activated = "add_obj_on_gui_selobj_noset_edit"
 
 
+class _TypeElasticity(CommandManager):
+    "The FEM_TypeElasticity command definition"
+
+    def __init__(self):
+        super(_TypeElasticity, self).__init__()
+        self.menuetext = "Elasticity analysis type"
+        self.tooltip = "Adds a FEM analysis type for elasticity"
+        self.is_active = "with_solver_mofem"
+        self.do_activated = "add_obj_on_gui_selobj_noset_edit"
+
+
+class _TypeBone(CommandManager):
+    "The FEM_TypeBone command definition"
+
+    def __init__(self):
+        super(_TypeBone, self).__init__()
+        self.menuetext = "Bone remodeling analysis type"
+        self.tooltip = "Adds a FEM analysis type for bone remodeling"
+        self.is_active = "with_solver_mofem"
+        self.do_activated = "add_obj_on_gui_selobj_noset_edit"
+
+
 class _Examples(CommandManager):
     "The FEM_Examples command definition"
 
@@ -406,13 +436,15 @@ class _MaterialMechanicalNonlinear(CommandManager):
                 return
 
         # add a nonlinear material
-        string_lin_mat_obj = "FreeCAD.ActiveDocument.getObject('" + self.selobj.Name + "')"
+        string_lin_mat_obj = "FreeCAD.ActiveDocument.getObject('" + \
+            self.selobj.Name + "')"
         command_to_run = (
             "FemGui.getActiveAnalysis().addObject(ObjectsFem."
             "makeMaterialMechanicalNonlinear(FreeCAD.ActiveDocument, {}))"
             .format(string_lin_mat_obj)
         )
-        FreeCAD.ActiveDocument.openTransaction("Create FemMaterialMechanicalNonlinear")
+        FreeCAD.ActiveDocument.openTransaction(
+            "Create FemMaterialMechanicalNonlinear")
         FreeCADGui.addModule("ObjectsFem")
         FreeCADGui.doCommand(command_to_run)
         # set some property of the solver to nonlinear
@@ -551,10 +583,12 @@ class _MeshDisplayInfo(CommandManager):
 
     def Activated(self):
         FreeCAD.ActiveDocument.openTransaction("Display FEM mesh info")
-        FreeCADGui.doCommand("print(FreeCAD.ActiveDocument." + self.selobj.Name + ".FemMesh)")
+        FreeCADGui.doCommand(
+            "print(FreeCAD.ActiveDocument." + self.selobj.Name + ".FemMesh)")
         FreeCADGui.addModule("PySide")
         FreeCADGui.doCommand(
-            "mesh_info = str(FreeCAD.ActiveDocument." + self.selobj.Name + ".FemMesh)"
+            "mesh_info = str(FreeCAD.ActiveDocument." +
+            self.selobj.Name + ".FemMesh)"
         )
         FreeCADGui.doCommand(
             "PySide.QtGui.QMessageBox.information(None, 'FEM Mesh Info', mesh_info)"
@@ -581,7 +615,8 @@ class _MeshGmshFromShape(CommandManager):
         # mesh_obj_name = self.selobj.Name + "_Mesh"
         FreeCADGui.addModule("ObjectsFem")
         FreeCADGui.doCommand(
-            "ObjectsFem.makeMeshGmsh(FreeCAD.ActiveDocument, '" + mesh_obj_name + "')"
+            "ObjectsFem.makeMeshGmsh(FreeCAD.ActiveDocument, '" +
+            mesh_obj_name + "')"
         )
         FreeCADGui.doCommand(
             "FreeCAD.ActiveDocument.ActiveObject.Part = FreeCAD.ActiveDocument.{}"
@@ -631,7 +666,8 @@ class _MeshNetgenFromShape(CommandManager):
         # mesh_obj_name = sel[0].Name + "_Mesh"
         FreeCADGui.addModule("ObjectsFem")
         FreeCADGui.doCommand(
-            "ObjectsFem.makeMeshNetgen(FreeCAD.ActiveDocument, '" + mesh_obj_name + "')"
+            "ObjectsFem.makeMeshNetgen(FreeCAD.ActiveDocument, '" +
+            mesh_obj_name + "')"
         )
         FreeCADGui.doCommand(
             "FreeCAD.ActiveDocument.ActiveObject.Shape = FreeCAD.ActiveDocument.{}"
@@ -715,9 +751,11 @@ class _SolverCxxtools(CommandManager):
             FreeCADGui.doCommand(
                 "solver = ObjectsFem.makeSolverCalculixCcxTools(FreeCAD.ActiveDocument)"
             )
-            FreeCADGui.doCommand("solver.GeometricalNonlinearity = 'nonlinear'")
+            FreeCADGui.doCommand(
+                "solver.GeometricalNonlinearity = 'nonlinear'")
             FreeCADGui.doCommand("solver.MaterialNonlinearity = 'nonlinear'")
-            FreeCADGui.doCommand("FemGui.getActiveAnalysis().addObject(solver)")
+            FreeCADGui.doCommand(
+                "FemGui.getActiveAnalysis().addObject(solver)")
         else:
             FreeCADGui.doCommand(
                 "FemGui.getActiveAnalysis().addObject(ObjectsFem."
@@ -766,8 +804,10 @@ class _SolverElmer(CommandManager):
         self.is_active = "with_analysis"
         self.do_activated = "add_obj_on_gui_noset_edit"
 
+
 class _SolverMoFEM(CommandManager):
     "The FEM_SolverElmer command definition"
+
     def __init__(self):
         super(_SolverMoFEM, self).__init__()
         self.menuetext = "Solver MoFEM"
@@ -891,6 +931,14 @@ FreeCADGui.addCommand(
 FreeCADGui.addCommand(
     "FEM_EquationHeat",
     _EquationHeat()
+)
+FreeCADGui.addCommand(
+    "MoFEM_Elasticity",
+    _TypeElasticity()
+)
+FreeCADGui.addCommand(
+    "MoFEM_Bone",
+    _TypeBone()
 )
 FreeCADGui.addCommand(
     "FEM_Examples",

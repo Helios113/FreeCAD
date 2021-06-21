@@ -1,5 +1,6 @@
 # ***************************************************************************
 # *   Copyright (c) 2017 Markus Hovorka <m.hovorka@live.de>                 *
+# *   Copyright (c) 2020 Bernd Hahnebach <bernd@bimstatik.org>              *
 # *                                                                         *
 # *   This file is part of the FreeCAD CAx development system.              *
 # *                                                                         *
@@ -21,6 +22,9 @@
 # *                                                                         *
 # ***************************************************************************
 
+__title__ = "FreeCAD FEM MoFEM tasks"
+__author__ = "Preslav Aleksandrov"
+__url__ = "https://www.freecadweb.org"
 
 # \addtogroup FEM
 #  @{
@@ -125,7 +129,6 @@ class Prepare(run.Prepare):
     def run(self):  # called by GUI
 
         FreeCAD.Console.PrintMessage("Preparing files...\n")
-
         # Gets the read med binary
         read_med = FreeCAD.ParamGet(
             "User parameter:BaseApp/Preferences/Mod/Fem/MoFEM").GetString("MoFEMMedPath")
@@ -213,7 +216,7 @@ class Results(run.Results):
     def run(self):
         if self.solver.MoFEMResult is None:
             self._createResults()
-        postPath = self._getResultFile()
+        postPath = self._getVTK()
         self.solver.MoFEMResult.read(postPath)
         self.solver.MoFEMResult.getLastPostObject().touch()
         self.solver.Document.recompute()
@@ -224,20 +227,21 @@ class Results(run.Results):
         self.solver.ElmerResult.Label = self.solver.Label + "Result"
         self.analysis.addObject(self.solver.MoFEMResult)
 
-    def _getResultFile(self):
-        postPath = None
-        # elmer post file path changed with version x.x
-        # see https://forum.freecadweb.org/viewtopic.php?f=18&t=42732
-        # workaround
-        possible_post_file_0 = os.path.join(self.directory, "case0001.vtu")
-        possible_post_file_t = os.path.join(self.directory, "case_t0001.vtu")
-        if os.path.isfile(possible_post_file_0):
-            postPath = possible_post_file_0
-        elif os.path.isfile(possible_post_file_t):
-            postPath = possible_post_file_t
-        else:
-            self.report.error("Result file not found.")
+    def _getVTK(self):
+        try:  # Generate MoFEM-compatible mesh
+            FreeCAD.Console.PrintMessage("Generating VTK\n")
+            path = self.directory
+            """task = [read_med, "-med_file",  w.med_path,
+                    "-meshsets_config", w.cfg_path,
+                    "-output_file", join(self.directory, w.mesh_name, ".h5m")]  # the join points towards the mesh file
+            """
+            task = ""
+            self._process = subprocess.Popen(  # creates the mofem readable mesh
+                task, cwd=self.directory,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE)
+        except IOError:
+            self.report.error("Can't access working directory.")
             self.fail()
-        return postPath
-
-# @}
+        return path
+        # @}

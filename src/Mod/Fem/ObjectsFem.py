@@ -25,7 +25,7 @@ __title__ = "Objects FEM"
 __author__ = "Bernd Hahnebach"
 __url__ = "https://www.freecadweb.org"
 
-## \addtogroup FEM
+# \addtogroup FEM
 #  @{
 
 import FreeCAD
@@ -68,7 +68,8 @@ def makeConstantVacuumPermittivity(
     constant_vacuumpermittivity.ConstantVacuumPermittivity(obj)
     if FreeCAD.GuiUp:
         from femviewprovider import view_constant_vacuumpermittivity
-        view_constant_vacuumpermittivity.VPConstantVacuumPermittivity(obj.ViewObject)
+        view_constant_vacuumpermittivity.VPConstantVacuumPermittivity(
+            obj.ViewObject)
     return obj
 
 
@@ -129,7 +130,8 @@ def makeConstraintElectrostaticPotential(
     constraint_electrostaticpotential.ConstraintElectrostaticPotential(obj)
     if FreeCAD.GuiUp:
         from femviewprovider import view_constraint_electrostaticpotential
-        view_constraint_electrostaticpotential.VPConstraintElectroStaticPotential(obj.ViewObject)
+        view_constraint_electrostaticpotential.VPConstraintElectroStaticPotential(
+            obj.ViewObject)
     return obj
 
 
@@ -209,7 +211,8 @@ def makeConstraintInitialFlowVelocity(
     constraint_initialflowvelocity.ConstraintInitialFlowVelocity(obj)
     if FreeCAD.GuiUp:
         from femviewprovider import view_constraint_initialflowvelocity
-        view_constraint_initialflowvelocity.VPConstraintInitialFlowVelocity(obj.ViewObject)
+        view_constraint_initialflowvelocity.VPConstraintInitialFlowVelocity(
+            obj.ViewObject)
     return obj
 
 
@@ -350,7 +353,8 @@ def makeElementGeometry1D(
     element_geometry1D.ElementGeometry1D(obj)
     sec_types = element_geometry1D.ElementGeometry1D.known_beam_types
     if sectiontype not in sec_types:
-        FreeCAD.Console.PrintError("Section type is not known. Set to " + sec_types[0] + " \n")
+        FreeCAD.Console.PrintError(
+            "Section type is not known. Set to " + sec_types[0] + " \n")
         obj.SectionType = sec_types[0]
     else:
         obj.SectionType = sectiontype
@@ -747,6 +751,34 @@ def makeEquationHeat(
     return obj
 
 
+def makeTypeElasticity(
+    doc,
+    base_solver=None,
+    name="Elasticity"
+):
+    """makeMoFEMAnalysisTypeElasticity(document, [base_solver], [name]):
+    creates a FEM elasticity analysis for a solver"""
+    from femsolver.mofem.type import elasticity
+    obj = elasticity.create(doc, name)
+    if base_solver:
+        base_solver.addObject(obj)
+    return obj
+
+
+def makeTypeBone(
+    doc,
+    base_solver=None,
+    name="Bone Remodeling"
+):
+    """makeMoFEMAnalysisTypeBone(document, [base_solver], [name]):
+    creates a FEM elasticity analysis for a solver"""
+    from femsolver.mofem.type import bone
+    obj = bone.create(doc, name)
+    if base_solver:
+        base_solver.addObject(obj)
+    return obj
+
+
 def makeSolverCalculixCcxTools(
     doc,
     name="SolverCcxTools"
@@ -783,6 +815,7 @@ def makeSolverElmer(
     obj = femsolver.elmer.solver.create(doc, name)
     return obj
 
+
 def makeSolverMoFEM(
     doc,
     name="SolverMoFEM"
@@ -816,4 +849,4 @@ for s in sorted(App.ActiveDocument.supportedTypes()):
 
 """
 
-##  @}
+# @}

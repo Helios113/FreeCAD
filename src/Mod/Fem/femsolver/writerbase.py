@@ -25,7 +25,7 @@ __title__ = "FreeCAD FEM solver writer base object"
 __author__ = "Bernd Hahnebach"
 __url__ = "https://www.freecadweb.org"
 
-## \addtogroup FEM
+# \addtogroup FEM
 #  @{
 
 import os
@@ -109,8 +109,8 @@ class FemInputWriter():
                 )
                 # ATM only used in meshtools.get_femelement_direction1D_set
                 # TODO somehow this is not smart, rare meshes might be used often
-                
-            self.femmesh = self.mesh_object.FemMesh # this is our shit
+
+            self.femmesh = self.mesh_object.FemMesh  # this is our shit
         else:
             FreeCAD.Console.PrintWarning(
                 "No finite element mesh object was given to the writer class. "
@@ -289,7 +289,6 @@ class FemInputWriter():
     def get_constraints_pressure_faces(self):
         # TODO see comments in get_constraints_force_nodeloads()
         # it applies here too. Mhh it applies to all constraints ...
-
         """
         # deprecated version
         # get the faces and face numbers
@@ -305,7 +304,8 @@ class FemInputWriter():
         if not self.femnodes_mesh:
             self.femnodes_mesh = self.femmesh.Nodes
         if not self.femelement_table:
-            self.femelement_table = meshtools.get_femelement_table(self.femmesh)
+            self.femelement_table = meshtools.get_femelement_table(
+                self.femmesh)
         if not self.femnodes_ele_table:
             self.femnodes_ele_table = meshtools.get_femnodes_ele_table(
                 self.femnodes_mesh,
@@ -332,7 +332,8 @@ class FemInputWriter():
         if not self.femnodes_mesh:
             self.femnodes_mesh = self.femmesh.Nodes
         if not self.femelement_table:
-            self.femelement_table = meshtools.get_femelement_table(self.femmesh)
+            self.femelement_table = meshtools.get_femelement_table(
+                self.femmesh)
         if not self.femnodes_ele_table:
             self.femnodes_ele_table = meshtools.get_femnodes_ele_table(
                 self.femnodes_mesh,
@@ -365,7 +366,8 @@ class FemInputWriter():
         if not self.femnodes_mesh:
             self.femnodes_mesh = self.femmesh.Nodes
         if not self.femelement_table:
-            self.femelement_table = meshtools.get_femelement_table(self.femmesh)
+            self.femelement_table = meshtools.get_femelement_table(
+                self.femmesh)
         if not self.femnodes_ele_table:
             self.femnodes_ele_table = meshtools.get_femnodes_ele_table(
                 self.femnodes_mesh,
@@ -463,7 +465,8 @@ class FemInputWriter():
                 FreeCAD.Console.PrintMessage("\n")
             if all_found is False:
                 if not self.femelement_table:
-                    self.femelement_table = meshtools.get_femelement_table(self.femmesh)
+                    self.femelement_table = meshtools.get_femelement_table(
+                        self.femmesh)
                 # we're going to use the binary search for get_femelements_by_femnodes()
                 # thus we need the parameter values self.femnodes_ele_table
                 if not self.femnodes_mesh:
@@ -517,4 +520,4 @@ def print_obj_info(obj, log=False):
             "    Type: {}, Name: {}\n".format(type_of_obj(obj), obj.Name)
         )
 
-##  @}
+# @}

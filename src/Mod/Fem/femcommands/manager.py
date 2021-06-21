@@ -26,7 +26,7 @@ __title__ = "FreeCAD FEM command base class"
 __author__ = "Przemo Firszt, Bernd Hahnebach"
 __url__ = "https://www.freecadweb.org"
 
-## @package manager
+# @package manager
 #  \ingroup FEM
 #  \brief FreeCAD FEM command base class
 
@@ -155,9 +155,11 @@ class CommandManager(object):
         elif self.do_activated == "add_obj_on_gui_set_edit":
             self.add_obj_on_gui_set_edit(self.__class__.__name__.lstrip("_"))
         elif self.do_activated == "add_obj_on_gui_selobj_noset_edit":
-            self.add_obj_on_gui_selobj_noset_edit(self.__class__.__name__.lstrip("_"))
+            self.add_obj_on_gui_selobj_noset_edit(
+                self.__class__.__name__.lstrip("_"))
         elif self.do_activated == "add_obj_on_gui_selobj_set_edit":
-            self.add_obj_on_gui_selobj_set_edit(self.__class__.__name__.lstrip("_"))
+            self.add_obj_on_gui_selobj_set_edit(
+                self.__class__.__name__.lstrip("_"))
         # in all other cases Activated is implemented it the command class
 
     def results_present(self):
@@ -275,9 +277,10 @@ class CommandManager(object):
             return True
         else:
             return False
+
     def solver_mofem_selected(self):
         sel = FreeCADGui.Selection.getSelection()
-        if len(sel) == 1 and is_of_type(sel[0], "Fem::SolverMoFEM"):
+        if len(sel) == 1 and is_of_type(sel[0], "FEM::SolverMoFEM"):
             self.selobj = sel[0]
             return True
         else:

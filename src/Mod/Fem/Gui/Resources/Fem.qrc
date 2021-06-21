@@ -41,6 +41,8 @@
         <file>icons/FEM_EquationFlow.svg</file>
         <file>icons/FEM_EquationFlux.svg</file>
         <file>icons/FEM_EquationHeat.svg</file>
+        <file>icons/FEM_TypeElasticity.svg</file>
+        <file>icons/FEM_TypeBone.svg</file>
 
         <!-- gui command icons: meshes -->
         <file>icons/FEM_CreateNodesSet.svg</file>
