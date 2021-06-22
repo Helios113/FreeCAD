@@ -145,7 +145,7 @@ class MedWriterMoFEM(writerbase.FemInputWriter):
         tools.run_gmsh_with_geo()
 
         os.remove(brepPath)
-        # os.remove(geoPath)
+        os.remove(geoPath)
 
     def _change_MeshFormat(self, geoPath):
         with fileinput.FileInput(geoPath,
@@ -196,26 +196,3 @@ class MedWriterMoFEMError(Exception):
     pass
 
 # @}
-
-
-"""
-                if work_obj.xFix:
-                    print("Object refrence", type(
-                        work_obj.References[0][1][0]))
-                    new_group_data['FIX_X'].append(
-                        work_obj.References[0][1][0])
-                elif work_obj.yFix:
-                    print("Object refrence", type(
-                        work_obj.References[0][1][0]))
-                    new_group_data['FIX_Y'].append(
-                        work_obj.References[0][1][0])
-                elif work_obj.zFix:
-                    print("Object refrence", type(
-                        work_obj.References[0][1][0]))
-                    new_group_data['FIX_Z'].append(
-                        work_obj.References[0][1][0])
-
-
-                  new_group_data = {k: v for k,
-                              v in new_group_data.items() if v != []}
-                """

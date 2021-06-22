@@ -29,6 +29,7 @@ __url__ = "https://www.freecadweb.org"
 # \addtogroup FEM
 #  @{
 
+from femsolver import task
 import os
 import os.path
 from posixpath import join
@@ -181,10 +182,13 @@ class Prepare(run.Prepare):
             task = [self.read_med, "-med_file",  w.med_path,
                     "-meshsets_config", w.cfg_path,
                     "-output_file", w.work_path]
+            logfile = open(w.include+".log", "w")
             self._process = subprocess.Popen(  # creates the mofem readable mesh
                 task, cwd=self.directory,
-                stdout=subprocess.PIPE,
+                stdout=logfile,
                 stderr=subprocess.PIPE)
+            self._process.wait()
+            logfile.close()
         except IOError:
             self.report.error("Can't access working directory.")
             self.fail()
@@ -211,22 +215,32 @@ class Solve(run.Solve):
         print("Type", analysis_type)
         binary = settings.get_binary(analysis_type)
         print(analysis_type, binary)
-        if False:  # if binary is not None:
-            # if ELMER_HOME is not set, set it.
-            # Needed if elmer is compiled but not installed on Linux
-            # http://www.elmerfem.org/forum/viewtopic.php?f=2&t=7119
-            # https://stackoverflow.com/questions/1506010/how-to-use-export-with-python-on-linux
-            # TODO move retrieving the param to solver settings module
-            self._process = subprocess.Popen(
-                [binary], cwd=self.directory,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE)
-            self.signalAbort.add(self._process.terminate)
-            output = self._observeSolver(self._process)
-            self._process.communicate()
-            self.signalAbort.remove(self._process.terminate)
-            if not self.aborted:
-                self._updateOutput(output)
+        mesh = membertools.get_mesh_to_solve(self.analysis)[0]
+        work_dir = join(self.directory, mesh.Name+".h5m")
+
+        if binary is not None:
+            try:
+                task = [binary, "-my_file", work_dir]
+                self._process = subprocess.Popen(
+                    task, cwd=self.directory,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE)
+            except IOError:
+                self.report.error("Can't access working directory.")
+                self.fail()
+            try:
+                task = [mbconver_path, join(
+                    self.directory, "out.h5m"), join(
+                    self.directory, "out.vtk")]
+                self._process = subprocess.Popen(
+                    task, cwd=self.directory,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE)
+            except IOError:
+                self.report.error("Can't access working directory.")
+                self.fail()
+
+            self._updateOutput()
         else:
             self.report.error(analysis_type+" executable not found.")
             self.fail()
@@ -249,20 +263,10 @@ class Results(run.Results):
         self.analysis.addObject(self.solver.MoFEMResult)
 
     def _getVTK(self):
-        try:  # Generate MoFEM-compatible mesh
-            FreeCAD.Console.PrintMessage("Generating VTK\n")
-            path = self.directory
-            """task = [read_med, "-med_file",  w.med_path,
-                    "-meshsets_config", w.cfg_path,
-                    "-output_file", join(self.directory, w.mesh_name, ".h5m")]  # the join points towards the mesh file
-            """
-            task = ""
-            self._process = subprocess.Popen(  # creates the mofem readable mesh
-                task, cwd=self.directory,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE)
+        try:
+            pass
         except IOError:
             self.report.error("Can't access working directory.")
             self.fail()
-        return path
-        # @}
+        return join(self.directory, "out.vtk")
+# @}
