@@ -26,6 +26,7 @@ from femtools import membertools
 from femtools import femutils
 from femtools import constants
 from femmesh import meshtools
+import fileinput
 from femmesh import gmshtools
 from .. import settings
 from femtools import geomtools
@@ -65,12 +66,12 @@ class MedWriterMoFEM(writerbase.FemInputWriter):
     ):
         self.mesh_obj = mesh_obj
         self.member = member
-        print("Mesh object", self.mesh_obj)
         self.mesh_name = self.mesh_obj.Name
         self.dir_name = dir_name
         self.include = join(self.dir_name, self.mesh_name)
-        self.med_path = self.include+"_med.med"
-        self.cfg_path = self.include+"_med.config"
+        self.med_path = self.include+".med"
+        self.cfg_path = self.include+".config"
+        self.work_path = self.include+".h5m"
         writerbase.FemInputWriter.__init__(
             self,
             analysis_obj,
@@ -80,21 +81,124 @@ class MedWriterMoFEM(writerbase.FemInputWriter):
             dir_name
         )
 
-    def get_mofem_bcs(self, tools):
+    def get_mofem_bcs(self):
+        # This here is done for concistency
+        # The order of the different conditions matters
+        # We change them here so we can use the same order later
+        # When creating the block sets for the FEM solver
         new_group_data = {}
 
         if self.fixed_objects:
-            new_group_data['FIX_ALL'] = []
-            for fix in self.fixed_objects:
+            for i, fix in enumerate(self.fixed_objects):
                 work_obj = fix['Object']
-                print("Object refrence", type(work_obj.References[0][1][0]))
-                new_group_data['FIX_ALL'].append(work_obj.References[0][1][0])
+                print("Object refrence", work_obj.References)
+                new_group_data['FIX_ALL_' +
+                               str(i)] = [work_obj.References[0][1][0]]
+
         if self.displacement_objects:
-            new_group_data['FIX_X'] = []
-            new_group_data['FIX_Y'] = []
-            new_group_data['FIX_Z'] = []
+            for i, disp in enumerate(self.displacement_objects):
+                work_obj = disp['Object']
+                new_group_data['FIX_DISP_' +
+                               str(i)] = [work_obj.References[0][1][0]]
+
+        if self.pressure_objects:
+            for i, press in enumerate(self.pressure_objects):
+                work_obj = press['Object']
+                new_group_data['PRESSURE_' +
+                               str(i)] = [work_obj.References[0][1][0]]
+
+        print("New group data", new_group_data)
+        return new_group_data
+
+    def gen_med_file(self):
+        brepFd, brepPath = tempfile.mkstemp(suffix=".brep")
+        geoFd, geoPath = tempfile.mkstemp(suffix=".geo")
+        os.close(brepFd)
+        os.close(geoFd)
+
+        if self.mesh_obj.ElementOrder == '2nd':
+            Console.PrintError("Only element order one supported by MoFem")
+            Console.PrintError("Changing order")
+            self.mesh_obj.ElementOrder = '1st'
+
+        tools = gmshtools.GmshTools(self.mesh_obj, analysis=self.analysis)
+        tools.get_group_data()  # Try to get group data
+        print("Old group data", tools.group_elements)
+        tools.group_elements = self.get_mofem_bcs()
+
+        tools.group_nodes_export = True
+        tools.ele_length_map = {}
+        tools.temp_file_geometry = brepPath
+        tools.temp_file_geo = geoPath
+        tools.temp_file_mesh = self.med_path
+
+        tools.get_dimension()
+        tools.get_region_data()
+        tools.get_boundary_layer_data()
+        tools.write_part_file()
+        tools.write_geo()
+        tools.get_gmsh_command()
+        self._change_MeshFormat(geoPath)
+        print("GeoPath", geoPath)
+        print("Med path", self.med_path)
+        print("CFG path", self.cfg_path)
+        tools.run_gmsh_with_geo()
+
+        os.remove(brepPath)
+        # os.remove(geoPath)
+
+    def _change_MeshFormat(self, geoPath):
+        with fileinput.FileInput(geoPath,
+                                 inplace=True, backup='.bak') as f:
+            for line in f:
+                if line == 'Mesh.Format = 2;\n':
+                    print('Mesh.Format = 10;', end='\n')
+                else:
+                    print(line, end='')
+
+    def gen_cfg_file(self):
+        cfg = open(self.cfg_path, "w")
+        cfg.write(
+            "[block_1]\nid=101\nadd=BLOCKSET\nname=MAT_ELASTIC\nyoung=1\npoisson=0.1\n\n")
+        block_number = 2
+        if self.fixed_objects:
+            for fix in self.fixed_objects:
+                cfg.write("[block_{block_id}]\nid={id}\nadd=BLOCKSET\nname={name}\n\n".format(
+                    block_id=block_number, id=100+block_number, name="FIX_ALL"))
+                block_number += 1
+        if self.displacement_objects:
             for disp in self.displacement_objects:
                 work_obj = disp['Object']
+                name = "FIX_"
+                if work_obj.xFix:
+                    name += "X"
+                if work_obj.yFix:
+                    name += "Y"
+                if work_obj.zFix:
+                    name += "Z"
+                cfg.write("[block_{block_id}]\nid={id}\nadd=BLOCKSET\nname={name}\n\n".format(
+                    block_id=block_number, id=100+block_number, name=name))
+                block_number += 1
+
+        if self.pressure_objects:
+            for press in self.pressure_objects:
+                work_obj = press['Object']
+                cfg.write("[block_{block_id}]\nid={id}\nadd=SIDESET\nname={name}\n".format(
+                    block_id=block_number, id=100+block_number, name=name))
+                cfg.write("pressure_flag2=0\npressure_magnitude={dirmag}".format(
+                    dirmag=-work_obj.Pressure if work_obj.Reversed else work_obj.Pressure))
+                block_number += 1
+
+        cfg.close()
+
+
+class MedWriterMoFEMError(Exception):
+    pass
+
+# @}
+
+
+"""
                 if work_obj.xFix:
                     print("Object refrence", type(
                         work_obj.References[0][1][0]))
@@ -110,74 +214,8 @@ class MedWriterMoFEM(writerbase.FemInputWriter):
                         work_obj.References[0][1][0]))
                     new_group_data['FIX_Z'].append(
                         work_obj.References[0][1][0])
-            new_group_data = {k: v for k,
+
+
+                  new_group_data = {k: v for k,
                               v in new_group_data.items() if v != []}
-        """
-        print("disp group", tools.group_elements['ConstraintDisplacement'])
-        print(self.displacement_objects)
-        for disp in self.displacement_objects:
-            print("Disp object is")
-            print(disp)
-            print(disp['Object'])
-            print(disp['Object'].xFix)
-            print(disp['Object'].Name)
-            print(disp['Object'].References)
-        """
-        return new_group_data
-
-    def add_mofem_bcs(self):
-        # print("Fixed obj", self.member.cons_fixed)
-        # print("Fixed Disp", self.member.cons_displacement)
-        unvGmshFd, unvGmshPath = tempfile.mkstemp(suffix=".unv")
-        brepFd, brepPath = tempfile.mkstemp(suffix=".brep")
-        geoFd, geoPath = tempfile.mkstemp(suffix=".geo")
-        os.close(brepFd)
-        os.close(geoFd)
-        os.close(unvGmshFd)
-
-        tools = gmshtools.GmshTools(self.mesh_obj, analysis=self.analysis)
-
-        tools.get_group_data()  # Try to get group data
-        print("At line 117")
-        tools.group_elements = self.get_mofem_bcs(tools)
-        print(tools.group_elements)  # print to see if we have it
-
-        tools.group_nodes_export = False
-        tools.ele_length_map = {}
-        tools.temp_file_geometry = brepPath
-        tools.temp_file_geo = geoPath
-        tools.temp_file_mesh = unvGmshPath
-
-        tools.get_dimension()
-        tools.get_region_data()
-        tools.get_boundary_layer_data()
-        tools.write_part_file()
-        tools.write_geo()
-        if False:
-            Console.PrintMessage(
-                "Solver Elmer testmode, Gmsh will not be used. "
-                "It might not be installed.\n"
-            )
-            import shutil
-            shutil.copyfile(geoPath, os.path.join(
-                self.directory, "group_mesh.geo"))
-        else:
-            tools.get_gmsh_command()
-            tools.run_gmsh_with_geo()
-
-            ioMesh = Fem.FemMesh()
-            ioMesh.read(unvGmshPath)
-
-            print("MED file path", self.med_path)
-
-            ioMesh.write(self.med_path)
-
-        os.remove(brepPath)
-        os.remove(geoPath)
-        os.remove(unvGmshPath)
-
-
-class MedWriterMoFEMError(Exception):
-    pass
-
-# @}
+                """

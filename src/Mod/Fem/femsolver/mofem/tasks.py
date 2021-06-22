@@ -35,6 +35,7 @@ from posixpath import join
 import subprocess
 import sys
 from platform import system
+from tempfile import SpooledTemporaryFile
 
 import FreeCAD
 
@@ -130,9 +131,8 @@ class Prepare(run.Prepare):
 
         FreeCAD.Console.PrintMessage("Preparing files...\n")
         # Gets the read med binary
-        read_med = FreeCAD.ParamGet(
+        self.read_med = FreeCAD.ParamGet(
             "User parameter:BaseApp/Preferences/Mod/Fem/MoFEM").GetString("MoFEMMedPath")
-
         w = writer.MedWriterMoFEM(
             self.analysis,
             self.solver,
@@ -141,14 +141,15 @@ class Prepare(run.Prepare):
             membertools.AnalysisMember(self.analysis),
             self.directory
         )
+
+        self._create_med(w)
+        self._create_cfg(w)
+        self._create_h5m(w)
+
+    def _create_med(self, w):
         try:  # Generate MoFEM .config file
             FreeCAD.Console.PrintMessage("Initializing writer\n")
-            w.add_mofem_bcs()  # amends the .geo file with mofem bcs
-            task = [read_med, "-med_file",  w.med_path]
-            self._process = subprocess.Popen(
-                task, cwd=self.directory,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE)
+            w.gen_med_file()  # amends the .geo file with mofem bcs and creates med file
         except writer.MedWriterMoFEMError as e:
             self.report.error(str(e))
             self.fail()
@@ -156,11 +157,30 @@ class Prepare(run.Prepare):
             self.report.error("Can't access working directory.")
             self.fail()
 
+    def _create_cfg(self, w):
+        try:  # Generate MoFEM .config file
+            FreeCAD.Console.PrintMessage("Writing config file\n")
+            w.gen_cfg_file()  # amends the .geo file with mofem bcs and creates med file
+        except writer.MedWriterMoFEMError as e:
+            self.report.error(str(e))
+            self.fail()
+        except IOError:
+            self.report.error("Can't access working directory.")
+            self.fail()
+    """
+            task = [read_med, "-med_file",  w.med_path]
+            self._process = subprocess.Popen(
+                task, cwd=self.directory,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE)
+        """
+
+    def _create_h5m(self, w):
         try:  # Generate MoFEM-compatible mesh
             FreeCAD.Console.PrintMessage("Generating MoFEM-compatible mesh\n")
-            task = [read_med, "-med_file",  w.med_path,
+            task = [self.read_med, "-med_file",  w.med_path,
                     "-meshsets_config", w.cfg_path,
-                    "-output_file", join(self.directory, w.mesh_name, ".h5m")]  # the join points towards the mesh file
+                    "-output_file", w.work_path]
             self._process = subprocess.Popen(  # creates the mofem readable mesh
                 task, cwd=self.directory,
                 stdout=subprocess.PIPE,
@@ -186,8 +206,9 @@ class Solve(run.Solve):
         # on rerun the result file will not deleted before starting the solver
         # if the solver fails, the existing result from a former run file will be loaded
         # TODO: delete result file (may be delete all files which will be recreated)
-        self.pushStatus("Executing solver...\n")
+        print("Executing solver...\n")
         analysis_type = self.solver.AnalysisType
+        print("Type", analysis_type)
         binary = settings.get_binary(analysis_type)
         print(analysis_type, binary)
         if False:  # if binary is not None:

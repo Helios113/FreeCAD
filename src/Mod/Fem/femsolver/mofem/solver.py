@@ -73,7 +73,7 @@ class Proxy(solverbase.Proxy):
     # Ad the properties needed to solve the mesh
 
     _EQUATIONS = {
-        "Elasticity": elasticity,
+        "Linear Elasticity": elasticity,
         "Bone Remodeling": bone
     }
 

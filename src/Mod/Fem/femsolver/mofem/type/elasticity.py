@@ -33,14 +33,14 @@ from ... import equationbase
 from . import linear
 
 
-def create(doc, name="Elasticity"):
+def create(doc, name="Linear Elasticity"):
     return femutils.createObject(
         doc, name, Proxy, ViewProxy)
 
 
 class Proxy(equationbase.TypeElasticityProxy):  # add linear proxy later
 
-    Type = "Fem::TypeMoFEMElasticity"
+    Type = "Fem::TypeMoFEMLinerElasticity"
 
     def __init__(self, obj):
         super(Proxy, self).__init__(obj)
