@@ -92,9 +92,7 @@ def get_binary(name):
     :param name: solver id as a ``str`` (see :mod:`femsolver.settings`)
     """
     if name in _SOLVER_PARAM:
-        print("ln 95", name)
         binary = _SOLVER_PARAM[name].get_binary()
-        print("ln 97", binary)
         FreeCAD.Console.PrintMessage(
             'Solver binary path: {} \n'.format(binary))
         return binary
@@ -195,21 +193,17 @@ class _SolverDlg(object):
         # set the binary path to the FreeCAD defaults
         # ATM pure unix shell commands without path names are used
         binary = self.default
-        print("ln 197", binary)
         FreeCAD.Console.PrintLog("Solver binary path: {} \n".format(binary))
 
         # check if use_default is set to True
         # if True the standard binary path will be overwritten with a user binary path
         if self.param_group.GetBool(self.use_default, True) is False:
             binary = self.param_group.GetString(self.custom_path)
-            print("ln 204", binary)
         FreeCAD.Console.PrintLog("Solver binary path: {} \n".format(binary))
 
         # get the whole binary path name for the given command or binary path and return it
         from distutils.spawn import find_executable as find_bin
-        print("Binary is", binary, "ans if of type", type(binary))
         path = find_bin(binary)
-        print("Ln 211, the path is", path)
         return path
 
     def get_write_comments(self):
@@ -252,4 +246,14 @@ _SOLVER_PARAM = {
         param_path=_PARAM_PATH + "MoFEM",
         use_default="UseStandardBoneLocation",
         custom_path="Bone_remodelingPath"),
+    "read_med": _SolverDlg(
+        default="read_med",
+        param_path=_PARAM_PATH + "MoFEM",
+        use_default="UseStandardMedLocation",
+        custom_path="MoFEMMedPath"),
+    "mbconvert": _SolverDlg(
+        default="mbconvert",
+        param_path=_PARAM_PATH + "MoFEM",
+        use_default="UseStandardMbconvertLocation",
+        custom_path="mbconvertPath"),
 }

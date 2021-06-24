@@ -30,8 +30,9 @@ __url__ = "https://www.freecadweb.org"
 #  @{
 
 from femsolver import task
-import os
-import os.path
+from os import listdir, mkdir, pread
+from os.path import isfile
+#from os.path import join
 from posixpath import join
 import subprocess
 import sys
@@ -50,37 +51,6 @@ from femtools import membertools
 """
 Module containing one task class per task required for a solver implementation.
 Those tasks divide the process of solving a analysis into the following steps: check, prepare, solve, results
-"""
-"""
-
-class Check(run.Check):
-
-    def run(self):
-        self.pushStatus("Checking analysis...\n")
-        if (self.checkMesh()):
-            self.checkMeshType()
-        self.checkMaterial()
-        self.checkEquations()
-
-    def checkMeshType(self):
-        mesh = membertools.get_single_member(
-            self.analysis, "Fem::FemMeshObject")
-        if not femutils.is_of_type(mesh, "Fem::FemMeshGmsh"):
-            self.report.error(
-                "Unsupported type of mesh. "
-                "Mesh must be created with gmsh.")
-            self.fail()
-            return False
-        return True
-
-    def checkEquations(self):
-        equations = self.solver.Group
-        if not equations:
-            self.report.error(
-                "Solver has no equations. "
-                "Add at least one equation.")
-            self.fail()
-
 """
 
 
@@ -132,8 +102,7 @@ class Prepare(run.Prepare):
 
         FreeCAD.Console.PrintMessage("Preparing files...\n")
         # Gets the read med binary
-        self.read_med = FreeCAD.ParamGet(
-            "User parameter:BaseApp/Preferences/Mod/Fem/MoFEM").GetString("MoFEMMedPath")
+        self.read_med = settings.get_binary("read_med")
         w = writer.MedWriterMoFEM(
             self.analysis,
             self.solver,
@@ -168,13 +137,6 @@ class Prepare(run.Prepare):
         except IOError:
             self.report.error("Can't access working directory.")
             self.fail()
-    """
-            task = [read_med, "-med_file",  w.med_path]
-            self._process = subprocess.Popen(
-                task, cwd=self.directory,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE)
-        """
 
     def _create_h5m(self, w):
         try:  # Generate MoFEM-compatible mesh
@@ -188,6 +150,7 @@ class Prepare(run.Prepare):
                 stdout=logfile,
                 stderr=subprocess.PIPE)
             self._process.wait()
+            logfile.flush()
             logfile.close()
         except IOError:
             self.report.error("Can't access working directory.")
@@ -212,35 +175,60 @@ class Solve(run.Solve):
         # TODO: delete result file (may be delete all files which will be recreated)
         print("Executing solver...\n")
         analysis_type = self.solver.AnalysisType
-        print("Type", analysis_type)
         binary = settings.get_binary(analysis_type)
+        mbconvert_path = settings.get_binary("mbconvert")
         print(analysis_type, binary)
+        print("mbconvert", mbconvert_path)
         mesh = membertools.get_mesh_to_solve(self.analysis)[0]
         work_dir = join(self.directory, mesh.Name+".h5m")
 
         if binary is not None:
             try:
+                print("#######################")
+                print("Work dir", work_dir)
                 task = [binary, "-my_file", work_dir]
                 self._process = subprocess.Popen(
                     task, cwd=self.directory,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE)
+                out, err = self._process.communicate()
+                print(out.decode("utf-8"))
+                print(err.decode("utf-8"))
+            except FileNotFoundError:
+                self.report.error(".h5m file is missing from work directory.")
+                self.fail()
             except IOError:
                 self.report.error("Can't access working directory.")
                 self.fail()
             try:
-                task = [mbconver_path, join(
-                    self.directory, "out.h5m"), join(
-                    self.directory, "out.vtk")]
-                self._process = subprocess.Popen(
-                    task, cwd=self.directory,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE)
+                # get all files from directory
+                print(listdir(self.directory))
+                files_list = [f for f in listdir(
+                    self.directory) if isfile(join(self.directory, f))]
+                # check if they are .h5m
+
+                results_list = [f for f in files_list if f[-3:] == "h5m"]
+                print("results", files_list)
+                print("results", files_list[0][-3:])
+                print("Results", results_list)
+
+                mkdir(join(self.directory, "results_vtk"))
+                for i, res in enumerate(results_list):
+                    task = [mbconvert_path, res, join(
+                        self.directory, "results_vtk/out{num}.vtk".format(num=i))]
+                    print(task)
+                    self._process = subprocess.Popen(
+                        task, stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE)
+                    out, err = self._process.communicate()
+                    print(out.decode("utf-8"))
+                    print(err.decode("utf-8"))
             except IOError:
                 self.report.error("Can't access working directory.")
                 self.fail()
 
-            self._updateOutput()
+            # self._updateOutput()
+            self.fail()
         else:
             self.report.error(analysis_type+" executable not found.")
             self.fail()
@@ -259,7 +247,7 @@ class Results(run.Results):
     def _createResults(self):
         self.solver.MoFEMResult = self.analysis.Document.addObject(
             "Fem::FemPostPipeline", self.solver.Name + "Result")
-        self.solver.ElmerResult.Label = self.solver.Label + "Result"
+        self.solver.MoFEMResult.Label = self.solver.Label + "Result"
         self.analysis.addObject(self.solver.MoFEMResult)
 
     def _getVTK(self):

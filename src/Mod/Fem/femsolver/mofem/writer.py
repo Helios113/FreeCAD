@@ -53,8 +53,7 @@ from collections import defaultdict
 
 # Generate .geo file
 # Change the physical group names
-# Generate .unv and write as .med
-# Write the .med file to a usable directory
+# Generate .med
 class MedWriterMoFEM(writerbase.FemInputWriter):
     def __init__(
         self,
@@ -91,20 +90,20 @@ class MedWriterMoFEM(writerbase.FemInputWriter):
         if self.fixed_objects:
             for i, fix in enumerate(self.fixed_objects):
                 work_obj = fix['Object']
-                print("Object refrence", work_obj.References)
-                new_group_data['FIX_ALL_' +
+                #print("Object refrence", work_obj.References)
+                new_group_data['fix_all' +
                                str(i)] = [work_obj.References[0][1][0]]
 
         if self.displacement_objects:
             for i, disp in enumerate(self.displacement_objects):
                 work_obj = disp['Object']
-                new_group_data['FIX_DISP_' +
+                new_group_data['fix_disp' +
                                str(i)] = [work_obj.References[0][1][0]]
 
         if self.pressure_objects:
             for i, press in enumerate(self.pressure_objects):
                 work_obj = press['Object']
-                new_group_data['PRESSURE_' +
+                new_group_data['pressure' +
                                str(i)] = [work_obj.References[0][1][0]]
 
         print("New group data", new_group_data)
@@ -123,9 +122,9 @@ class MedWriterMoFEM(writerbase.FemInputWriter):
 
         tools = gmshtools.GmshTools(self.mesh_obj, analysis=self.analysis)
         tools.get_group_data()  # Try to get group data
-        print("Old group data", tools.group_elements)
+        #print("Old group data", tools.group_elements)
         tools.group_elements = self.get_mofem_bcs()
-
+        print(tools.group_elements)
         tools.group_nodes_export = True
         tools.ele_length_map = {}
         tools.temp_file_geometry = brepPath
@@ -140,12 +139,13 @@ class MedWriterMoFEM(writerbase.FemInputWriter):
         tools.get_gmsh_command()
         self._change_MeshFormat(geoPath)
         print("GeoPath", geoPath)
+        print("Brep", brepPath)
         print("Med path", self.med_path)
-        print("CFG path", self.cfg_path)
+        #print("CFG path", self.cfg_path)
         tools.run_gmsh_with_geo()
 
-        os.remove(brepPath)
-        os.remove(geoPath)
+        # os.remove(brepPath)
+        # os.remove(geoPath)
 
     def _change_MeshFormat(self, geoPath):
         with fileinput.FileInput(geoPath,
@@ -183,6 +183,7 @@ class MedWriterMoFEM(writerbase.FemInputWriter):
         if self.pressure_objects:
             for press in self.pressure_objects:
                 work_obj = press['Object']
+                name = "PRESSURE"
                 cfg.write("[block_{block_id}]\nid={id}\nadd=SIDESET\nname={name}\n".format(
                     block_id=block_number, id=100+block_number, name=name))
                 cfg.write("pressure_flag2=0\npressure_magnitude={dirmag}".format(
