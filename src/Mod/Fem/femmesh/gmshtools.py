@@ -746,7 +746,7 @@ class GmshTools():
     def write_part_file(self):
         self.part_obj.Shape.exportBrep(self.temp_file_geometry)
 
-    def write_geo(self):
+    def write_geo(self, mesh_format=2):
         geo = open(self.temp_file_geo, "w")
         geo.write(
             "// geo file for meshing with Gmsh meshing software created by FreeCAD\n")
@@ -895,7 +895,7 @@ class GmshTools():
 
         # save mesh
         geo.write("// save\n")
-        geo.write("Mesh.Format = 2;\n")  # unv
+        geo.write("Mesh.Format = {mesh_format};\n".format(mesh_format = mesh_format))  # unv
         if self.group_elements and self.group_nodes_export:
             geo.write(
                 "// For each group save not only the elements but the nodes too.;\n")
@@ -930,7 +930,6 @@ class GmshTools():
 
     def run_gmsh_with_geo(self):
         command_list = [self.gmsh_bin, "-", self.temp_file_geo]
-        # print(command_list)
         try:
             p = subprocess.Popen(
                 command_list,
@@ -939,6 +938,7 @@ class GmshTools():
                 stderr=subprocess.PIPE
             )
             output, error = p.communicate()
+            output = output.decode("utf-8")
             if sys.version_info.major >= 3:
                 # output = output.decode("utf-8")
                 error = error.decode("utf-8")

@@ -29,6 +29,7 @@ __url__ = "https://www.freecadweb.org"
 # \addtogroup FEM
 #  @{
 
+import os
 from femsolver import task
 from os import listdir, mkdir, pread
 from os.path import isfile
@@ -98,15 +99,12 @@ class Check(run.Check):
 # which can be used by mofem for analysis
 class Prepare(run.Prepare):
 
-    def run(self):  # called by GUI
-
+    def run(self):  
         FreeCAD.Console.PrintMessage("Preparing files...\n")
-        # Gets the read med binary
         self.read_med = settings.get_binary("read_med")
         w = writer.MedWriterMoFEM(
             self.analysis,
             self.solver,
-            # This is the mesh to solve, pre check has been done already
             membertools.get_mesh_to_solve(self.analysis)[0],
             membertools.AnalysisMember(self.analysis),
             self.directory
@@ -117,9 +115,9 @@ class Prepare(run.Prepare):
         self._create_h5m(w)
 
     def _create_med(self, w):
-        try:  # Generate MoFEM .config file
-            FreeCAD.Console.PrintMessage("Initializing writer\n")
-            w.gen_med_file()  # amends the .geo file with mofem bcs and creates med file
+        try:  # Generates MoFEM .med file
+            FreeCAD.Console.PrintMessage("Writing .med file\n")
+            w.gen_med_file()  #amends the .geo file with mofem bcs and creates med file
         except writer.MedWriterMoFEMError as e:
             self.report.error(str(e))
             self.fail()
@@ -129,8 +127,8 @@ class Prepare(run.Prepare):
 
     def _create_cfg(self, w):
         try:  # Generate MoFEM .config file
-            FreeCAD.Console.PrintMessage("Writing config file\n")
-            w.gen_cfg_file()  # amends the .geo file with mofem bcs and creates med file
+            FreeCAD.Console.PrintMessage("Writing .config file\n")
+            w.gen_cfg_file()
         except writer.MedWriterMoFEMError as e:
             self.report.error(str(e))
             self.fail()
@@ -139,22 +137,37 @@ class Prepare(run.Prepare):
             self.fail()
 
     def _create_h5m(self, w):
-        try:  # Generate MoFEM-compatible mesh
-            FreeCAD.Console.PrintMessage("Generating MoFEM-compatible mesh\n")
-            task = [self.read_med, "-med_file",  w.med_path,
-                    "-meshsets_config", w.cfg_path,
-                    "-output_file", w.work_path]
-            logfile = open(w.include+".log", "w")
-            self._process = subprocess.Popen(  # creates the mofem readable mesh
-                task, cwd=self.directory,
-                stdout=logfile,
-                stderr=subprocess.PIPE)
-            self._process.wait()
-            logfile.flush()
-            logfile.close()
-        except IOError:
-            self.report.error("Can't access working directory.")
+        if self.read_med is not None:
+            h5m_log = join(self.directory, 'h5m_log.txt')
+            with open(h5m_log, "w") as f:
+                try:  # Generate MoFEM-compatible .h5m file
+                    FreeCAD.Console.PrintMessage("Generating MoFEM-compatible .h5m file\n")
+                    task = [self.read_med, "-med_file",  w.med_path,
+                            "-meshsets_config", w.cfg_path,
+                            "-output_file", w.work_path]
+                    logfile = open(w.include+".log", "w")
+                    self._process = subprocess.Popen(  # calls read_med tool
+                        task, cwd=self.directory,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE)
+                    out, err = self._process.communicate()
+                    if self._process.returncode != 0:
+                        for line in err.decode(encoding='utf-8').split('\n'):
+                            f.write(line+'\n')
+                        self.report.error("read_med tool failed check log file at: "+ h5m_log)
+                        self.fail()
+                    else:
+                        for line in out.decode(encoding='utf-8').split('\n'):
+                            f.write(line+'\n')
+                        self.report.info("read_med tool finished, log file located at: "+ h5m_log)
+                    
+                except IOError:
+                    self.report.error("Can't access working directory.")
+                    self.fail()
+        else:
+            self.report.error("read_med executable not found.")
             self.fail()
+
 
     def checkHandled(self, w):
         handled = w.getHandledConstraints()
@@ -170,64 +183,76 @@ class Prepare(run.Prepare):
 class Solve(run.Solve):
 
     def run(self):
-        # on rerun the result file will not deleted before starting the solver
-        # if the solver fails, the existing result from a former run file will be loaded
-        # TODO: delete result file (may be delete all files which will be recreated)
-        print("Executing solver...\n")
+
+        FreeCAD.Console.PrintMessage("Executing solver...\n")
         analysis_type = self.solver.AnalysisType
         binary = settings.get_binary(analysis_type)
         mbconvert_path = settings.get_binary("mbconvert")
-        print(analysis_type, binary)
-        print("mbconvert", mbconvert_path)
         mesh = membertools.get_mesh_to_solve(self.analysis)[0]
-        work_dir = join(self.directory, mesh.Name+".h5m")
-
-        if binary is not None:
-            try:
-                print("#######################")
-                print("Work dir", work_dir)
-                task = [binary, "-my_file", work_dir]
-                self._process = subprocess.Popen(
-                    task, cwd=self.directory,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE)
-                out, err = self._process.communicate()
-                print(out.decode("utf-8"))
-                print(err.decode("utf-8"))
-            except FileNotFoundError:
-                self.report.error(".h5m file is missing from work directory.")
-                self.fail()
-            except IOError:
-                self.report.error("Can't access working directory.")
-                self.fail()
-            try:
-                # get all files from directory
-                print(listdir(self.directory))
-                files_list = [f for f in listdir(
-                    self.directory) if isfile(join(self.directory, f))]
-                # check if they are .h5m
-
-                results_list = [f for f in files_list if f[-3:] == "h5m"]
-                print("results", files_list)
-                print("results", files_list[0][-3:])
-                print("Results", results_list)
-
-                mkdir(join(self.directory, "results_vtk"))
-                for i, res in enumerate(results_list):
-                    task = [mbconvert_path, res, join(
-                        self.directory, "results_vtk/out{num}.vtk".format(num=i))]
-                    print(task)
+        res_dir = join(self.directory, "results_vtk")
+        out_dir = join(self.directory, "output_h5m")
+        work_file = join(self.directory, mesh.Name+".h5m")
+        if mbconvert_path is None:
+            self.report.error("mbconvert tool not found.")
+            self.fail()
+        elif binary is not None:
+            solver_log = join(self.directory, 'solver_log.txt')
+            with open(solver_log, "w") as f:
+                try:
+                    os.mkdir(out_dir)
+                    task = [binary, "-my_file", work_file]
                     self._process = subprocess.Popen(
-                        task, stdout=subprocess.PIPE,
+                        task, cwd=out_dir,
+                        stdout=subprocess.PIPE,
                         stderr=subprocess.PIPE)
                     out, err = self._process.communicate()
-                    print(out.decode("utf-8"))
-                    print(err.decode("utf-8"))
-            except IOError:
-                self.report.error("Can't access working directory.")
-                self.fail()
+                    if self._process.returncode != 0:
+                        for line in err.decode(encoding='utf-8').split('\n'):
+                            f.write(line+'\n')
+                        self.report.error(analysis_type+" failed check log file at: "+ solver_log)
+                        self.fail()
+                    else:
+                        for line in out.decode(encoding='utf-8').split('\n'):
+                            f.write(line+'\n')
+                        self.report.info(analysis_type + "finished, log file located at: "+ solver_log)
+                except FileNotFoundError:
+                    self.report.error(".h5m file is missing from work directory.")
+                    self.fail()
+                except IOError:
+                    self.report.error("Can't access working directory.")
+                    self.fail()
+            convert_log = join(self.directory, 'convert_log.txt')
+            with open(convert_log, "w") as f:
+                try:
+                    # get all files from directory
+                    files_list = [f for f in listdir(out_dir) if isfile(join(out_dir, f))]
+                    # check if they are .h5m
+                    out_list = [f for f in files_list if f[-3:] == "h5m"]
+                    if not out_list:
+                        self.report.error("No MoFEM results found. Check "+out_dir+" for .h5m files")
+                        self.fail()
+                    mkdir(res_dir)
+                    for out in out_list:
+                        res = out.replace('h5m', 'vtk')
+                        task = [mbconvert_path, join(out_dir,out), join(res_dir,res)]
+                        self._process = subprocess.Popen(
+                            task, stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE)
+                        out, err = self._process.communicate()
+                        if self._process.returncode != 0:
+                            for line in err.decode(encoding='utf-8').split('\n'):
+                                f.write(line+'\n')
+                            self.report.error("mbconvert tool failed check log file at: "+ convert_log)
+                            self.fail()
+                        else:
+                            for line in out.decode(encoding='utf-8').split('\n'):
+                                f.write(line+'\n')
+                            self.report.info("mbconvert finished, log file located at: "+ convert_log)
+                except IOError:
+                    self.report.error("Can't access working directory.")
+                    self.fail()
 
-            # self._updateOutput()
+            self._updateOutput()
             self.fail()
         else:
             self.report.error(analysis_type+" executable not found.")

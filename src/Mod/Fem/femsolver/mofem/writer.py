@@ -105,13 +105,11 @@ class MedWriterMoFEM(writerbase.FemInputWriter):
                 work_obj = press['Object']
                 new_group_data['pressure' +
                                str(i)] = [work_obj.References[0][1][0]]
-
-        print("New group data", new_group_data)
         return new_group_data
 
     def gen_med_file(self):
-        brepFd, brepPath = tempfile.mkstemp(suffix=".brep")
-        geoFd, geoPath = tempfile.mkstemp(suffix=".geo")
+        brepFd, brepPath = tempfile.mkstemp(dir=self.dir_name, suffix=".brep")
+        geoFd, geoPath = tempfile.mkstemp(dir=self.dir_name, suffix=".geo")
         os.close(brepFd)
         os.close(geoFd)
 
@@ -121,40 +119,34 @@ class MedWriterMoFEM(writerbase.FemInputWriter):
             self.mesh_obj.ElementOrder = '1st'
 
         tools = gmshtools.GmshTools(self.mesh_obj, analysis=self.analysis)
-        tools.get_group_data()  # Try to get group data
-        #print("Old group data", tools.group_elements)
+        tools.get_group_data()
+
         tools.group_elements = self.get_mofem_bcs()
-        print(tools.group_elements)
+
         tools.group_nodes_export = True
         tools.ele_length_map = {}
         tools.temp_file_geometry = brepPath
         tools.temp_file_geo = geoPath
         tools.temp_file_mesh = self.med_path
-
         tools.get_dimension()
         tools.get_region_data()
         tools.get_boundary_layer_data()
         tools.write_part_file()
-        tools.write_geo()
+        tools.write_geo(33)
         tools.get_gmsh_command()
-        self._change_MeshFormat(geoPath)
-        print("GeoPath", geoPath)
-        print("Brep", brepPath)
-        print("Med path", self.med_path)
-        #print("CFG path", self.cfg_path)
         tools.run_gmsh_with_geo()
+        os.remove(brepPath)
+        os.remove(geoPath)
 
-        # os.remove(brepPath)
-        # os.remove(geoPath)
-
-    def _change_MeshFormat(self, geoPath):
-        with fileinput.FileInput(geoPath,
-                                 inplace=True, backup='.bak') as f:
-            for line in f:
-                if line == 'Mesh.Format = 2;\n':
-                    print('Mesh.Format = 10;', end='\n')
-                else:
-                    print(line, end='')
+    """def _change_MeshFormat(self, geoPath):
+        file = fileinput.input(geoPath, inplace=True, backup='.bak')
+        for line in file:
+            if line == 'Mesh.Format = 2;\n':
+                print('Mesh.Format = 10;', end='\n')
+            else:
+                print(line, end='')
+        file.close()
+        """
 
     def gen_cfg_file(self):
         cfg = open(self.cfg_path, "w")
