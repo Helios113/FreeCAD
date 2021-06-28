@@ -93,8 +93,6 @@ def get_binary(name):
     """
     if name in _SOLVER_PARAM:
         binary = _SOLVER_PARAM[name].get_binary()
-        FreeCAD.Console.PrintMessage(
-            'Solver binary path: {} \n'.format(binary))
         return binary
     else:
         FreeCAD.Console.PrintError(
@@ -193,13 +191,11 @@ class _SolverDlg(object):
         # set the binary path to the FreeCAD defaults
         # ATM pure unix shell commands without path names are used
         binary = self.default
-        FreeCAD.Console.PrintLog("Solver binary path: {} \n".format(binary))
 
         # check if use_default is set to True
         # if True the standard binary path will be overwritten with a user binary path
         if self.param_group.GetBool(self.use_default, True) is False:
             binary = self.param_group.GetString(self.custom_path)
-        FreeCAD.Console.PrintLog("Solver binary path: {} \n".format(binary))
 
         # get the whole binary path name for the given command or binary path and return it
         from distutils.spawn import find_executable as find_bin

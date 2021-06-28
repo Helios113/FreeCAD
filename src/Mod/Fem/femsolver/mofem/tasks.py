@@ -47,6 +47,7 @@ from .. import run
 from .. import settings
 from femtools import femutils
 from femtools import membertools
+from feminout import importVTKResults
 
 
 """
@@ -159,7 +160,7 @@ class Prepare(run.Prepare):
                     else:
                         for line in out.decode(encoding='utf-8').split('\n'):
                             f.write(line+'\n')
-                        self.report.info("read_med tool finished, log file located at: "+ h5m_log)
+                        FreeCAD.Console.PrintLog("read_med tool finished, log file located at: "+ h5m_log)
                     
                 except IOError:
                     self.report.error("Can't access working directory.")
@@ -199,7 +200,8 @@ class Solve(run.Solve):
             solver_log = join(self.directory, 'solver_log.txt')
             with open(solver_log, "w") as f:
                 try:
-                    os.mkdir(out_dir)
+                    if not os.path.isdir(out_dir):
+                        os.mkdir(out_dir)
                     task = [binary, "-my_file", work_file]
                     self._process = subprocess.Popen(
                         task, cwd=out_dir,
@@ -214,7 +216,7 @@ class Solve(run.Solve):
                     else:
                         for line in out.decode(encoding='utf-8').split('\n'):
                             f.write(line+'\n')
-                        self.report.info(analysis_type + "finished, log file located at: "+ solver_log)
+                        FreeCAD.Console.PrintLog(analysis_type + "finished, log file located at: "+ solver_log)
                 except FileNotFoundError:
                     self.report.error(".h5m file is missing from work directory.")
                     self.fail()
@@ -231,7 +233,8 @@ class Solve(run.Solve):
                     if not out_list:
                         self.report.error("No MoFEM results found. Check "+out_dir+" for .h5m files")
                         self.fail()
-                    mkdir(res_dir)
+                    if not os.path.isdir(res_dir):
+                        os.mkdir(res_dir)
                     for out in out_list:
                         res = out.replace('h5m', 'vtk')
                         task = [mbconvert_path, join(out_dir,out), join(res_dir,res)]
@@ -247,13 +250,10 @@ class Solve(run.Solve):
                         else:
                             for line in out.decode(encoding='utf-8').split('\n'):
                                 f.write(line+'\n')
-                            self.report.info("mbconvert finished, log file located at: "+ convert_log)
+                            FreeCAD.Console.PrintLog("mbconvert finished, log file located at: "+ convert_log)
                 except IOError:
                     self.report.error("Can't access working directory.")
                     self.fail()
-
-            self._updateOutput()
-            self.fail()
         else:
             self.report.error(analysis_type+" executable not found.")
             self.fail()
@@ -262,12 +262,18 @@ class Solve(run.Solve):
 class Results(run.Results):
 
     def run(self):
+        FreeCAD.Console.PrintMessage("Loading result vtk files")
+        res_dir = join(self.directory, "results_vtk")
+        print(res_dir)
+        importVTKResults.importVtk(join(res_dir,"out.vtk"),"Result", 0)
+        """
         if self.solver.MoFEMResult is None:
             self._createResults()
         postPath = self._getVTK()
         self.solver.MoFEMResult.read(postPath)
         self.solver.MoFEMResult.getLastPostObject().touch()
         self.solver.Document.recompute()
+        """
 
     def _createResults(self):
         self.solver.MoFEMResult = self.analysis.Document.addObject(

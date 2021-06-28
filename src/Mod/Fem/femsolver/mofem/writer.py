@@ -155,8 +155,14 @@ class MedWriterMoFEM(writerbase.FemInputWriter):
         block_number = 2
         if self.fixed_objects:
             for fix in self.fixed_objects:
+                """
                 cfg.write("[block_{block_id}]\nid={id}\nadd=BLOCKSET\nname={name}\n\n".format(
                     block_id=block_number, id=100+block_number, name="FIX_ALL"))
+                    """
+                cfg.write("""[block_{block_id}]\nid={id}\nadd=NODESET\n
+                          disp_flag1=1\ndisp_ux=0.0\ndisp_flag2=1\ndisp_uy=0.0\n
+                          disp_flag3=1\ndisp_uz=0.0\n\n""".format(
+                    block_id=block_number, id=100+block_number))
                 block_number += 1
         if self.displacement_objects:
             for disp in self.displacement_objects:
