@@ -22,6 +22,7 @@
 # *                                                                         *
 # ***************************************************************************
 
+from pprint import pp
 from femtools import membertools
 from femtools import femutils
 from femtools import constants
@@ -84,39 +85,62 @@ class MedWriterMoFEM(writerbase.FemInputWriter):
         # The order of the different conditions matters
         # We change them here so we can use the same order later
         # When creating the block sets for the FEM solver
+
         new_group_data = {}
+
         order_index = 0
         if self.material_objects:
-            for i, mat in enumerate(self.material_objects):
-                work_obj = mat['Object']
-                new_group_data[str(order_index)+'mat' +
-                               str(i)] = [work_obj.References[0][1][0]]
-                order_index += 1
+            self._bc_parse(self.material_objects, new_group_data,
+                           str(order_index) + "mat", )
+            order_index += 1
 
         #if self.material_nonlinear_objects
 
         if self.fixed_objects:
-            for i, fix in enumerate(self.fixed_objects):
-                work_obj = fix['Object']
-                #print("Object refrence", work_obj.References)
-                new_group_data[str(order_index)+'fix_all' +
-                               str(i)] = [work_obj.References[0][1][0]]
-                order_index += 1
+            self._bc_parse(self.fixed_objects, new_group_data,
+                           str(order_index) + "fix_all")
+            order_index += 1
 
         if self.displacement_objects:
-            for i, disp in enumerate(self.displacement_objects):
-                work_obj = disp['Object']
-                new_group_data[str(order_index)+'fix_disp' +
-                               str(i)] = [work_obj.References[0][1][0]]
-                order_index += 1
+            self._bc_parse(self.displacement_objects, new_group_data,
+                           str(order_index) + "disp")
+            order_index += 1
 
         if self.pressure_objects:
-            for i, press in enumerate(self.pressure_objects):
-                work_obj = press['Object']
-                new_group_data[str(order_index)+'pressure' +
-                               str(i)] = [work_obj.References[0][1][0]]
-                order_index += 1
+            self._bc_parse(self.pressure_objects, new_group_data,
+                           str(order_index) + "pressure")
+            order_index += 1
+        
+        if self.selfweight_objects:
+            for i, ele in enumerate(self.selfweight_objects):
+                print("___________")
+                work_obj = ele['Object']
+                print(work_obj)
+                print(work_obj.Gravity_x)
+                print(work_obj.Gravity_y)
+                print(work_obj.Gravity_z)
+            #self._bc_parse(self.selfweight_objects, new_group_data,
+            #               str(order_index) + "sw")
+            #order_index += 1
+        
+        if self.force_objects:
+            for i, ele in enumerate(self.force_objects):
+                print("___________")
+                work_obj = ele['Object']
+                print(work_obj)
+                print(work_obj.Force) # magnitude
+                print(work_obj.DirectionVector)# the one we need normalised
+                print(work_obj.References) 
+            self._bc_parse(self.force_objects, new_group_data,
+                           str(order_index) + "force")
+            order_index += 1
+        print(new_group_data)
         return new_group_data
+
+    def _bc_parse(self, obj, new_group_data, name):
+        for i, ele in enumerate(obj):
+            work_obj = ele['Object']
+            new_group_data[name + str(i)] = [work_obj.References[0][1][0]]
 
     def gen_med_file(self):
         brepFd, brepPath = tempfile.mkstemp(dir=self.dir_name, suffix=".brep")
@@ -194,16 +218,19 @@ class MedWriterMoFEM(writerbase.FemInputWriter):
                 block_number += 1
         if self.displacement_objects:
             for disp in self.displacement_objects:
+                # implement proper displacements
                 work_obj = disp['Object']
-                name = "FIX_"
-                if work_obj.xFix:
-                    name += "X"
-                if work_obj.yFix:
-                    name += "Y"
-                if work_obj.zFix:
-                    name += "Z"
-                cfg.write("[block_{block_id}]\nid={id}\nadd=BLOCKSET\nname={name}\n\n".format(
-                    block_id=block_number, id=100+block_number, name=name))
+                cfg.write("[block_{block_id}]\nid={id}\nadd=BLOCKSET\n".format(
+                    block_id=block_number, id=100+block_number))
+                cfg.write(("disp_flag1={x}\ndisp_ux={ux}\n"
+                           "disp_flag2={y}\ndisp_uy={uy}\n"
+                           "disp_flag3={z}\ndisp_uz={uz}\n\n")).format(
+                            x=int(work_obj.xFix == 'true'),
+                            ux=work_obj.xDisplacement,
+                            y=int(work_obj.yFix == 'true'),
+                            uy=work_obj.yDisplacement,
+                            z=int(work_obj.zFix == 'true'),
+                            uz=work_obj.zDisplacement)
                 block_number += 1
 
         if self.pressure_objects:
@@ -215,8 +242,7 @@ class MedWriterMoFEM(writerbase.FemInputWriter):
                 cfg.write("pressure_flag2=0\npressure_magnitude={dirmag}\n\n".format(
                     dirmag=-work_obj.Pressure if work_obj.Reversed else work_obj.Pressure))
                 block_number += 1
-
-        cfg.close()
+            
 
 
 class MedWriterMoFEMError(Exception):
