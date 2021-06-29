@@ -31,14 +31,12 @@ __url__ = "https://www.freecadweb.org"
 
 import os
 from femsolver import task
-from os import listdir, mkdir, pread
+from os import listdir
 from os.path import isfile
 #from os.path import join
 from posixpath import join
 import subprocess
-import sys
-from platform import system
-from tempfile import SpooledTemporaryFile
+
 
 import FreeCAD
 
@@ -64,13 +62,13 @@ Those tasks divide the process of solving a analysis into the following steps: c
 class Check(run.Check):
 
     def run(self):
-        self.pushStatus("Checking analysis...\n")
+        FreeCAD.Console.PrintMessage("Checking analysis configuration...\n")
         if self.checkMesh():  # works for only one mesh if more meshes are needed this check needs to be amended
             if self.checkMeshType():
                 self.pushStatus("Mesh created with gmsh\n")
         self.checkMaterial()
-        # self.checkEquations() implements equations - not used for now
-
+        self.checkEquations()
+        
     def checkMeshType(self):
         mesh = membertools.get_mesh_to_solve(self.analysis)[0]
         if not femutils.is_of_type(mesh, "Fem::FemMeshGmsh"):
@@ -85,9 +83,34 @@ class Check(run.Check):
         equations = self.solver.Group
         if not equations:
             self.report.error(
-                "Solver has no equations. "
-                "Add at least one equation.")
+                "Solver has no analysis type. "
+                "Add a type to continue.")
             self.fail()
+        elif len(equations) != 1:
+            self.report.error(
+                "Solver can only do one analysis type at a time. "
+                "Make sure there is only one type.")
+            self.fail()
+
+    def checkMaterial(self):
+        matObjs = membertools.get_member(
+            self.analysis, "App::MaterialObjectPython")
+        if len(matObjs) == 0:
+            self.report.error(
+                "No material object found. "
+                "At least one material is required.")
+            self.fail()
+            return False
+        else:
+            for mat in matObjs:
+                if mat.References:
+                    if mat.References[0][1][0] and mat.References[0][1][0].strip():
+                        return True
+            self.report.error(
+                "No material is associated with any object. "
+                "Please create the connection through the material creation dialog")
+            self.fail()
+            return False
 
 
 # Implementation of the Prepare class
