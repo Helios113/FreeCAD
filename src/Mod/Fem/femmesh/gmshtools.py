@@ -895,7 +895,7 @@ class GmshTools():
 
         # save mesh
         geo.write("// save\n")
-        geo.write("Mesh.Format = {mesh_format};\n".format(mesh_format = mesh_format))  # unv
+        geo.write("Mesh.Format = {mesh_format};\n".format(mesh_format = mesh_format))  # Format = 2 unv, 10 auto, 33 med
         if self.group_elements and self.group_nodes_export:
             geo.write(
                 "// For each group save not only the elements but the nodes too.;\n")

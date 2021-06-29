@@ -106,7 +106,20 @@ def add_attributes(obj):
     )
     obj.AnalysisType = ANALYSIS_TYPES
     obj.AnalysisType = ANALYSIS_TYPES[0]
-
+    obj.addProperty(
+            "App::PropertyLink",
+            "GmshMesh",
+            "Base",
+            "",
+            4 | 8
+        )
+    obj.addProperty(
+            "App::PropertyLink",
+            "MoFEMResult",
+            "Base",
+            "",
+            4 | 8
+        )
 
 # Implementation of the ViewProxy class
 # This class is called from the GUI

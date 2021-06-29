@@ -66,7 +66,6 @@ class Check(run.Check):
     def run(self):
         self.pushStatus("Checking analysis...\n")
         if self.checkMesh():  # works for only one mesh if more meshes are needed this check needs to be amended
-            self.pushStatus("Mesh OK\n")
             if self.checkMeshType():
                 self.pushStatus("Mesh created with gmsh\n")
         self.checkMaterial()
@@ -169,7 +168,6 @@ class Prepare(run.Prepare):
             self.report.error("read_med executable not found.")
             self.fail()
 
-
     def checkHandled(self, w):
         handled = w.getHandledConstraints()
         allConstraints = membertools.get_member(
@@ -227,17 +225,19 @@ class Solve(run.Solve):
             with open(convert_log, "w") as f:
                 try:
                     # get all files from directory
-                    files_list = [f for f in listdir(out_dir) if isfile(join(out_dir, f))]
+                    files_list = [f for f in listdir(out_dir) if isfile(
+                                    join(out_dir, f))]
                     # check if they are .h5m
                     out_list = [f for f in files_list if f[-3:] == "h5m"]
                     if not out_list:
-                        self.report.error("No MoFEM results found. Check "+out_dir+" for .h5m files")
+                        self.report.error("No MoFEM results found. Check " +
+                                          out_dir + " for .h5m files")
                         self.fail()
                     if not os.path.isdir(res_dir):
                         os.mkdir(res_dir)
                     for out in out_list:
                         res = out.replace('h5m', 'vtk')
-                        task = [mbconvert_path, join(out_dir,out), join(res_dir,res)]
+                        task = [mbconvert_path, join(out_dir, out), join(res_dir, res)]
                         self._process = subprocess.Popen(
                             task, stdout=subprocess.PIPE,
                             stderr=subprocess.PIPE)
@@ -245,12 +245,14 @@ class Solve(run.Solve):
                         if self._process.returncode != 0:
                             for line in err.decode(encoding='utf-8').split('\n'):
                                 f.write(line+'\n')
-                            self.report.error("mbconvert tool failed check log file at: "+ convert_log)
+                            self.report.error("mbconvert tool failed check log \
+                                file at: " + convert_log)
                             self.fail()
                         else:
                             for line in out.decode(encoding='utf-8').split('\n'):
                                 f.write(line+'\n')
-                            FreeCAD.Console.PrintLog("mbconvert finished, log file located at: "+ convert_log)
+                            FreeCAD.Console.PrintLog("mbconvert finished, \
+                                log file located at: " + convert_log)
                 except IOError:
                     self.report.error("Can't access working directory.")
                     self.fail()
@@ -263,17 +265,17 @@ class Results(run.Results):
 
     def run(self):
         FreeCAD.Console.PrintMessage("Loading result vtk files")
-        res_dir = join(self.directory, "results_vtk")
+        res_dir = join(self.directory, "results_vtk/out.vtk")
         print(res_dir)
-        importVTKResults.importVtk(join(res_dir,"out.vtk"),"Result", 0)
-        """
+        # importVTKResults.importVtk(join(res_dir, "out.vtk"), "Result", 0)
+
         if self.solver.MoFEMResult is None:
             self._createResults()
-        postPath = self._getVTK()
-        self.solver.MoFEMResult.read(postPath)
-        self.solver.MoFEMResult.getLastPostObject().touch()
-        self.solver.Document.recompute()
-        """
+
+        self.solver.MoFEMResult.read(res_dir)
+        self.solver.MoFEMResult.touch()
+        FreeCAD.ActiveDocument.recompute()
+        FreeCAD.Console.PrintMessage("Done!")
 
     def _createResults(self):
         self.solver.MoFEMResult = self.analysis.Document.addObject(
@@ -281,11 +283,4 @@ class Results(run.Results):
         self.solver.MoFEMResult.Label = self.solver.Label + "Result"
         self.analysis.addObject(self.solver.MoFEMResult)
 
-    def _getVTK(self):
-        try:
-            pass
-        except IOError:
-            self.report.error("Can't access working directory.")
-            self.fail()
-        return join(self.directory, "out.vtk")
 # @}

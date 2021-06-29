@@ -48,7 +48,6 @@ import os
 import os.path
 import subprocess
 import tempfile
-from collections import defaultdict
 
 
 # Generate .geo file
@@ -86,32 +85,46 @@ class MedWriterMoFEM(writerbase.FemInputWriter):
         # We change them here so we can use the same order later
         # When creating the block sets for the FEM solver
         new_group_data = {}
+        order_index = 0
+        if self.material_objects:
+            for i, mat in enumerate(self.material_objects):
+                work_obj = mat['Object']
+                new_group_data[str(order_index)+'mat' +
+                               str(i)] = [work_obj.References[0][1][0]]
+                order_index += 1
+
+        #if self.material_nonlinear_objects
 
         if self.fixed_objects:
             for i, fix in enumerate(self.fixed_objects):
                 work_obj = fix['Object']
                 #print("Object refrence", work_obj.References)
-                new_group_data['fix_all' +
+                new_group_data[str(order_index)+'fix_all' +
                                str(i)] = [work_obj.References[0][1][0]]
+                order_index += 1
 
         if self.displacement_objects:
             for i, disp in enumerate(self.displacement_objects):
                 work_obj = disp['Object']
-                new_group_data['fix_disp' +
+                new_group_data[str(order_index)+'fix_disp' +
                                str(i)] = [work_obj.References[0][1][0]]
+                order_index += 1
 
         if self.pressure_objects:
             for i, press in enumerate(self.pressure_objects):
                 work_obj = press['Object']
-                new_group_data['pressure' +
+                new_group_data[str(order_index)+'pressure' +
                                str(i)] = [work_obj.References[0][1][0]]
+                order_index += 1
         return new_group_data
 
     def gen_med_file(self):
         brepFd, brepPath = tempfile.mkstemp(dir=self.dir_name, suffix=".brep")
         geoFd, geoPath = tempfile.mkstemp(dir=self.dir_name, suffix=".geo")
+        unvGmshFd, unvGmshPath = tempfile.mkstemp(suffix=".unv")
         os.close(brepFd)
         os.close(geoFd)
+        os.close(unvGmshFd)
 
         if self.mesh_obj.ElementOrder == '2nd':
             Console.PrintError("Only element order one supported by MoFem")
@@ -122,21 +135,26 @@ class MedWriterMoFEM(writerbase.FemInputWriter):
         tools.get_group_data()
 
         tools.group_elements = self.get_mofem_bcs()
-
         tools.group_nodes_export = True
         tools.ele_length_map = {}
         tools.temp_file_geometry = brepPath
         tools.temp_file_geo = geoPath
-        tools.temp_file_mesh = self.med_path
+        tools.temp_file_mesh = unvGmshPath
         tools.get_dimension()
         tools.get_region_data()
         tools.get_boundary_layer_data()
         tools.write_part_file()
-        tools.write_geo(33)
+        tools.write_geo()
         tools.get_gmsh_command()
         tools.run_gmsh_with_geo()
+        tools.read_and_set_new_mesh()
+        tools.temp_file_mesh = self.med_path
+        tools.write_geo(33)
+        tools.run_gmsh_with_geo()
+        
         os.remove(brepPath)
         os.remove(geoPath)
+        os.remove(unvGmshPath)
 
     """def _change_MeshFormat(self, geoPath):
         file = fileinput.input(geoPath, inplace=True, backup='.bak')
@@ -150,19 +168,29 @@ class MedWriterMoFEM(writerbase.FemInputWriter):
 
     def gen_cfg_file(self):
         cfg = open(self.cfg_path, "w")
-        cfg.write(
-            "[block_1]\nid=101\nadd=BLOCKSET\nname=MAT_ELASTIC\nyoung=1\npoisson=0.1\n\n")
+        
         block_number = 2
+
+        if self.material_objects:
+            for mat in self.material_objects:
+                work_obj = mat['Object']
+                youngs_modulus = work_obj.Material['YoungsModulus']
+                youngs_modulus = [float(s) for s in youngs_modulus.split() if s.isnumeric()][0]
+                poissons = work_obj.Material['PoissonRatio']
+                cfg.write(("[block_{block_id}]\nid={id}\nadd=BLOCKSET\n"
+                           "name={name}\nyoung={E}\npoisson={lam}\n\n").format(
+                        block_id=block_number, id=100+block_number,
+                        name="MAT_ELASTIC", E=youngs_modulus, lam=poissons))
+                # print("Our obj")
+                # print(work_obj.Material)
+                block_number += 1
+
         if self.fixed_objects:
             for fix in self.fixed_objects:
-                """
-                cfg.write("[block_{block_id}]\nid={id}\nadd=BLOCKSET\nname={name}\n\n".format(
-                    block_id=block_number, id=100+block_number, name="FIX_ALL"))
-                    """
-                cfg.write("""[block_{block_id}]\nid={id}\nadd=NODESET\n
-                          disp_flag1=1\ndisp_ux=0.0\ndisp_flag2=1\ndisp_uy=0.0\n
-                          disp_flag3=1\ndisp_uz=0.0\n\n""".format(
-                    block_id=block_number, id=100+block_number))
+                cfg.write(("[block_{block_id}]\nid={id}\nadd=NODESET\n"
+                          "disp_flag1=1\ndisp_ux=0.0\ndisp_flag2=1\n"
+                          "disp_uy=0.0\ndisp_flag3=1\ndisp_uz=0.0\n\n").format(
+                        block_id=block_number, id=100+block_number))
                 block_number += 1
         if self.displacement_objects:
             for disp in self.displacement_objects:
@@ -184,7 +212,7 @@ class MedWriterMoFEM(writerbase.FemInputWriter):
                 name = "PRESSURE"
                 cfg.write("[block_{block_id}]\nid={id}\nadd=SIDESET\nname={name}\n".format(
                     block_id=block_number, id=100+block_number, name=name))
-                cfg.write("pressure_flag2=0\npressure_magnitude={dirmag}".format(
+                cfg.write("pressure_flag2=0\npressure_magnitude={dirmag}\n\n".format(
                     dirmag=-work_obj.Pressure if work_obj.Reversed else work_obj.Pressure))
                 block_number += 1
 
