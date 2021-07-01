@@ -238,6 +238,18 @@ class _ConstraintTie(CommandManager):
         self.is_active = "with_analysis"
         self.do_activated = "add_obj_on_gui_set_edit"
 
+"""
+class _ConstraintSpring(CommandManager):
+    "The FEM_ConstraintSpring command definition"
+
+    def __init__(self):
+        super(_ConstraintSpring, self).__init__()
+        self.menuetext = "Constraint spring"
+        self.tooltip = "Creates a FEM constraint spring"
+        self.is_active = "with_analysis"
+        self.do_activated = "add_obj_on_gui_set_edit"
+"""
+
 
 class _ElementFluid1D(CommandManager):
     "The FEM_ElementFluid1D command definition"
@@ -892,6 +904,11 @@ FreeCADGui.addCommand(
     "FEM_ConstraintTie",
     _ConstraintTie()
 )
+"""
+FreeCADGui.addCommand(
+    "FEM_ConstraintSpring",
+    _ConstraintSpring()
+)"""
 FreeCADGui.addCommand(
     "FEM_ElementFluid1D",
     _ElementFluid1D()
