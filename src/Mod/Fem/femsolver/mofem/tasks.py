@@ -207,6 +207,7 @@ class Solve(run.Solve):
     def run(self):
 
         FreeCAD.Console.PrintMessage("Executing solver...\n")
+        self._handleTypes()
         analysis_type = self.solver.AnalysisType
         binary = settings.get_binary(analysis_type)
         mbconvert_path = settings.get_binary("mbconvert")
@@ -283,6 +284,18 @@ class Solve(run.Solve):
             self.report.error(analysis_type+" executable not found.")
             self.fail()
 
+    def _handleTypes(self):
+        for tip in self.solver.Group:
+            if femutils.is_of_type(tip, "Fem::TypeMoFEMBone"):
+                print("Bone")
+                print(tip)
+                if tip.References:
+                    print(tip.References)
+            if femutils.is_of_type(tip, "Fem::TypeMoFEMLinerElasticity"):
+                print("Elastic")
+                print(tip)
+                if tip.References:
+                    print(tip.References)
 
 class Results(run.Results):
 

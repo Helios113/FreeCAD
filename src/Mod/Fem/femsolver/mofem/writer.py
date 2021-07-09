@@ -131,8 +131,13 @@ class MedWriterMoFEM(writerbase.FemInputWriter):
                 print(work_obj.Force) # magnitude
                 print(work_obj.DirectionVector)# the one we need normalised
                 print(work_obj.References) 
-            self._bc_parse(self.force_objects, new_group_data,
-                           str(order_index) + "force")
+            #self._bc_parse(self.force_objects, new_group_data,
+            #               str(order_index) + "force")
+            #order_index += 1
+
+        if self.spring_objects:
+            self._bc_parse(self.spring_objects, new_group_data,
+                           str(order_index) + "spring")
             order_index += 1
         print(new_group_data)
         return new_group_data
@@ -242,8 +247,17 @@ class MedWriterMoFEM(writerbase.FemInputWriter):
                 cfg.write("pressure_flag2=0\npressure_magnitude={dirmag}\n\n".format(
                     dirmag=-work_obj.Pressure if work_obj.Reversed else work_obj.Pressure))
                 block_number += 1
+        if self.spring_objects:
+            for spr in self.spring_objects:
+                work_obj = spr['Object']
+                name = "SPRING_BC"
+                cfg.write(("[block_{block_id}]\nid={id}\nadd=BLOCKSET\n"
+                            "name={name}\nuser1={nk}\nuser2={tk}").format(
+                    block_id=block_number, id=100+block_number, name=name,
+                    nk=work_obj.normalStiffness,
+                    tk=work_obj.tangentialStiffness))
+                block_number += 1
             
-
 
 class MedWriterMoFEMError(Exception):
     pass

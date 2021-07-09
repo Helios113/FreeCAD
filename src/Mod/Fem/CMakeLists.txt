@@ -494,6 +494,7 @@ SET(FemGuiTaskPanels_SRCS
     femtaskpanels/task_mesh_region.py
     femtaskpanels/task_result_mechanical.py
     femtaskpanels/task_solver_ccxtools.py
+    femtaskpanels/task_solver_mofem.py
 )
 
 SET(FemGuiTests_SRCS
@@ -533,6 +534,7 @@ SET(FemGuiViewProvider_SRCS
     femviewprovider/view_mesh_result.py
     femviewprovider/view_result_mechanical.py
     femviewprovider/view_solver_ccxtools.py
+    femviewprovider/view_solver_mofem.py
 )
 
 SET(FemAllGuiScripts
