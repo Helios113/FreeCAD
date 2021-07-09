@@ -135,7 +135,6 @@ public:
     static Unit YoungsModulus;
 
     static Unit Stiffness;
-    
 
     static Unit Force;
     static Unit Work;
