@@ -133,8 +133,8 @@ QString UnitsSchemaImperial1::schemaTranslate(const Quantity &quant, double &fac
         }
     }
     else if (unit == Unit::Stiffness) { //Make better, a
-        unitString = QString::fromLatin1("lbs/inch");
-        factor = 1;
+        unitString = QString::fromLatin1("lbf/inch");
+        factor = 4.448222/0.0254;
     }
     else if (unit == Unit::Velocity) {
         unitString = QString::fromLatin1("in/min");
@@ -188,8 +188,8 @@ QString UnitsSchemaImperialDecimal::schemaTranslate(const Base::Quantity& quant,
         factor = 6.894744825494;
     }
     else if (unit == Unit::Stiffness) {
-        unitString = QString::fromLatin1("lbs/inch");
-        factor = 1;
+        unitString = QString::fromLatin1("lbf/inch");
+        factor = 4.448222/0.0254;
     }
     else if (unit == Unit::Velocity) {
         unitString = QString::fromLatin1("in/min");
@@ -365,8 +365,8 @@ QString UnitsSchemaImperialCivil::schemaTranslate(const Base::Quantity& quant, d
             factor = 6.894744825494;
     }
     else if (unit == Unit::Stiffness) {
-        unitString = QString::fromLatin1("lbs/inch");
-        factor = 1;
+        unitString = QString::fromLatin1("lbf/inch");
+        factor = 4.448222/0.0254;
     }
     else if (unit == Unit::Velocity) {
         unitString = QString::fromLatin1("mph");
