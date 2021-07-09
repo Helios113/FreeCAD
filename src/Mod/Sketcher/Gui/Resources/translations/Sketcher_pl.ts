@@ -389,12 +389,12 @@
     <message>
       <location filename="../../CommandCreateGeo.cpp" line="1096"/>
       <source>Create rectangles</source>
-      <translation type="unfinished">Create rectangles</translation>
+      <translation>Utwórz prostokąty</translation>
     </message>
     <message>
       <location filename="../../CommandCreateGeo.cpp" line="1097"/>
       <source>Creates a rectangle in the sketch</source>
-      <translation type="unfinished">Creates a rectangle in the sketch</translation>
+      <translation>Utwórz prostokąt na szkicu</translation>
     </message>
     <message>
       <location filename="../../CommandCreateGeo.cpp" line="1180"/>
@@ -404,12 +404,12 @@
     <message>
       <location filename="../../CommandCreateGeo.cpp" line="1184"/>
       <source>Centered rectangle</source>
-      <translation type="unfinished">Centered rectangle</translation>
+      <translation>Prostokąt wyśrodkowany</translation>
     </message>
     <message>
       <location filename="../../CommandCreateGeo.cpp" line="1188"/>
       <source>Rounded rectangle</source>
-      <translation type="unfinished">Rounded rectangle</translation>
+      <translation>Prostokąt zaokrąglony</translation>
     </message>
   </context>
   <context>
@@ -1193,12 +1193,12 @@ w odniesieniu do linii lub trzeciego punktu</translation>
     <message>
       <location filename="../../CommandCreateGeo.cpp" line="1053"/>
       <source>Create rounded rectangle</source>
-      <translation type="unfinished">Create rounded rectangle</translation>
+      <translation>Utwórz prostokąt zaokrąglony</translation>
     </message>
     <message>
       <location filename="../../CommandCreateGeo.cpp" line="1054"/>
       <source>Create a rounded rectangle in the sketch</source>
-      <translation type="unfinished">Create a rounded rectangle in the sketch</translation>
+      <translation>Utwórz zaokrąglony prostokąt na szkicu</translation>
     </message>
   </context>
   <context>
@@ -1337,12 +1337,12 @@ w odniesieniu do linii lub trzeciego punktu</translation>
     <message>
       <location filename="../../CommandCreateGeo.cpp" line="729"/>
       <source>Create centered rectangle</source>
-      <translation type="unfinished">Create centered rectangle</translation>
+      <translation>Utwórz wyśrodkowany prostokąt</translation>
     </message>
     <message>
       <location filename="../../CommandCreateGeo.cpp" line="730"/>
       <source>Create a centered rectangle in the sketch</source>
-      <translation type="unfinished">Create a centered rectangle in the sketch</translation>
+      <translation>Utwórz wyśrodkowany prostokąt na szkicu</translation>
     </message>
   </context>
   <context>
@@ -1766,12 +1766,12 @@ jako odniesienia lustrzanego odbicia.</translation>
     <message>
       <location filename="../../CommandSketcherTools.cpp" line="2192"/>
       <source>Remove axes alignment</source>
-      <translation type="unfinished">Remove axes alignment</translation>
+      <translation>Usuń wyrównanie osi</translation>
     </message>
     <message>
       <location filename="../../CommandSketcherTools.cpp" line="2193"/>
       <source>Modifies constraints to remove axes alignment while trying to preserve the constraint relationship of the selection</source>
-      <translation type="unfinished">Modifies constraints to remove axes alignment while trying to preserve the constraint relationship of the selection</translation>
+      <translation>Modyfikuje wiązania, aby usunąć wyrównanie osi, próbując jednocześnie zachować zależność wiązań dla zaznaczenia</translation>
     </message>
   </context>
   <context>
@@ -2495,12 +2495,12 @@ nieprawidłowych wiązań, zdegenerowanej geometrii itp.</translation>
     <message>
       <location filename="../../CommandCreateGeo.cpp" line="575"/>
       <source>Add centered sketch box</source>
-      <translation type="unfinished">Add centered sketch box</translation>
+      <translation>Dodaj wyśrodkowane pole szkicu</translation>
     </message>
     <message>
       <location filename="../../CommandCreateGeo.cpp" line="901"/>
       <source>Add rounded rectangle</source>
-      <translation type="unfinished">Add rounded rectangle</translation>
+      <translation>Dodaj zaokrąglony prostokąt</translation>
     </message>
     <message>
       <location filename="../../CommandCreateGeo.cpp" line="1561"/>
@@ -2653,7 +2653,7 @@ nieprawidłowych wiązań, zdegenerowanej geometrii itp.</translation>
     <message>
       <location filename="../../CommandSketcherTools.cpp" line="2278"/>
       <source>Remove Axes Alignment</source>
-      <translation type="unfinished">Remove Axes Alignment</translation>
+      <translation>Usuń wyrównanie osi</translation>
     </message>
     <message>
       <location filename="../../CommandSketcherVirtualSpace.cpp" line="155"/>
@@ -2707,17 +2707,17 @@ nieprawidłowych wiązań, zdegenerowanej geometrii itp.</translation>
     <message>
       <location filename="../../../App/SketchAnalysis.cpp" line="373"/>
       <source>Autoconstrain error: Unsolvable sketch while applying coincident constraints.</source>
-      <translation>Błąd więzów automatycznych: Nierozwiązywalny szkic przy stosowaniu wiązania zbieżności.</translation>
+      <translation>Błąd wiązań automatycznych: Nierozwiązywalny szkic przy stosowaniu wiązania zbieżności.</translation>
     </message>
     <message>
       <location filename="../../../App/SketchAnalysis.cpp" line="454"/>
       <source>Autoconstrain error: Unsolvable sketch while applying vertical/horizontal constraints.</source>
-      <translation>Błąd więzów automatycznych: Nierozwiązywalny szkic przy stosowaniu wiązania pionowego/poziomego.</translation>
+      <translation>Błąd więzów automatycznych: Nierozwiązywalny szkic przy stosowaniu wiązania pionowego / poziomego.</translation>
     </message>
     <message>
       <location filename="../../../App/SketchAnalysis.cpp" line="651"/>
       <source>Autoconstrain error: Unsolvable sketch while applying equality constraints.</source>
-      <translation>Błąd więzów automatycznych: Nierozwiązywalny szkic przy stosowaniu wiązania równości.</translation>
+      <translation>Błąd wiązań automatycznych: Nierozwiązywalny szkic przy stosowaniu wiązania równości.</translation>
     </message>
     <message>
       <location filename="../../../App/SketchAnalysis.cpp" line="705"/>
@@ -2727,17 +2727,17 @@ nieprawidłowych wiązań, zdegenerowanej geometrii itp.</translation>
     <message>
       <location filename="../../../App/SketchAnalysis.cpp" line="742"/>
       <source>Autoconstrain error: Unsolvable sketch after applying horizontal and vertical constraints.</source>
-      <translation>Błąd więzów automatycznych: Nierozwiązywalny szkic po zastosowaniu więzów poziomych i pionowych.</translation>
+      <translation>Błąd wiązań automatycznych: Nierozwiązywalny szkic po zastosowaniu wiązań poziomych i pionowych.</translation>
     </message>
     <message>
       <location filename="../../../App/SketchAnalysis.cpp" line="764"/>
       <source>Autoconstrain error: Unsolvable sketch after applying point-on-point constraints.</source>
-      <translation>Błąd więzów automatycznych: Nierozwiązywalny szkic po zastosowaniu wiązania punkt do punktu.</translation>
+      <translation>Błąd wiązań automatycznych: Nierozwiązywalny szkic po zastosowaniu wiązania zbieżności punktów.</translation>
     </message>
     <message>
       <location filename="../../../App/SketchAnalysis.cpp" line="792"/>
       <source>Autoconstrain error: Unsolvable sketch after applying equality constraints.</source>
-      <translation>Błąd więzów automatycznych: Nierozwiązywalny szkic po zastosowaniu wiązania równości.</translation>
+      <translation>Błąd wiązań automatycznych: Nierozwiązywalny szkic przy stosowaniu wiązania równości.</translation>
     </message>
     <message>
       <location filename="../../../App/SketchObject.cpp" line="1978"/>
@@ -2777,7 +2777,7 @@ nieprawidłowych wiązań, zdegenerowanej geometrii itp.</translation>
     <message>
       <location filename="../../../App/SketchObject.cpp" line="5764"/>
       <source>The multiplicity cannot be decreased beyond zero.</source>
-      <translation>Wielokrotność nie może być zmniejszona poniżej zera.</translation>
+      <translation>Wielokrotność nie może zostać zmniejszona poniżej zera.</translation>
     </message>
     <message>
       <location filename="../../../App/SketchObject.cpp" line="5776"/>
@@ -2805,7 +2805,7 @@ nieprawidłowych wiązań, zdegenerowanej geometrii itp.</translation>
     <message>
       <location filename="../../Command.cpp" line="111"/>
       <source>There are no modes that accept the selected set of subelements</source>
-      <translation>Nie ma trybów akceptujących wybrany zestaw podelementów</translation>
+      <translation>Nie ma trybów, które akceptują wybrany zestaw elementów podrzędnych</translation>
     </message>
     <message>
       <location filename="../../Command.cpp" line="114"/>
@@ -3678,13 +3678,13 @@ Akceptowane kombinacje: dwie krzywe; punkt końcowy i krzywa; dwa punkty końcow
       <location filename="../../CommandSketcherBSpline.cpp" line="618"/>
       <location filename="../../CommandSketcherBSpline.cpp" line="772"/>
       <source>Wrong OCE/OCC version</source>
-      <translation>Zła wersja OCE/OCC</translation>
+      <translation>Niepoprawna wersja OCE / OCC</translation>
     </message>
     <message>
       <location filename="../../CommandSketcherBSpline.cpp" line="619"/>
       <location filename="../../CommandSketcherBSpline.cpp" line="773"/>
       <source>This version of OCE/OCC does not support knot operation. You need 6.9.0 or higher</source>
-      <translation>Ta wersja OCE/OCC nie obsługuje operacji węzła. Potrzebujesz wersji 6.9.0 lub bardziej aktualnej</translation>
+      <translation>Ta wersja OCE / OCC nie obsługuje operacji węzła. Potrzebujesz wersji 6.9.0 lub bardziej aktualnej</translation>
     </message>
     <message>
       <location filename="../../CommandSketcherBSpline.cpp" line="641"/>
@@ -3785,7 +3785,7 @@ Akceptowane kombinacje: dwie krzywe; punkt końcowy i krzywa; dwa punkty końcow
     <message>
       <location filename="../../CommandSketcherTools.cpp" line="2266"/>
       <source>Removal of axes alignment requires at least one selected non-external geometric element</source>
-      <translation type="unfinished">Removal of axes alignment requires at least one selected non-external geometric element</translation>
+      <translation>Usunięcie wyrównania osi wymaga wybrania co najmniej jednego niezewnętrznego elementu geometrycznego</translation>
     </message>
     <message>
       <location filename="../../EditDatumDialog.cpp" line="80"/>
@@ -3992,7 +3992,7 @@ Akceptowane kombinacje: dwie krzywe; punkt końcowy i krzywa; dwa punkty końcow
     <message>
       <location filename="../../CommandCreateGeo.cpp" line="6623"/>
       <source>Linking this will cause circular dependency.</source>
-      <translation>Powiązanie tego spowoduje zależność cykliczną.</translation>
+      <translation>Powiązanie to spowoduje zależność cykliczną.</translation>
     </message>
     <message>
       <location filename="../../CommandCreateGeo.cpp" line="6626"/>
@@ -5508,7 +5508,7 @@ Punkty muszą być ustawione bliżej niż jedna piąta rozmiaru siatki od linii 
     <message>
       <location filename="../../CommandConstraints.cpp" line="6013"/>
       <source>Fix the radius/diameter of a circle or an arc</source>
-      <translation>Napraw promień / średnicę okręgu lub łuku</translation>
+      <translation>Określ promień / średnicę okręgu lub łuku</translation>
     </message>
   </context>
   <context>
@@ -5525,7 +5525,7 @@ Punkty muszą być ustawione bliżej niż jedna piąta rozmiaru siatki od linii 
     <message>
       <location filename="../../CommandConstraints.cpp" line="6012"/>
       <source>Fix the radius/diameter of a circle or an arc</source>
-      <translation>Napraw promień / średnicę okręgu lub łuku</translation>
+      <translation>Określ promień / średnicę okręgu lub łuku</translation>
     </message>
   </context>
   <context>
@@ -5664,7 +5664,7 @@ Punkty muszą być ustawione bliżej niż jedna piąta rozmiaru siatki od linii 
     <message>
       <location filename="../../CommandCreateGeo.cpp" line="1189"/>
       <source>Create a rounded rectangle</source>
-      <translation type="unfinished">Create a rounded rectangle</translation>
+      <translation>Utwórz zaokrąglony prostokąt</translation>
     </message>
   </context>
   <context>
@@ -5705,7 +5705,7 @@ Punkty muszą być ustawione bliżej niż jedna piąta rozmiaru siatki od linii 
     <message>
       <location filename="../../CommandCreateGeo.cpp" line="1181"/>
       <source>Create a rectangle</source>
-      <translation type="unfinished">Create a rectangle</translation>
+      <translation>Utwórz prostokąt</translation>
     </message>
   </context>
   <context>
@@ -5713,7 +5713,7 @@ Punkty muszą być ustawione bliżej niż jedna piąta rozmiaru siatki od linii 
     <message>
       <location filename="../../CommandCreateGeo.cpp" line="1185"/>
       <source>Create a centered rectangle</source>
-      <translation type="unfinished">Create a centered rectangle</translation>
+      <translation>Utwórz wyśrodkowany prostokąt</translation>
     </message>
   </context>
   <context>
