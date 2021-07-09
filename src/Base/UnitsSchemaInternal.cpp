@@ -230,6 +230,7 @@ QString UnitsSchemaInternal::schemaTranslate(const Quantity &quant, double &fact
         else if (UnitValue < 1000000000.0) {
             unitString = QString::fromLatin1("MN/m");
             factor = 1000000.0;
+            
         }
     }
     else if (unit == Unit::Force) {

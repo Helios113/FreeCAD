@@ -510,7 +510,7 @@ Unit Unit::UltimateTensileStrength (-1,1,-2);
 Unit Unit::YieldStrength           (-1,1,-2);
 Unit Unit::YoungsModulus           (-1,1,-2);
 
-// Spring Stiffness [kg/s^-2]
+// Stiffness [kg/s^-2]
 Unit Unit::Stiffness               (0,1,-2);
 
 Unit Unit::Force   (1,1,-2);
