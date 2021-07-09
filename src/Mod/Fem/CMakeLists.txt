@@ -53,6 +53,7 @@ SET(FemExamples_SRCS
     femexamples/ccx_cantilever_nodeload.py
     femexamples/ccx_cantilever_hexa20faceload.py
     femexamples/ccx_cantilever_prescribeddisplacement.py
+    femexamples/constraint_centrif.py
     femexamples/constraint_contact_shell_shell.py
     femexamples/constraint_contact_solid_solid.py
     femexamples/constraint_section_print.py
@@ -88,6 +89,7 @@ SET(FemExampleMeshes_SRCS
     femexamples/meshes/mesh_canticcx_hexa20.py
     femexamples/meshes/mesh_canticcx_tetra10.py
     femexamples/meshes/mesh_capacitance_two_balls_tetra10.py
+    femexamples/meshes/mesh_constraint_centrif_tetra10.py
     femexamples/meshes/mesh_constraint_tie_tetra10.py
     femexamples/meshes/mesh_contact_box_halfcylinder_tetra10.py
     femexamples/meshes/mesh_contact_tube_tube_tria3.py
@@ -139,6 +141,7 @@ SET(FemObjects_SRCS
     femobjects/base_fempythonobject.py
     femobjects/constant_vacuumpermittivity.py
     femobjects/constraint_bodyheatsource.py
+    femobjects/constraint_centrif.py
     femobjects/constraint_electrostaticpotential.py
     femobjects/constraint_flowvelocity.py
     femobjects/constraint_initialflowvelocity.py
@@ -285,6 +288,7 @@ SET(FemTestsCcx_SRCS
     femtest/data/calculix/ccxcantilever_hexa20.inp
     femtest/data/calculix/ccxcantilever_nodeload.inp
     femtest/data/calculix/ccxcantilever_prescribeddisplacement.inp
+    femtest/data/calculix/constraint_centrif.inp
     femtest/data/calculix/constraint_contact_shell_shell.FCStd
     femtest/data/calculix/constraint_contact_shell_shell.inp
     femtest/data/calculix/constraint_contact_solid_solid.FCStd
@@ -481,6 +485,7 @@ SET(FemGuiObjects_SRCS
 
 SET(FemGuiTaskPanels_SRCS
     femtaskpanels/__init__.py
+    femtaskpanels/task_constraint_centrif.py
     femtaskpanels/task_constraint_electrostaticpotential.py
     femtaskpanels/task_constraint_flowvelocity.py
     femtaskpanels/task_constraint_initialflowvelocity.py
@@ -518,6 +523,7 @@ SET(FemGuiViewProvider_SRCS
     femviewprovider/view_base_femobject.py
     femviewprovider/view_constant_vacuumpermittivity.py
     femviewprovider/view_constraint_bodyheatsource.py
+    femviewprovider/view_constraint_centrif.py
     femviewprovider/view_constraint_electrostaticpotential.py
     femviewprovider/view_constraint_flowvelocity.py
     femviewprovider/view_constraint_initialflowvelocity.py
