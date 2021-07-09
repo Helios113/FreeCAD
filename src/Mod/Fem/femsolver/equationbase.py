@@ -103,10 +103,10 @@ class TypeBoneProxy(BaseProxy):
     pass
 
 
-class TypeBoneProxy(BaseViewProxy):
+class TypeBoneViewProxy(BaseViewProxy):
 
     def getIcon(self):
-        return ":/icons/FEM_TypeBone.svg"
+        return ":/Resources/icons/FEM_TypeBone.svg"
 
 
 class ElectrostaticViewProxy(BaseViewProxy):

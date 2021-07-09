@@ -73,6 +73,7 @@ class FemInputWriter():
         self.temperature_objects = member.cons_temperature
         self.tie_objects = member.cons_tie
         self.transform_objects = member.cons_transform
+        self.spring_objects = member.cons_spring
         # working dir
         self.dir_name = dir_name
         # if dir_name was not given or if it exists but isn't empty: create a temporary dir
