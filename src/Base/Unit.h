@@ -136,10 +136,6 @@ public:
 
     static Unit Stiffness;
     
-<<<<<<< HEAD
-=======
-
->>>>>>> 86dac838ad02d64ea4ea90c1ab44a8a8f01394d1
     static Unit Force;
     static Unit Work;
     static Unit Power;

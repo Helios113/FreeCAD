@@ -219,7 +219,6 @@ QString UnitsSchemaInternal::schemaTranslate(const Quantity &quant, double &fact
         }
     }
     else if ((unit == Unit::Stiffness)) {
-<<<<<<< HEAD
         if (UnitValue < 1){// mN/m is the smallest
             unitString = QString::fromLatin1("mN/m");
             factor = 1e-3;
@@ -235,19 +234,6 @@ QString UnitsSchemaInternal::schemaTranslate(const Quantity &quant, double &fact
         else {
             unitString = QString::fromLatin1("MN/m");
             factor = 1e6;
-=======
-        if (UnitValue < 1000.0) {// N/m is the smallest
-            unitString = QString::fromLatin1("N/m");
-            factor = 1.0;
-        }
-        else if (UnitValue < 1000000.0) {
-            unitString = QString::fromLatin1("kN/m");
-            factor = 1000.0;
-        }
-        else if (UnitValue < 1000000000.0) {
-            unitString = QString::fromLatin1("MN/m");
-            factor = 1000000.0;
->>>>>>> 86dac838ad02d64ea4ea90c1ab44a8a8f01394d1
             
         }
     }

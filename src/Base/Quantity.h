@@ -245,12 +245,9 @@ public:
     static Quantity MegaNewton;
 
     static Quantity NewtonPerMeter;
-<<<<<<< HEAD
     static Quantity MilliNewtonPerMeter;
     static Quantity KiloNewtonPerMeter;
     static Quantity MegaNewtonPerMeter;
-=======
->>>>>>> 86dac838ad02d64ea4ea90c1ab44a8a8f01394d1
     
     static Quantity Pascal;
     static Quantity KiloPascal;
