@@ -454,6 +454,7 @@ QString Unit::getTypeString(void) const
     if(*this == Unit::Force                       )       return QString::fromLatin1("Force");
     if(*this == Unit::Work                        )       return QString::fromLatin1("Work");
     if(*this == Unit::Power                       )       return QString::fromLatin1("Power");
+    if(*this == Unit::Stiffness                   )       return QString::fromLatin1("Power");
     if(*this == Unit::SpecificEnergy              )       return QString::fromLatin1("SpecificEnergy");
     if(*this == Unit::ThermalConductivity         )       return QString::fromLatin1("ThermalConductivity");
     if(*this == Unit::ThermalExpansionCoefficient )       return QString::fromLatin1("ThermalExpansionCoefficient");
