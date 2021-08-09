@@ -3252,13 +3252,11 @@ Evolumes
 
 ***********************************************************
 ** Element sets for materials and FEM element type (solid, shell, beam, fluid)
-** written by write_element_sets_material_and_femelement_type function
 *ELSET,ELSET=FemMaterialSolid
 Evolumes
 
 ***********************************************************
 ** constraints displacement node sets
-** written by write_node_sets_constraints_displacement function
 ** FemConstraintDisplacment
 *NSET,NSET=FemConstraintDisplacment
 4,
@@ -3438,7 +3436,6 @@ Evolumes
 
 ***********************************************************
 ** constraints transform node sets
-** written by write_node_sets_constraints_transform function
 ** FemConstraintTransform1
 *NSET,NSET=CylinFemConstraintTransform1
 5,
@@ -3620,39 +3617,34 @@ Evolumes
 
 ***********************************************************
 ** Materials
-** written by write_materials function
-** Young's modulus unit is MPa = N/mm2
+** see information about units at file end
 ** FreeCAD material name: CalculiX-Steel
 ** FemMaterial
 *MATERIAL, NAME=FemMaterial
 *ELASTIC
-210000, 0.300
+210000,0.3
 
 ***********************************************************
 ** Sections
-** written by write_femelementsets function
 *SOLID SECTION, ELSET=FemMaterialSolid, MATERIAL=FemMaterial
 
 ***********************************************************
 ** Transform Constraints
-** written by write_constraints_transform function
 ** FemConstraintTransform1
 *TRANSFORM, NSET=CylinFemConstraintTransform1, TYPE=C
-10.000000,27.000000,10.000000,10.000000,7.000000,10.000000
+10,27,10,10,7,10
 ** FemConstraintTransform2
 *TRANSFORM, NSET=CylinFemConstraintTransform2, TYPE=C
-190.000000,27.000000,10.000000,190.000000,7.000000,10.000000
+190,27,10,190,7,10
 
 ***********************************************************
 ** At least one step is needed to run an CalculiX analysis of FreeCAD
-** written by write_step_begin function
 *STEP
 *STATIC
 
 
 ***********************************************************
 ** Displacement constraint applied
-** written by write_constraints_displacement function
 ** FemConstraintDisplacment
 *BOUNDARY
 FemConstraintDisplacment,1
@@ -3660,144 +3652,140 @@ FemConstraintDisplacment,1
 
 ***********************************************************
 ** constraints pressure element face loads
-** written by write_constraints_pressure function
 ** FemConstraintPressure
 *DLOAD
 ** FemConstraintPressure: face load
-1384,P3,10.0
-1394,P2,10.0
-1397,P2,10.0
-1399,P1,10.0
-1400,P1,10.0
-1402,P2,10.0
-1404,P2,10.0
-1415,P4,10.0
-1418,P1,10.0
-1419,P2,10.0
-1423,P2,10.0
-1428,P2,10.0
-1429,P1,10.0
-1432,P4,10.0
-1433,P3,10.0
-1437,P4,10.0
-1438,P2,10.0
-1441,P2,10.0
-1442,P3,10.0
-1443,P3,10.0
-1448,P4,10.0
-1451,P4,10.0
-1455,P2,10.0
-1457,P4,10.0
-1458,P1,10.0
-1461,P3,10.0
-1466,P3,10.0
-1467,P3,10.0
-1475,P1,10.0
-1476,P1,10.0
-1484,P1,10.0
-1500,P1,10.0
-1501,P2,10.0
-1503,P1,10.0
-1504,P1,10.0
-1507,P2,10.0
-1508,P1,10.0
-1548,P1,10.0
-1549,P4,10.0
-1550,P3,10.0
-1552,P4,10.0
-1554,P1,10.0
-1555,P1,10.0
-1571,P3,10.0
-1579,P2,10.0
-1580,P1,10.0
-1581,P4,10.0
-1589,P3,10.0
-1590,P3,10.0
-1661,P1,10.0
-1663,P3,10.0
-1675,P1,10.0
-1676,P4,10.0
-1685,P4,10.0
-1686,P2,10.0
-1687,P3,10.0
-1707,P4,10.0
-1713,P1,10.0
-1718,P4,10.0
-1719,P2,10.0
-1721,P2,10.0
-1728,P1,10.0
-1730,P4,10.0
-1733,P3,10.0
-1737,P1,10.0
-1740,P4,10.0
-1742,P3,10.0
-1743,P1,10.0
-1744,P1,10.0
-1747,P1,10.0
-1750,P4,10.0
-1751,P4,10.0
-1759,P1,10.0
-1760,P3,10.0
-1761,P4,10.0
-1762,P2,10.0
-1767,P3,10.0
-1770,P1,10.0
-1771,P1,10.0
-1776,P3,10.0
-1785,P4,10.0
-1786,P1,10.0
-1804,P4,10.0
-1818,P1,10.0
-1820,P2,10.0
-1823,P3,10.0
-1824,P4,10.0
-1832,P1,10.0
-1833,P4,10.0
-1838,P3,10.0
-1848,P1,10.0
-1849,P3,10.0
-1850,P2,10.0
-1851,P2,10.0
-1852,P4,10.0
-1860,P4,10.0
-1861,P1,10.0
-1864,P3,10.0
-1874,P4,10.0
-1881,P3,10.0
-1892,P2,10.0
-1893,P2,10.0
-1900,P1,10.0
-1901,P3,10.0
-1902,P1,10.0
-1903,P2,10.0
-1907,P3,10.0
-1909,P1,10.0
-1918,P4,10.0
-1919,P2,10.0
-1922,P3,10.0
-1928,P3,10.0
-1934,P4,10.0
-1935,P4,10.0
-1943,P3,10.0
-1976,P4,10.0
-1982,P2,10.0
-1984,P4,10.0
+1384,P3,10
+1394,P2,10
+1397,P2,10
+1399,P1,10
+1400,P1,10
+1402,P2,10
+1404,P2,10
+1415,P4,10
+1418,P1,10
+1419,P2,10
+1423,P2,10
+1428,P2,10
+1429,P1,10
+1432,P4,10
+1433,P3,10
+1437,P4,10
+1438,P2,10
+1441,P2,10
+1442,P3,10
+1443,P3,10
+1448,P4,10
+1451,P4,10
+1455,P2,10
+1457,P4,10
+1458,P1,10
+1461,P3,10
+1466,P3,10
+1467,P3,10
+1475,P1,10
+1476,P1,10
+1484,P1,10
+1500,P1,10
+1501,P2,10
+1503,P1,10
+1504,P1,10
+1507,P2,10
+1508,P1,10
+1548,P1,10
+1549,P4,10
+1550,P3,10
+1552,P4,10
+1554,P1,10
+1555,P1,10
+1571,P3,10
+1579,P2,10
+1580,P1,10
+1581,P4,10
+1589,P3,10
+1590,P3,10
+1661,P1,10
+1663,P3,10
+1675,P1,10
+1676,P4,10
+1685,P4,10
+1686,P2,10
+1687,P3,10
+1707,P4,10
+1713,P1,10
+1718,P4,10
+1719,P2,10
+1721,P2,10
+1728,P1,10
+1730,P4,10
+1733,P3,10
+1737,P1,10
+1740,P4,10
+1742,P3,10
+1743,P1,10
+1744,P1,10
+1747,P1,10
+1750,P4,10
+1751,P4,10
+1759,P1,10
+1760,P3,10
+1761,P4,10
+1762,P2,10
+1767,P3,10
+1770,P1,10
+1771,P1,10
+1776,P3,10
+1785,P4,10
+1786,P1,10
+1804,P4,10
+1818,P1,10
+1820,P2,10
+1823,P3,10
+1824,P4,10
+1832,P1,10
+1833,P4,10
+1838,P3,10
+1848,P1,10
+1849,P3,10
+1850,P2,10
+1851,P2,10
+1852,P4,10
+1860,P4,10
+1861,P1,10
+1864,P3,10
+1874,P4,10
+1881,P3,10
+1892,P2,10
+1893,P2,10
+1900,P1,10
+1901,P3,10
+1902,P1,10
+1903,P2,10
+1907,P3,10
+1909,P1,10
+1918,P4,10
+1919,P2,10
+1922,P3,10
+1928,P3,10
+1934,P4,10
+1935,P4,10
+1943,P3,10
+1976,P4,10
+1982,P2,10
+1984,P4,10
 
 ***********************************************************
 ** Outputs --> frd file
-** written by write_outputs_types function
 *NODE FILE
 U
 *EL FILE
 S, E
 
 ***********************************************************
-** written by write_step_end function
 *END STEP 
 
 ***********************************************************
 ** CalculiX Input file
-** written by write_footer function
 **   written by    --> FreeCAD 0.20.25211 (Git)
 **   written on    --> Fri Jul  9 17:37:32 2021
 **   file name     --> constraint_transform_beam_hinged.FCStd
@@ -3821,9 +3809,9 @@ S, E
 **
 **  This leads to:
 **  Force: N
-**  Pressure: N/mm^2
+**  Pressure: N/mm^2 == MPa (Young's Modulus has unit Pressure)
 **  Density: t/mm^3
 **  Gravity: mm/s^2
-**  Thermal conductivity: t*mm/K/s^3 (same as W/m/K)
-**  Specific Heat: mm^2/s^2/K (same as J/kg/K)
+**  Thermal conductivity: t*mm/K/s^3 == as W/m/K == kW/mm/K
+**  Specific Heat: mm^2/s^2/K = J/kg/K == kJ/t/K
 **
