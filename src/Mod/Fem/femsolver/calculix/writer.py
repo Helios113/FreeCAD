@@ -29,21 +29,36 @@ __url__ = "https://www.freecadweb.org"
 # \addtogroup FEM
 #  @{
 
-# import io
-import codecs
-import os
-import six
-import sys
 import time
 from os.path import join
 
 import FreeCAD
 from FreeCAD import Units
 
+from . import write_constraint_centrif as con_centrif
+from . import write_constraint_contact as con_contact
+from . import write_constraint_displacement as con_displacement
+from . import write_constraint_fixed as con_fixed
+from . import write_constraint_fluidsection as con_fluidsection
+from . import write_constraint_force as con_force
+from . import write_constraint_heatflux as con_heatflux
+from . import write_constraint_initialtemperature as con_itemp
+from . import write_constraint_planerotation as con_planerotation
+from . import write_constraint_pressure as con_pressure
+from . import write_constraint_sectionprint as con_sectionprint
+from . import write_constraint_selfweight as con_selfweight
+from . import write_constraint_temperature as con_temperature
+from . import write_constraint_tie as con_tie
+from . import write_constraint_transform as con_transform
+from . import write_femelement_geometry
+from . import write_femelement_material
+from . import write_femelement_matgeosets
+from . import write_footer
+from . import write_mesh
+from . import write_step_equation
+from . import write_step_output
 from .. import writerbase
-from femmesh import meshtools
 from femtools import constants
-from femtools import geomtools
 
 
 # Interesting forum topic: https://forum.freecadweb.org/viewtopic.php?&t=48451
@@ -69,12 +84,23 @@ units_information = """*********************************************************
 **
 **  This leads to:
 **  Force: N
-**  Pressure: N/mm^2
+**  Pressure: N/mm^2 == MPa (Young's Modulus has unit Pressure)
 **  Density: t/mm^3
 **  Gravity: mm/s^2
-**  Thermal conductivity: t*mm/K/s^3 (same as W/m/K)
-**  Specific Heat: mm^2/s^2/K (same as J/kg/K)
+**  Thermal conductivity: t*mm/K/s^3 == as W/m/K == kW/mm/K
+**  Specific Heat: mm^2/s^2/K = J/kg/K == kJ/t/K
 """
+
+
+# TODO
+# {0:.13G} or {:.13G} should be used on all places writing floating points to ccx
+# All floating points fields read from ccx are F20.0 FORTRAN input fields.
+# see in dload.f in ccx's source
+# https://forum.freecadweb.org/viewtopic.php?f=18&p=516518#p516433
+# https://forum.freecadweb.org/viewtopic.php?f=18&t=22759&#p176578
+# example "{:.13G}".format(math.sqrt(2.)*-1e100) and count chars
+# a property type is best checked in FreeCAD objects definition
+# see femobjects package for Python objects or in objects App
 
 
 class FemInputWriterCcx(writerbase.FemInputWriter):
@@ -84,7 +110,8 @@ class FemInputWriterCcx(writerbase.FemInputWriter):
         solver_obj,
         mesh_obj,
         member,
-        dir_name=None
+        dir_name=None,
+        mat_geo_sets=None
     ):
         writerbase.FemInputWriter.__init__(
             self,
@@ -92,13 +119,14 @@ class FemInputWriterCcx(writerbase.FemInputWriter):
             solver_obj,
             mesh_obj,
             member,
-            dir_name
+            dir_name,
+            mat_geo_sets
         )
         self.mesh_name = self.mesh_object.Name
-        self.include = join(self.dir_name, self.mesh_name)
-        self.file_name = self.include + ".inp"
+        self.file_name = join(self.dir_name, self.mesh_name + ".inp")
         self.femmesh_file = ""  # the file the femmesh is in, no matter if one or split input file
         self.gravity = int(Units.Quantity(constants.gravity()).getValueAs("mm/s^2"))  # 9820 mm/s2
+        self.units_information = units_information
 
     # ********************************************************************************************
     # write calculix input
@@ -122,74 +150,74 @@ class FemInputWriterCcx(writerbase.FemInputWriter):
 
         self.write_file()
 
+        time_start = time.process_time()
+        FreeCAD.Console.PrintMessage("\n")  # because of time print in separate line
+        FreeCAD.Console.PrintMessage("CalculiX solver input writing...\n")
         FreeCAD.Console.PrintMessage(
-            "Writing time CalculiX input file: {} seconds \n\n"
-            .format(round((time.process_time() - timestart), 2))
+            "Input file:{}\n"
+            .format(self.file_name)
         )
-        if self.femelement_count_test is True:
-            return self.file_name
-        else:
-            FreeCAD.Console.PrintError(
-                "Problems on writing input file, check report prints.\n\n"
-            )
-            return ""
 
-    def write_file(self):
         if self.solver_obj.SplitInputWriter is True:
+            FreeCAD.Console.PrintMessage("Split input file.\n")
             self.split_inpfile = True
         else:
+            FreeCAD.Console.PrintMessage("One monster input file.\n")
             self.split_inpfile = False
 
         # mesh
-        inpfile_main = self.write_mesh()
+        inpfile = write_mesh.write_mesh(self)
 
         # element sets for materials and element geometry
-        # self.write_element_sets_material_and_femelement_geometry(inpfile_main)
-        self.write_element_sets_material_and_femelement_type(inpfile_main)
+        write_femelement_matgeosets.write_femelement_matgeosets(inpfile, self)
 
-        if self.fluidsection_objects:
-            # some fluidsection objs need special treatment, ccx_elsets are needed for this
-            inpfile_main = self.handle_fluidsection_liquid_inlet_outlet(inpfile_main)
+        # some fluidsection objs need special treatment, mat_geo_sets are needed for this
+        inpfile = con_fluidsection.handle_fluidsection_liquid_inlet_outlet(inpfile, self)
 
-        # node sets and surface sets
-        self.write_node_sets_constraints_fixed(inpfile_main)
-        self.write_node_sets_constraints_displacement(inpfile_main)
-        self.write_node_sets_constraints_planerotation(inpfile_main)
-        self.write_surfaces_constraints_contact(inpfile_main)
-        self.write_surfaces_constraints_tie(inpfile_main)
-        self.write_surfaces_constraints_sectionprint(inpfile_main)
-        self.write_node_sets_constraints_transform(inpfile_main)
-        self.write_node_sets_constraints_temperature(inpfile_main)
+        # element sets constraints
+        self.write_constraints_meshsets(inpfile, self.member.cons_centrif, con_centrif)
+
+        # node sets
+        self.write_constraints_meshsets(inpfile, self.member.cons_fixed, con_fixed)
+        self.write_constraints_meshsets(inpfile, self.member.cons_displacement, con_displacement)
+        self.write_constraints_meshsets(inpfile, self.member.cons_planerotation, con_planerotation)
+        self.write_constraints_meshsets(inpfile, self.member.cons_transform, con_transform)
+        self.write_constraints_meshsets(inpfile, self.member.cons_temperature, con_temperature)
+
+        # surface sets
+        self.write_constraints_meshsets(inpfile, self.member.cons_contact, con_contact)
+        self.write_constraints_meshsets(inpfile, self.member.cons_tie, con_tie)
+        self.write_constraints_meshsets(inpfile, self.member.cons_sectionprint, con_sectionprint)
 
         # materials and fem element types
-        self.write_materials(inpfile_main)
-        self.write_constraints_initialtemperature(inpfile_main)
-        # self.write_femelement_geometry(inpfile_main)
-        self.write_femelementsets(inpfile_main)
+        write_femelement_material.write_femelement_material(inpfile, self)
+        self.write_constraints_propdata(inpfile, self.member.cons_initialtemperature, con_itemp)
+        write_femelement_geometry.write_femelement_geometry(inpfile, self)
 
         # constraints independent from steps
-        self.write_constraints_planerotation(inpfile_main)
-        self.write_constraints_contact(inpfile_main)
-        self.write_constraints_tie(inpfile_main)
-        self.write_constraints_transform(inpfile_main)
+        self.write_constraints_propdata(inpfile, self.member.cons_planerotation, con_planerotation)
+        self.write_constraints_propdata(inpfile, self.member.cons_contact, con_contact)
+        self.write_constraints_propdata(inpfile, self.member.cons_tie, con_tie)
+        self.write_constraints_propdata(inpfile, self.member.cons_transform, con_transform)
 
-        # step begin
-        self.write_step_begin(inpfile_main)
+        # step equation
+        write_step_equation.write_step_equation(inpfile, self)
 
         # constraints dependent from steps
-        self.write_constraints_fixed(inpfile_main)
-        self.write_constraints_displacement(inpfile_main)
-        self.write_constraints_sectionprint(inpfile_main)
-        self.write_constraints_selfweight(inpfile_main)
-        self.write_constraints_force(inpfile_main)
-        self.write_constraints_pressure(inpfile_main)
-        self.write_constraints_temperature(inpfile_main)
-        self.write_constraints_heatflux(inpfile_main)
-        self.write_constraints_fluidsection(inpfile_main)
+        self.write_constraints_propdata(inpfile, self.member.cons_fixed, con_fixed)
+        self.write_constraints_propdata(inpfile, self.member.cons_displacement, con_displacement)
+        self.write_constraints_propdata(inpfile, self.member.cons_sectionprint, con_sectionprint)
+        self.write_constraints_propdata(inpfile, self.member.cons_selfweight, con_selfweight)
+        self.write_constraints_propdata(inpfile, self.member.cons_centrif, con_centrif)
+        self.write_constraints_meshsets(inpfile, self.member.cons_force, con_force)
+        self.write_constraints_meshsets(inpfile, self.member.cons_pressure, con_pressure)
+        self.write_constraints_propdata(inpfile, self.member.cons_temperature, con_temperature)
+        self.write_constraints_meshsets(inpfile, self.member.cons_heatflux, con_heatflux)
+        con_fluidsection.write_constraints_fluidsection(inpfile, self)
 
         # output and step end
-        self.write_outputs_types(inpfile_main)
-        self.write_step_end(inpfile_main)
+        write_step_output.write_step_output(inpfile, self)
+        write_step_equation.write_step_end(inpfile, self)
 
         # footer
         self.write_footer(inpfile_main)
@@ -886,133 +914,14 @@ class FemInputWriterCcx(writerbase.FemInputWriter):
             heatflux_facetype = "S"
             heatflux_values = "{}".format(heatflux_obj.DFlux * 0.001)
 
-        f.write("*{}\n".format(heatflux_key_word))
-        for ref_shape in femobj["HeatFluxFaceTable"]:
-            elem_string = ref_shape[0]
-            face_table = ref_shape[1]
-            f.write("** Heat flux on face {}\n".format(elem_string))
-            for i in face_table:
-                # OvG: Only write out the VolumeIDs linked to a particular face
-                f.write("{},{}{},{}\n".format(
-                    i[0],
-                    heatflux_facetype,
-                    i[1],
-                    heatflux_values
-                ))
-
-    # ********************************************************************************************
-    # handle elements for constraints fluidsection with Liquid Inlet or Outlet
-    # belongs to write_constraints_fluidsection, should be next method
-    # leave the constraints fluidsection code as the last constraint method in this module
-    # as it is none standard constraint method compared to all other constraints
-    def handle_fluidsection_liquid_inlet_outlet(self, inpfile_main):
-
-        # Fluid sections:
-        # fluidsection Liquid inlet outlet objs  requires special element definition
-        # to fill self.FluidInletoutlet_ele list the ccx_elset are needed
-        # thus this has to be after the creation of ccx_elsets
-        # different pipe cross sections will generate ccx_elsets
-
-        self.FluidInletoutlet_ele = []
-        self.fluid_inout_nodes_file = join(
-            self.dir_name,
-            "{}_inout_nodes.txt".format(self.mesh_name)
+        writetime = round((time.process_time() - time_start), 3)
+        FreeCAD.Console.PrintMessage(
+            "Writing time CalculiX input file: {} seconds.\n".format(writetime)
         )
 
-        def get_fluidsection_inoutlet_obj_if_setdata(ccx_elset):
-            if (
-                ccx_elset["ccx_elset"]
-                # use six to be sure to be Python 2.7 and 3.x compatible
-                and not isinstance(ccx_elset["ccx_elset"], six.string_types)
-                and "fluidsection_obj" in ccx_elset  # fluid mesh
-            ):
-                fluidsec_obj = ccx_elset["fluidsection_obj"]
-                if (
-                    fluidsec_obj.SectionType == "Liquid"
-                    and (
-                        fluidsec_obj.LiquidSectionType == "PIPE INLET"
-                        or fluidsec_obj.LiquidSectionType == "PIPE OUTLET"
-                    )
-                ):
-                    return fluidsec_obj
-            return None
-
-        def is_fluidsection_inoutlet_setnames_possible(ccx_elsets):
-            for ccx_elset in ccx_elsets:
-                if (
-                    ccx_elset["ccx_elset"]
-                    and "fluidsection_obj" in ccx_elset  # fluid mesh
-                ):
-                    fluidsec_obj = ccx_elset["fluidsection_obj"]
-                    if (
-                        fluidsec_obj.SectionType == "Liquid"
-                        and (
-                            fluidsec_obj.LiquidSectionType == "PIPE INLET"
-                            or fluidsec_obj.LiquidSectionType == "PIPE OUTLET"
-                        )
-                    ):
-                        return True
-            return False
-
-        # collect elementIDs for fluidsection Liquid inlet outlet objs
-        # if they have element data (happens if not "eall")
-        for ccx_elset in self.ccx_elsets:
-            fluidsec_obj = get_fluidsection_inoutlet_obj_if_setdata(ccx_elset)
-            if fluidsec_obj is None:
-                continue
-            elsetchanged = False
-            counter = 0
-            for elid in ccx_elset["ccx_elset"]:
-                counter = counter + 1
-                if (elsetchanged is False) \
-                        and (fluidsec_obj.LiquidSectionType == "PIPE INLET"):
-                    # 3rd index is to track which line nr the element is defined
-                    self.FluidInletoutlet_ele.append(
-                        [str(elid), fluidsec_obj.LiquidSectionType, 0]
-                    )
-                    elsetchanged = True
-                elif (fluidsec_obj.LiquidSectionType == "PIPE OUTLET") \
-                        and (counter == len(ccx_elset["ccx_elset"])):
-                    # 3rd index is to track which line nr the element is defined
-                    self.FluidInletoutlet_ele.append(
-                        [str(elid), fluidsec_obj.LiquidSectionType, 0]
-                    )
-
-        # create the correct element definition for fluidsection Liquid inlet outlet objs
-        # at least one "fluidsection_obj" needs to be in ccx_elsets and has the attributes
-        # TODO: what if there are other objs in elsets?
-        if is_fluidsection_inoutlet_setnames_possible(self.ccx_elsets) is not None:
-            # it is not distinguished if split input file
-            # for split input file the main file is just closed and reopend even if not needed
-            inpfile_main.close()
-            meshtools.use_correct_fluidinout_ele_def(
-                self.FluidInletoutlet_ele,
-                self.femmesh_file,
-                self.fluid_inout_nodes_file
-            )
-            inpfile_main = codecs.open(self.file_name, "a", encoding="utf-8")
-
-        return inpfile_main
-
-    # ********************************************************************************************
-    # constraints fluidsection
-    # TODO:
-    # split method into separate methods and move some part into base writer
-    # see also method handle_fluidsection_liquid_inlet_outlet
-    def write_constraints_fluidsection(self, f):
-        if not self.fluidsection_objects:
-            return
-        if self.analysis_type not in ["thermomech"]:
-            return
-
-        # write constraint to file
-        f.write("\n***********************************************************\n")
-        f.write("** FluidSection constraints\n")
-        f.write("** written by {} function\n".format(sys._getframe().f_code.co_name))
-        if os.path.exists(self.fluid_inout_nodes_file):
-            inout_nodes_file = open(self.fluid_inout_nodes_file, "r")
-            lines = inout_nodes_file.readlines()
-            inout_nodes_file.close()
+        # return
+        if self.femelement_count_test is True:
+            return self.file_name
         else:
             FreeCAD.Console.PrintError(
                 "1DFlow inout nodes file not found: {}\n"

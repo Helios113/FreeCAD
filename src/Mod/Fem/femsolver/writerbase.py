@@ -29,11 +29,11 @@ __url__ = "https://www.freecadweb.org"
 #  @{
 
 import os
+from os.path import join
 
 import FreeCAD
 
-from femmesh import meshtools
-from femtools.femutils import type_of_obj
+from femmesh import meshsetsgetter
 
 
 class FemInputWriter():
@@ -43,13 +43,16 @@ class FemInputWriter():
         solver_obj,
         mesh_obj,
         member,
-        dir_name=None
+        dir_name=None,
+        mat_geo_sets=None
     ):
         # class attributes from parameter values
         self.analysis = analysis_obj
         self.solver_obj = solver_obj
-        self.analysis_type = self.solver_obj.AnalysisType
         self.mesh_object = mesh_obj
+        self.member = member
+        # more attributes
+        self.analysis_type = self.solver_obj.AnalysisType
         self.document = self.analysis.Document
         # materials
         self.material_objects = member.mats_linear
@@ -76,7 +79,7 @@ class FemInputWriter():
         self.spring_objects = member.cons_spring
         # working dir
         self.dir_name = dir_name
-        # if dir_name was not given or if it exists but isn't empty: create a temporary dir
+        # if dir_name was not given or if it exists but is not empty: create a temporary dir
         # Purpose: makes sure the analysis can be run even on wired situation
         if not dir_name:
             FreeCAD.Console.PrintWarning(
@@ -96,7 +99,7 @@ class FemInputWriter():
         self.ccx_evolumes = "Evolumes"
         self.ccx_efaces = "Efaces"
         self.ccx_eedges = "Eedges"
-        self.ccx_elsets = []
+        self.mat_geo_sets = mat_geo_sets
         if self.mesh_object:
             if hasattr(self.mesh_object, "Shape"):
                 self.theshape = self.mesh_object.Shape
@@ -117,6 +120,10 @@ class FemInputWriter():
                 "No finite element mesh object was given to the writer class. "
                 "In rare cases this might not be an error. "
             )
+
+        # *************************************************
+        # deprecated, leave for compatibility reasons
+        # if these are calculated here they are calculated twice :-(
         self.femnodes_mesh = {}
         self.femelement_table = {}
         self.constraint_conflict_nodes = []
@@ -128,173 +135,140 @@ class FemInputWriter():
         self.femelement_edges_table = {}
         self.femelement_count_test = True
 
-    # ********************************************************************************************
-    # ********************************************************************************************
-    # use set for node sets to be sure all nodes are unique
-    # use sorted to be sure the order is the same on different runs
-    # be aware a sorted set returns a list, because set are not sorted by default
-    #     - done in return value of meshtools.get_femnodes_by_femobj_with_references
-    # TODO FIXME might be appropriate for element sets too
+        # deprecated, leave for compatibility reasons
+        # do not add new objects
+        # only the ones which exists on 0.19 release are kept
+        # materials
+        self.material_objects = member.mats_linear
+        self.material_nonlinear_objects = member.mats_nonlinear
+        # geometries
+        self.beamsection_objects = member.geos_beamsection
+        self.beamrotation_objects = member.geos_beamrotation
+        self.fluidsection_objects = member.geos_fluidsection
+        self.shellthickness_objects = member.geos_shellthickness
+        # constraints
+        self.contact_objects = member.cons_contact
+        self.displacement_objects = member.cons_displacement
+        self.fixed_objects = member.cons_fixed
+        self.force_objects = member.cons_force
+        self.heatflux_objects = member.cons_heatflux
+        self.initialtemperature_objects = member.cons_initialtemperature
+        self.planerotation_objects = member.cons_planerotation
+        self.pressure_objects = member.cons_pressure
+        self.selfweight_objects = member.cons_selfweight
+        self.temperature_objects = member.cons_temperature
+        self.tie_objects = member.cons_tie
+        self.transform_objects = member.cons_transform
+
+        # meshdatagetter, for compatibility, same with all getter methods
+        self.meshdatagetter = meshsetsgetter.MeshSetsGetter(
+            self.analysis,
+            self.solver_obj,
+            self.mesh_object,
+            self.member,
+        )
 
     # ********************************************************************************************
     # ********************************************************************************************
-    # node sets
-    def get_constraints_fixed_nodes(self):
-        # get nodes
-        for femobj in self.fixed_objects:
-            # femobj --> dict, FreeCAD document object is femobj["Object"]
-            print_obj_info(femobj["Object"])
-            femobj["Nodes"] = meshtools.get_femnodes_by_femobj_with_references(
-                self.femmesh,
-                femobj
-            )
-            # add nodes to constraint_conflict_nodes, needed by constraint plane rotation
-            for node in femobj["Nodes"]:
-                self.constraint_conflict_nodes.append(node)
-        # if mixed mesh with solids the node set needs to be split
-        # because solid nodes do not have rotational degree of freedom
-        if self.femmesh.Volumes \
-                and (len(self.shellthickness_objects) > 0 or len(self.beamsection_objects) > 0):
-            FreeCAD.Console.PrintMessage("We need to find the solid nodes.\n")
-            if not self.femelement_volumes_table:
-                self.femelement_volumes_table = meshtools.get_femelement_volumes_table(
-                    self.femmesh
-                )
-            for femobj in self.fixed_objects:
+    # generic writer for constraints mesh sets and constraints property data
+    # write constraint node sets, constraint face sets, constraint element sets
+    def write_constraints_meshsets(
+        self,
+        f,
+        femobjs,
+        con_module
+    ):
+        if not femobjs:
+            return
+
+        analysis_types = con_module.get_analysis_types()
+        if analysis_types != "all" and self.analysis_type not in analysis_types:
+            return
+
+        def constraint_sets_loop_writing(the_file, femobjs, write_before, write_after):
+            if write_before != "":
+                f.write(write_before)
+            for femobj in femobjs:
                 # femobj --> dict, FreeCAD document object is femobj["Object"]
-                nds_solid = []
-                nds_faceedge = []
-                for n in femobj["Nodes"]:
-                    solid_node = False
-                    for ve in self.femelement_volumes_table:
-                        if n in self.femelement_volumes_table[ve]:
-                            solid_node = True
-                            nds_solid.append(n)
-                            break
-                    if not solid_node:
-                        nds_faceedge.append(n)
-                femobj["NodesSolid"] = set(nds_solid)
-                femobj["NodesFaceEdge"] = set(nds_faceedge)
+                the_obj = femobj["Object"]
+                f.write("** {}\n".format(the_obj.Label))
+                con_module.write_meshdata_constraint(the_file, femobj, the_obj, self)
+            if write_after != "":
+                f.write(write_after)
+
+        write_before = con_module.get_before_write_meshdata_constraint()
+        write_after = con_module.get_after_write_meshdata_constraint()
+
+        # write sets to file
+        write_name = con_module.get_sets_name()
+        f.write("\n{}\n".format(59 * "*"))
+        f.write("** {}\n".format(write_name.replace("_", " ")))
+
+        if self.split_inpfile is True:
+            file_name_split = "{}_{}.inp".format(self.mesh_name, write_name)
+            f.write("** {}\n".format(write_name.replace("_", " ")))
+            f.write("*INCLUDE,INPUT={}\n".format(file_name_split))
+            inpfile_split = open(join(self.dir_name, file_name_split), "w")
+            constraint_sets_loop_writing(inpfile_split, femobjs, write_before, write_after)
+            inpfile_split.close()
+        else:
+            constraint_sets_loop_writing(f, femobjs, write_before, write_after)
+
+    # write constraint property data
+    def write_constraints_propdata(
+        self,
+        f,
+        femobjs,
+        con_module
+    ):
+
+        if not femobjs:
+            return
+
+        analysis_types = con_module.get_analysis_types()
+        if analysis_types != "all" and self.analysis_type not in analysis_types:
+            return
+
+        write_before = con_module.get_before_write_constraint()
+        write_after = con_module.get_after_write_constraint()
+
+        # write constraint to file
+        f.write("\n{}\n".format(59 * "*"))
+        f.write("** {}\n".format(con_module.get_constraint_title()))
+        if write_before != "":
+            f.write(write_before)
+        for femobj in femobjs:
+            # femobj --> dict, FreeCAD document object is femobj["Object"]
+            the_obj = femobj["Object"]
+            f.write("** {}\n".format(the_obj.Label))
+            con_module.write_constraint(f, femobj, the_obj, self)
+        if write_after != "":
+            f.write(write_after)
+
+    # ********************************************************************************************
+    # deprecated, do not add new constraints
+    # only the ones which exists on 0.19 release are kept
+    def get_constraints_fixed_nodes(self):
+        self.meshdatagetter.get_constraints_fixed_nodes()
 
     def get_constraints_displacement_nodes(self):
-        # get nodes
-        for femobj in self.displacement_objects:
-            # femobj --> dict, FreeCAD document object is femobj["Object"]
-            print_obj_info(femobj["Object"])
-            femobj["Nodes"] = meshtools.get_femnodes_by_femobj_with_references(
-                self.femmesh,
-                femobj
-            )
-            # add nodes to constraint_conflict_nodes, needed by constraint plane rotation
-            for node in femobj["Nodes"]:
-                self.constraint_conflict_nodes.append(node)
+        self.meshdatagetter.get_constraints_displacement_nodes()
 
     def get_constraints_planerotation_nodes(self):
-        # get nodes
-        for femobj in self.planerotation_objects:
-            # femobj --> dict, FreeCAD document object is femobj["Object"]
-            print_obj_info(femobj["Object"])
-            femobj["Nodes"] = meshtools.get_femnodes_by_femobj_with_references(
-                self.femmesh,
-                femobj
-            )
+        self.meshdatagetter.get_constraints_planerotation_nodes()
 
     def get_constraints_transform_nodes(self):
-        # get nodes
-        for femobj in self.transform_objects:
-            # femobj --> dict, FreeCAD document object is femobj["Object"]
-            print_obj_info(femobj["Object"])
-            femobj["Nodes"] = meshtools.get_femnodes_by_femobj_with_references(
-                self.femmesh,
-                femobj
-            )
+        self.meshdatagetter.get_constraints_transform_nodes()
 
     def get_constraints_temperature_nodes(self):
-        # get nodes
-        for femobj in self.temperature_objects:
-            # femobj --> dict, FreeCAD document object is femobj["Object"]
-            print_obj_info(femobj["Object"])
-            femobj["Nodes"] = meshtools.get_femnodes_by_femobj_with_references(
-                self.femmesh,
-                femobj
-            )
+        self.meshdatagetter.get_constraints_temperature_nodes()
 
     def get_constraints_fluidsection_nodes(self):
-        # get nodes
-        for femobj in self.fluidsection_objects:
-            # femobj --> dict, FreeCAD document object is femobj["Object"]
-            print_obj_info(femobj["Object"])
-            femobj["Nodes"] = meshtools.get_femnodes_by_femobj_with_references(
-                self.femmesh,
-                femobj
-            )
+        self.meshdatagetter.get_constraints_fluidsection_nodes()
 
     def get_constraints_force_nodeloads(self):
-        # check shape type of reference shape
-        for femobj in self.force_objects:
-            # femobj --> dict, FreeCAD document object is femobj["Object"]
-            print_obj_info(femobj["Object"], log=True)
-            if femobj["RefShapeType"] == "Vertex":
-                FreeCAD.Console.PrintLog(
-                    "    load on vertices --> The femelement_table "
-                    "and femnodes_mesh are not needed for node load calculation.\n"
-                )
-            elif femobj["RefShapeType"] == "Face" \
-                    and meshtools.is_solid_femmesh(self.femmesh) \
-                    and not meshtools.has_no_face_data(self.femmesh):
-                FreeCAD.Console.PrintLog(
-                    "    solid_mesh with face data --> The femelement_table is not "
-                    "needed but the femnodes_mesh is needed for node load calculation.\n"
-                )
-                if not self.femnodes_mesh:
-                    self.femnodes_mesh = self.femmesh.Nodes
-            else:
-                FreeCAD.Console.PrintLog(
-                    "    mesh without needed data --> The femelement_table "
-                    "and femnodes_mesh are not needed for node load calculation.\n"
-                )
-                if not self.femnodes_mesh:
-                    self.femnodes_mesh = self.femmesh.Nodes
-                if not self.femelement_table:
-                    self.femelement_table = meshtools.get_femelement_table(
-                        self.femmesh
-                    )
-        # get node loads
-        FreeCAD.Console.PrintLog(
-            "    Finite element mesh nodes will be retrieved by searching "
-            "the appropriate nodes in the finite element mesh.\n"
-        )
-        FreeCAD.Console.PrintLog(
-            "    The appropriate finite element mesh node load values will "
-            "be calculated according to the finite element definition.\n"
-        )
-        for femobj in self.force_objects:
-            # femobj --> dict, FreeCAD document object is femobj["Object"]
-            frc_obj = femobj["Object"]
-            print_obj_info(frc_obj)
-            if frc_obj.Force == 0:
-                FreeCAD.Console.PrintMessage("  Warning --> Force = 0\n")
-            if femobj["RefShapeType"] == "Vertex":  # point load on vertices
-                femobj["NodeLoadTable"] = meshtools.get_force_obj_vertex_nodeload_table(
-                    self.femmesh,
-                    frc_obj
-                )
-            elif femobj["RefShapeType"] == "Edge":  # line load on edges
-                femobj["NodeLoadTable"] = meshtools.get_force_obj_edge_nodeload_table(
-                    self.femmesh,
-                    self.femelement_table,
-                    self.femnodes_mesh, frc_obj
-                )
-            elif femobj["RefShapeType"] == "Face":  # area load on faces
-                femobj["NodeLoadTable"] = meshtools.get_force_obj_face_nodeload_table(
-                    self.femmesh,
-                    self.femelement_table,
-                    self.femnodes_mesh, frc_obj
-                )
+        self.meshdatagetter.get_constraints_force_nodeloads()
 
-    # ********************************************************************************************
-    # ********************************************************************************************
-    # faces sets
     def get_constraints_pressure_faces(self):
         # TODO see comments in get_constraints_force_nodeloads()
         # it applies here too. Mhh it applies to all constraints ...
@@ -440,568 +414,7 @@ class FemInputWriter():
                         )
 
     def get_constraints_heatflux_faces(self):
-        # TODO: use meshtools to get the surfaces (or move to mesh tools)
-        # see constraint contact or constrint tie and constraint force
-        # heatflux_obj_face_table: see force_obj_node_load_table
-        #     [
-        #         ("refshape_name:elemname", face_table),
-        #         ...,
-        #         ("refshape_name:elemname", face_table)
-        #     ]
-        for femobj in self.heatflux_objects:
-            # femobj --> dict, FreeCAD document object is femobj["Object"]
-            heatflux_obj = femobj["Object"]
-            femobj["HeatFluxFaceTable"] = []
-            for o, elem_tup in heatflux_obj.References:
-                for elem in elem_tup:
-                    ho = o.Shape.getElement(elem)
-                    if ho.ShapeType == "Face":
-                        elem_info = "{}:{}".format(o.Name, elem)
-                        face_table = self.mesh_object.FemMesh.getccxVolumesByFace(ho)
-                        femobj["HeatFluxFaceTable"].append((elem_info, face_table))
+        self.meshdatagetter.get_constraints_heatflux_faces()
 
-    # ********************************************************************************************
-    # ********************************************************************************************
-    # element sets
-    def get_solid_element_sets(self, femobjs):
-        # get element ids and write them into the femobj
-        all_found = False
-        if self.femmesh.GroupCount:
-            all_found = meshtools.get_femelement_sets_from_group_data(
-                self.femmesh,
-                femobjs
-            )
-            FreeCAD.Console.PrintMessage(all_found)
-            FreeCAD.Console.PrintMessage("\n")
-        if all_found is False:
-            if not self.femelement_table:
-                self.femelement_table = meshtools.get_femelement_table(self.femmesh)
-            # we're going to use the binary search for get_femelements_by_femnodes()
-            # thus we need the parameter values self.femnodes_ele_table
-            if not self.femnodes_mesh:
-                self.femnodes_mesh = self.femmesh.Nodes
-            if not self.femnodes_ele_table:
-                self.femnodes_ele_table = meshtools.get_femnodes_ele_table(
-                    self.femnodes_mesh,
-                    self.femelement_table
-                )
-            control = meshtools.get_femelement_sets(
-                self.femmesh,
-                self.femelement_table,
-                femobjs,
-                self.femnodes_ele_table
-            )
-            # we only need to set it, if it is still True
-            if (self.femelement_count_test is True) and (control is False):
-                self.femelement_count_test = False
-
-    def get_element_geometry2D_elements(self):
-        # get element ids and write them into the objects
-        FreeCAD.Console.PrintMessage("Shell thicknesses\n")
-        if not self.femelement_faces_table:
-            self.femelement_faces_table = meshtools.get_femelement_faces_table(
-                self.femmesh
-            )
-        meshtools.get_femelement_sets(
-            self.femmesh,
-            self.femelement_faces_table,
-            self.shellthickness_objects
-        )
-
-    def get_element_geometry1D_elements(self):
-        # get element ids and write them into the objects
-        FreeCAD.Console.PrintMessage("Beam sections\n")
-        if not self.femelement_edges_table:
-            self.femelement_edges_table = meshtools.get_femelement_edges_table(
-                self.femmesh
-            )
-        meshtools.get_femelement_sets(
-            self.femmesh,
-            self.femelement_edges_table,
-            self.beamsection_objects
-        )
-
-    def get_element_rotation1D_elements(self):
-        # get for each geometry edge direction the element ids and rotation norma
-        FreeCAD.Console.PrintMessage("Beam rotations\n")
-        if not self.femelement_edges_table:
-            self.femelement_edges_table = meshtools.get_femelement_edges_table(
-                self.femmesh
-            )
-        meshtools.get_femelement_direction1D_set(
-            self.femmesh,
-            self.femelement_edges_table,
-            self.beamrotation_objects,
-            self.theshape
-        )
-
-    def get_element_fluid1D_elements(self):
-        # get element ids and write them into the objects
-        FreeCAD.Console.PrintMessage("Fluid sections\n")
-        if not self.femelement_edges_table:
-            self.femelement_edges_table = meshtools.get_femelement_edges_table(
-                self.femmesh
-            )
-        meshtools.get_femelement_sets(
-            self.femmesh,
-            self.femelement_edges_table,
-            self.fluidsection_objects
-        )
-
-    def get_material_elements(self):
-        # it only works if either Volumes or Shellthicknesses or Beamsections
-        # are in the material objects, it means it does not work
-        # for mixed meshes and multiple materials, this is checked in check_prerequisites
-        # the femelement_table is only calculated for
-        # the highest dimension in get_femelement_table
-        FreeCAD.Console.PrintMessage("Materials\n")
-        if self.femmesh.Volumes:
-            # we only could do this for volumes
-            # if a mesh contains volumes we're going to use them in the analysis
-            # but a mesh could contain
-            # the element faces of the volumes as faces
-            # and the edges of the faces as edges
-            # there we have to check of some geometric objects
-            # get element ids and write them into the femobj
-            self.get_solid_element_sets(self.material_objects)
-        if self.shellthickness_objects:
-            if not self.femelement_faces_table:
-                self.femelement_faces_table = meshtools.get_femelement_faces_table(
-                    self.femmesh
-                )
-            meshtools.get_femelement_sets(
-                self.femmesh,
-                self.femelement_faces_table,
-                self.material_objects
-            )
-        if self.beamsection_objects or self.fluidsection_objects:
-            if not self.femelement_edges_table:
-                self.femelement_edges_table = meshtools.get_femelement_edges_table(
-                    self.femmesh
-                )
-            meshtools.get_femelement_sets(
-                self.femmesh,
-                self.femelement_edges_table,
-                self.material_objects
-            )
-
-    def get_element_sets_material_and_femelement_geometry(self):
-        # in any case if we have beams, we're going to need the element ids for the rotation elsets
-        if self.beamsection_objects:
-            # we will need to split the beam even for one beamobj
-            # because no beam in z-direction can be used in ccx without a special adjustment
-            # thus they need an own ccx_elset
-            self.get_element_rotation1D_elements()
-
-        # get the element ids for face and edge elements and write them into the objects
-        if len(self.shellthickness_objects) > 1:
-            self.get_element_geometry2D_elements()
-        if len(self.beamsection_objects) > 1:
-            self.get_element_geometry1D_elements()
-        if len(self.fluidsection_objects) > 1:
-            self.get_element_fluid1D_elements()
-
-        # get the element ids for material objects and write them into the material object
-        if len(self.material_objects) > 1:
-            self.get_material_elements()
-
-        # create the ccx_elsets
-        if len(self.material_objects) == 1:
-            if self.femmesh.Volumes:
-                # we only could do this for volumes, if a mesh contains volumes
-                # we're going to use them in the analysis
-                # but a mesh could contain the element faces of the volumes as faces
-                # and the edges of the faces as edges
-                # there we have to check for some geometric objects
-                self.get_ccx_elsets_single_mat_solid()
-            if len(self.shellthickness_objects) == 1:
-                self.get_ccx_elsets_single_mat_single_shell()
-            elif len(self.shellthickness_objects) > 1:
-                self.get_ccx_elsets_single_mat_multiple_shell()
-            if len(self.beamsection_objects) == 1:
-                self.get_ccx_elsets_single_mat_single_beam()
-            elif len(self.beamsection_objects) > 1:
-                self.get_ccx_elsets_single_mat_multiple_beam()
-            if len(self.fluidsection_objects) == 1:
-                self.get_ccx_elsets_single_mat_single_fluid()
-            elif len(self.fluidsection_objects) > 1:
-                self.get_ccx_elsets_single_mat_multiple_fluid()
-        elif len(self.material_objects) > 1:
-            if self.femmesh.Volumes:
-                # we only could do this for volumes, if a mseh contains volumes
-                # we're going to use them in the analysis
-                # but a mesh could contain the element faces of the volumes as faces
-                # and the edges of the faces as edges
-                # there we have to check for some geometric objects
-                # volume is a bit special
-                # because retrieving ids from group mesh data is implemented
-                self.get_ccx_elsets_multiple_mat_solid()
-            if len(self.shellthickness_objects) == 1:
-                self.get_ccx_elsets_multiple_mat_single_shell()
-            elif len(self.shellthickness_objects) > 1:
-                self.get_ccx_elsets_multiple_mat_multiple_shell()
-            if len(self.beamsection_objects) == 1:
-                self.get_ccx_elsets_multiple_mat_single_beam()
-            elif len(self.beamsection_objects) > 1:
-                self.get_ccx_elsets_multiple_mat_multiple_beam()
-            if len(self.fluidsection_objects) == 1:
-                self.get_ccx_elsets_multiple_mat_single_fluid()
-            elif len(self.fluidsection_objects) > 1:
-                self.get_ccx_elsets_multiple_mat_multiple_fluid()
-
-    # self.ccx_elsets = [ {
-    #                        "ccx_elset" : [e1, e2, e3, ... , en] or elements set name strings
-    #                        "ccx_elset_name" : "ccx_identifier_elset"
-    #                        "mat_obj_name" : "mat_obj.Name"
-    #                        "ccx_mat_name" : "mat_obj.Material["Name"]"   !!! not unique !!!
-    #                        "beamsection_obj" : "beamsection_obj"         if exists
-    #                        "fluidsection_obj" : "fluidsection_obj"       if exists
-    #                        "shellthickness_obj" : shellthickness_obj"    if exists
-    #                        "beam_normal" : normal vector                 for beams only
-    #                     },
-    #                     {}, ... , {} ]
-
-    # beam
-    # TODO support multiple beamrotations
-    # we do not need any more any data from the rotation document object,
-    # thus we do not need to save the rotation document object name in the else
-    def get_ccx_elsets_single_mat_single_beam(self):
-        mat_obj = self.material_objects[0]["Object"]
-        beamsec_obj = self.beamsection_objects[0]["Object"]
-        beamrot_data = self.beamrotation_objects[0]
-        for i, beamdirection in enumerate(beamrot_data["FEMRotations1D"]):
-            # ID's for this direction
-            elset_data = beamdirection["ids"]
-            names = [
-                {"short": "M0"},
-                {"short": "B0"},
-                {"short": beamrot_data["ShortName"]},
-                {"short": "D" + str(i)}
-            ]
-            ccx_elset = {}
-            ccx_elset["ccx_elset"] = elset_data
-            ccx_elset["ccx_elset_name"] = get_ccx_elset_name_short(names)
-            ccx_elset["mat_obj_name"] = mat_obj.Name
-            ccx_elset["ccx_mat_name"] = mat_obj.Material["Name"]
-            ccx_elset["beamsection_obj"] = beamsec_obj
-            # normal for this direction
-            ccx_elset["beam_normal"] = beamdirection["normal"]
-            self.ccx_elsets.append(ccx_elset)
-
-    def get_ccx_elsets_single_mat_multiple_beam(self):
-        mat_obj = self.material_objects[0]["Object"]
-        beamrot_data = self.beamrotation_objects[0]
-        for beamsec_data in self.beamsection_objects:
-            beamsec_obj = beamsec_data["Object"]
-            beamsec_ids = set(beamsec_data["FEMElements"])
-            for i, beamdirection in enumerate(beamrot_data["FEMRotations1D"]):
-                beamdir_ids = set(beamdirection["ids"])
-                # empty intersection sets possible
-                elset_data = list(sorted(beamsec_ids.intersection(beamdir_ids)))
-                if elset_data:
-                    names = [
-                        {"short": "M0"},
-                        {"short": beamsec_data["ShortName"]},
-                        {"short": beamrot_data["ShortName"]},
-                        {"short": "D" + str(i)}
-                    ]
-                    ccx_elset = {}
-                    ccx_elset["ccx_elset"] = elset_data
-                    ccx_elset["ccx_elset_name"] = get_ccx_elset_name_short(names)
-                    ccx_elset["mat_obj_name"] = mat_obj.Name
-                    ccx_elset["ccx_mat_name"] = mat_obj.Material["Name"]
-                    ccx_elset["beamsection_obj"] = beamsec_obj
-                    # normal for this direction
-                    ccx_elset["beam_normal"] = beamdirection["normal"]
-                    self.ccx_elsets.append(ccx_elset)
-
-    def get_ccx_elsets_multiple_mat_single_beam(self):
-        beamsec_obj = self.beamsection_objects[0]["Object"]
-        beamrot_data = self.beamrotation_objects[0]
-        for mat_data in self.material_objects:
-            mat_obj = mat_data["Object"]
-            mat_ids = set(mat_data["FEMElements"])
-            for i, beamdirection in enumerate(beamrot_data["FEMRotations1D"]):
-                beamdir_ids = set(beamdirection["ids"])
-                elset_data = list(sorted(mat_ids.intersection(beamdir_ids)))
-                if elset_data:
-                    names = [
-                        {"short": mat_data["ShortName"]},
-                        {"short": "B0"},
-                        {"short": beamrot_data["ShortName"]},
-                        {"short": "D" + str(i)}
-                    ]
-                    ccx_elset = {}
-                    ccx_elset["ccx_elset"] = elset_data
-                    ccx_elset["ccx_elset_name"] = get_ccx_elset_name_short(names)
-                    ccx_elset["mat_obj_name"] = mat_obj.Name
-                    ccx_elset["ccx_mat_name"] = mat_obj.Material["Name"]
-                    ccx_elset["beamsection_obj"] = beamsec_obj
-                    # normal for this direction
-                    ccx_elset["beam_normal"] = beamdirection["normal"]
-                    self.ccx_elsets.append(ccx_elset)
-
-    def get_ccx_elsets_multiple_mat_multiple_beam(self):
-        beamrot_data = self.beamrotation_objects[0]
-        for beamsec_data in self.beamsection_objects:
-            beamsec_obj = beamsec_data["Object"]
-            beamsec_ids = set(beamsec_data["FEMElements"])
-            for mat_data in self.material_objects:
-                mat_obj = mat_data["Object"]
-                mat_ids = set(mat_data["FEMElements"])
-                for i, beamdirection in enumerate(beamrot_data["FEMRotations1D"]):
-                    beamdir_ids = set(beamdirection["ids"])
-                    # empty intersection sets possible
-                    elset_data = list(sorted(
-                        beamsec_ids.intersection(mat_ids).intersection(beamdir_ids)
-                    ))
-                    if elset_data:
-                        names = [
-                            {"short": mat_data["ShortName"]},
-                            {"short": beamsec_data["ShortName"]},
-                            {"short": beamrot_data["ShortName"]},
-                            {"short": "D" + str(i)}
-                        ]
-                        ccx_elset = {}
-                        ccx_elset["ccx_elset"] = elset_data
-                        ccx_elset["ccx_elset_name"] = get_ccx_elset_name_short(names)
-                        ccx_elset["mat_obj_name"] = mat_obj.Name
-                        ccx_elset["ccx_mat_name"] = mat_obj.Material["Name"]
-                        ccx_elset["beamsection_obj"] = beamsec_obj
-                        # normal for this direction
-                        ccx_elset["beam_normal"] = beamdirection["normal"]
-                        self.ccx_elsets.append(ccx_elset)
-
-    # fluid
-    def get_ccx_elsets_single_mat_single_fluid(self):
-        mat_obj = self.material_objects[0]["Object"]
-        fluidsec_obj = self.fluidsection_objects[0]["Object"]
-        elset_data = self.ccx_eedges
-        names = [{"short": "M0"}, {"short": "F0"}]
-        ccx_elset = {}
-        ccx_elset["ccx_elset"] = elset_data
-        ccx_elset["ccx_elset_name"] = get_ccx_elset_name_short(names)
-        ccx_elset["mat_obj_name"] = mat_obj.Name
-        ccx_elset["ccx_mat_name"] = mat_obj.Material["Name"]
-        ccx_elset["fluidsection_obj"] = fluidsec_obj
-        self.ccx_elsets.append(ccx_elset)
-
-    def get_ccx_elsets_single_mat_multiple_fluid(self):
-        mat_obj = self.material_objects[0]["Object"]
-        for fluidsec_data in self.fluidsection_objects:
-            fluidsec_obj = fluidsec_data["Object"]
-            elset_data = fluidsec_data["FEMElements"]
-            names = [{"short": "M0"}, {"short": fluidsec_data["ShortName"]}]
-            ccx_elset = {}
-            ccx_elset["ccx_elset"] = elset_data
-            ccx_elset["ccx_elset_name"] = get_ccx_elset_name_short(names)
-            ccx_elset["mat_obj_name"] = mat_obj.Name
-            ccx_elset["ccx_mat_name"] = mat_obj.Material["Name"]
-            ccx_elset["fluidsection_obj"] = fluidsec_obj
-            self.ccx_elsets.append(ccx_elset)
-
-    def get_ccx_elsets_multiple_mat_single_fluid(self):
-        fluidsec_obj = self.fluidsection_objects[0]["Object"]
-        for mat_data in self.material_objects:
-            mat_obj = mat_data["Object"]
-            elset_data = mat_data["FEMElements"]
-            names = [{"short": mat_data["ShortName"]}, {"short": "F0"}]
-            ccx_elset = {}
-            ccx_elset["ccx_elset"] = elset_data
-            ccx_elset["ccx_elset_name"] = get_ccx_elset_name_short(names)
-            ccx_elset["mat_obj_name"] = mat_obj.Name
-            ccx_elset["ccx_mat_name"] = mat_obj.Material["Name"]
-            ccx_elset["fluidsection_obj"] = fluidsec_obj
-            self.ccx_elsets.append(ccx_elset)
-
-    def get_ccx_elsets_multiple_mat_multiple_fluid(self):
-        for fluidsec_data in self.fluidsection_objects:
-            fluidsec_obj = fluidsec_data["Object"]
-            for mat_data in self.material_objects:
-                mat_obj = mat_data["Object"]
-                fluidsec_ids = set(fluidsec_data["FEMElements"])
-                mat_ids = set(mat_data["FEMElements"])
-                # empty intersection sets possible
-                elset_data = list(sorted(fluidsec_ids.intersection(mat_ids)))
-                if elset_data:
-                    names = [
-                        {"short": mat_data["ShortName"]},
-                        {"short": fluidsec_data["ShortName"]}
-                    ]
-                    ccx_elset = {}
-                    ccx_elset["ccx_elset"] = elset_data
-                    ccx_elset["ccx_elset_name"] = get_ccx_elset_name_short(names)
-                    ccx_elset["mat_obj_name"] = mat_obj.Name
-                    ccx_elset["ccx_mat_name"] = mat_obj.Material["Name"]
-                    ccx_elset["fluidsection_obj"] = fluidsec_obj
-                    self.ccx_elsets.append(ccx_elset)
-
-    # shell
-    def get_ccx_elsets_single_mat_single_shell(self):
-        mat_obj = self.material_objects[0]["Object"]
-        shellth_obj = self.shellthickness_objects[0]["Object"]
-        elset_data = self.ccx_efaces
-        names = [
-            {"long": mat_obj.Name, "short": "M0"},
-            {"long": shellth_obj.Name, "short": "S0"}
-        ]
-        ccx_elset = {}
-        ccx_elset["ccx_elset"] = elset_data
-        ccx_elset["ccx_elset_name"] = get_ccx_elset_name_standard(names)
-        ccx_elset["mat_obj_name"] = mat_obj.Name
-        ccx_elset["ccx_mat_name"] = mat_obj.Material["Name"]
-        ccx_elset["shellthickness_obj"] = shellth_obj
-        self.ccx_elsets.append(ccx_elset)
-
-    def get_ccx_elsets_single_mat_multiple_shell(self):
-        mat_obj = self.material_objects[0]["Object"]
-        for shellth_data in self.shellthickness_objects:
-            shellth_obj = shellth_data["Object"]
-            elset_data = shellth_data["FEMElements"]
-            names = [
-                {"long": mat_obj.Name, "short": "M0"},
-                {"long": shellth_obj.Name, "short": shellth_data["ShortName"]}
-            ]
-            ccx_elset = {}
-            ccx_elset["ccx_elset"] = elset_data
-            ccx_elset["ccx_elset_name"] = get_ccx_elset_name_standard(names)
-            ccx_elset["mat_obj_name"] = mat_obj.Name
-            ccx_elset["ccx_mat_name"] = mat_obj.Material["Name"]
-            ccx_elset["shellthickness_obj"] = shellth_obj
-            self.ccx_elsets.append(ccx_elset)
-
-    def get_ccx_elsets_multiple_mat_single_shell(self):
-        shellth_obj = self.shellthickness_objects[0]["Object"]
-        for mat_data in self.material_objects:
-            mat_obj = mat_data["Object"]
-            elset_data = mat_data["FEMElements"]
-            names = [
-                {"long": mat_obj.Name, "short": mat_data["ShortName"]},
-                {"long": shellth_obj.Name, "short": "S0"}
-            ]
-            ccx_elset = {}
-            ccx_elset["ccx_elset"] = elset_data
-            ccx_elset["ccx_elset_name"] = get_ccx_elset_name_standard(names)
-            ccx_elset["mat_obj_name"] = mat_obj.Name
-            ccx_elset["ccx_mat_name"] = mat_obj.Material["Name"]
-            ccx_elset["shellthickness_obj"] = shellth_obj
-            self.ccx_elsets.append(ccx_elset)
-
-    def get_ccx_elsets_multiple_mat_multiple_shell(self):
-        for shellth_data in self.shellthickness_objects:
-            shellth_obj = shellth_data["Object"]
-            for mat_data in self.material_objects:
-                mat_obj = mat_data["Object"]
-                shellth_ids = set(shellth_data["FEMElements"])
-                mat_ids = set(mat_data["FEMElements"])
-                # empty intersection sets possible
-                elset_data = list(sorted(shellth_ids.intersection(mat_ids)))
-                if elset_data:
-                    names = [
-                        {"long": mat_obj.Name, "short": mat_data["ShortName"]},
-                        {"long": shellth_obj.Name, "short": shellth_data["ShortName"]}
-                    ]
-                    ccx_elset = {}
-                    ccx_elset["ccx_elset"] = elset_data
-                    ccx_elset["ccx_elset_name"] = get_ccx_elset_name_standard(names)
-                    ccx_elset["mat_obj_name"] = mat_obj.Name
-                    ccx_elset["ccx_mat_name"] = mat_obj.Material["Name"]
-                    ccx_elset["shellthickness_obj"] = shellth_obj
-                    self.ccx_elsets.append(ccx_elset)
-
-    # solid
-    def get_ccx_elsets_single_mat_solid(self):
-        mat_obj = self.material_objects[0]["Object"]
-        elset_data = self.ccx_evolumes
-        names = [
-            {"long": mat_obj.Name, "short": "M0"},
-            {"long": "Solid", "short": "Solid"}
-        ]
-        ccx_elset = {}
-        ccx_elset["ccx_elset"] = elset_data
-        ccx_elset["ccx_elset_name"] = get_ccx_elset_name_standard(names)
-        ccx_elset["mat_obj_name"] = mat_obj.Name
-        ccx_elset["ccx_mat_name"] = mat_obj.Material["Name"]
-        self.ccx_elsets.append(ccx_elset)
-
-    def get_ccx_elsets_multiple_mat_solid(self):
-        for mat_data in self.material_objects:
-            mat_obj = mat_data["Object"]
-            elset_data = mat_data["FEMElements"]
-            names = [
-                {"long": mat_obj.Name, "short": mat_data["ShortName"]},
-                {"long": "Solid", "short": "Solid"}
-            ]
-            ccx_elset = {}
-            ccx_elset["ccx_elset"] = elset_data
-            ccx_elset["ccx_elset_name"] = get_ccx_elset_name_standard(names)
-            ccx_elset["mat_obj_name"] = mat_obj.Name
-            ccx_elset["ccx_mat_name"] = mat_obj.Material["Name"]
-            self.ccx_elsets.append(ccx_elset)
-
-
-# ************************************************************************************************
-# Helpers
-
-
-# ccx elset names:
-# M .. Material
-# B .. Beam
-# R .. BeamRotation
-# D .. Direction
-# F .. Fluid
-# S .. Shell,
-# TODO write comment into input file to elset ids and elset attributes
-
-
-def get_ccx_elset_name_standard(names):
-    # standard max length = 80
-    ccx_elset_name = ""
-    for name in names:
-        ccx_elset_name += name["long"]
-    if len(ccx_elset_name) < 81:
-        return ccx_elset_name
-    else:
-        ccx_elset_name = ""
-        for name in names:
-            ccx_elset_name += name["short"]
-        if len(ccx_elset_name) < 81:
-            return ccx_elset_name
-        else:
-            error = (
-                "FEM: Trouble in ccx input file, because an "
-                "elset name is longer than 80 character! {}\n"
-                .format(ccx_elset_name)
-            )
-            raise Exception(error)
-
-
-def get_ccx_elset_name_short(names):
-    # restricted max length = 20 (beam elsets)
-    ccx_elset_name = ""
-    for name in names:
-        ccx_elset_name += name["short"]
-    if len(ccx_elset_name) < 21:
-        return ccx_elset_name
-    else:
-        error = (
-            "FEM: Trouble in ccx input file, because an"
-            "beam elset name is longer than 20 character! {}\n"
-            .format(ccx_elset_name)
-        )
-        raise Exception(error)
-
-
-def print_obj_info(obj, log=False):
-    if log is False:
-        FreeCAD.Console.PrintMessage("{}:\n".format(obj.Label))
-        FreeCAD.Console.PrintMessage(
-            "    Type: {}, Name: {}\n".format(type_of_obj(obj), obj.Name)
-        )
-    else:
-        FreeCAD.Console.PrintLog("{}:\n".format(obj.Label))
-        FreeCAD.Console.PrintLog(
-            "    Type: {}, Name: {}\n".format(type_of_obj(obj), obj.Name)
-        )
 
 # @}

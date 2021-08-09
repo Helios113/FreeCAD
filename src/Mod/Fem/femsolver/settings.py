@@ -34,6 +34,7 @@ are supported:
 
     - Calculix
     - ElmerSolver
+    - Mystran
     - Z88
 
 To query settings about those solver the solver name must be given exactly in
@@ -85,7 +86,7 @@ def get_binary(name):
 
     Return the specific path set by the user in FreeCADs settings/parameter
     system if set or the default binary name if no specific path is set. If no
-    path was found because the solver *name* isn't supported ``None`` is
+    path was found because the solver *name* is not supported ``None`` is
     returned. This method does not check whether the binary actually exists
     and is callable.
 
@@ -96,8 +97,8 @@ def get_binary(name):
         return binary
     else:
         FreeCAD.Console.PrintError(
-            'Settings solver name: {} not found in '
-            'solver settings modules _SOLVER_PARAM dirctionary.\n'
+            "Settings solver name: {} not found in "
+            "solver settings modules _SOLVER_PARAM dirctionary.\n"
             .format(name)
         )
         return None
@@ -107,8 +108,8 @@ def get_write_comments(name):
     """ Check whether "write_comments" is set for solver.
 
     Returns ``True`` if the "write_comments" setting/parameter is set for the
-    solver with the id *name*. Returns ``False`` otherwise. If the solver isn't
-    supported ``None`` is returned.
+    solver with the id *name*. Returns ``False`` otherwise. If the solver is
+    not supported ``None`` is returned.
 
     :param name: solver id as a ``str`` (see :mod:`femsolver.settings`)
     """
@@ -116,8 +117,8 @@ def get_write_comments(name):
         return _SOLVER_PARAM[name].get_write_comments()
     else:
         FreeCAD.Console.PrintError(
-            'Settings solver name: {} not found in '
-            'solver settings modules _SOLVER_PARAM dirctionary.\n'
+            "Settings solver name: {} not found in "
+            "solver settings modules _SOLVER_PARAM dirctionary.\n"
             .format(name)
         )
         return None
@@ -189,7 +190,10 @@ class _SolverDlg(object):
     def get_binary(self):
 
         # set the binary path to the FreeCAD defaults
-        # ATM pure unix shell commands without path names are used
+        # ATM pure unix shell commands without path names are used as standard
+        # TODO the binaries provieded with the FreeCAD distribution should be found
+        # without any additional user input
+        # see ccxttols, it works for Windows and Linux there
         binary = self.default
 
         # check if use_default is set to True
@@ -198,6 +202,8 @@ class _SolverDlg(object):
             binary = self.param_group.GetString(self.custom_path)
 
         # get the whole binary path name for the given command or binary path and return it
+        # None is returned if the binary has not been found
+        # The user does not know what exactly has going wrong.
         from distutils.spawn import find_executable as find_bin
         path = find_bin(binary)
         return path
@@ -227,6 +233,11 @@ _SOLVER_PARAM = {
         param_path=_PARAM_PATH + "Elmer",
         use_default="UseStandardGridLocation",
         custom_path="gridBinaryPath"),
+    "Mystran": _SolverDlg(
+        default="mystran",
+        param_path=_PARAM_PATH + "Mystran",
+        use_default="UseStandardMystranLocation",
+        custom_path="mystranBinaryPath"),
     "Z88": _SolverDlg(
         default="z88r",
         param_path=_PARAM_PATH + "Z88",
