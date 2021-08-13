@@ -707,10 +707,10 @@ App.Units.MilliNewton   = App.Units.Quantity('mN')
 App.Units.KiloNewton    = App.Units.Quantity('kN')
 App.Units.MegaNewton    = App.Units.Quantity('MN')
 
-App.Units.NewtonPerMeter   = App.Units.Quantity('N/m')
+App.Units.NewtonPerMeter        = App.Units.Quantity('N/m')
 App.Units.MilliNewtonPerMeter   = App.Units.Quantity('mN/m')
-App.Units.KiloNewtonPerMeter   = App.Units.Quantity('kN/m')
-App.Units.MegaNewtonPerMeter   = App.Units.Quantity('MN/m')
+App.Units.KiloNewtonPerMeter    = App.Units.Quantity('kN/m')
+App.Units.MegaNewtonPerMeter    = App.Units.Quantity('MN/m')
 
 App.Units.Pascal        = App.Units.Quantity('Pa')
 App.Units.KiloPascal    = App.Units.Quantity('kPa')
