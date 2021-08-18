@@ -129,6 +129,7 @@ class BoundarySelector(_Selector):
 
     def __init__(self):
         super(BoundarySelector, self).__init__()
+        self.solidsBtn = QtGui.QRadioButton(self.tr("Solid selection?"))
         self.setWindowTitle(self.tr("Select Faces/Edges/Vertexes"))
         self.setHelpText(self.tr(
             "To add references: select them in the 3D view "
@@ -137,6 +138,7 @@ class BoundarySelector(_Selector):
 
     def getSelection(self):
         selection = []
+        self
         for selObj in Gui.Selection.getSelectionEx():
             if selObj.HasSubObjects:
                 item = (selObj.Object, tuple(selObj.SubElementNames))

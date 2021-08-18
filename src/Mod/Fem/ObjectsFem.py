@@ -147,6 +147,20 @@ def makeConstraintElectrostaticPotential(
         view_constraint_electrostaticpotential.VPConstraintElectroStaticPotential(obj.ViewObject)
     return obj
 
+def makeConstraintUniversal(
+    doc,
+    name="ConstraintUniversal"
+):
+    """makeConstraintUniversal(document, [name]):
+    makes a Fem Universal object"""
+    obj = doc.addObject("Fem::ConstraintPython", name)
+    from femobjects import constraint_universal
+    constraint_universal.ConstraintUniversal(obj)
+    if FreeCAD.GuiUp:
+        from femviewprovider import view_constraint_universal
+        view_constraint_universal.VPConstraintUniversal(obj.ViewObject)
+    return obj
+
 
 def makeConstraintFixed(
     doc,

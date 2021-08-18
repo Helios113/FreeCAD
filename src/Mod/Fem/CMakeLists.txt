@@ -170,6 +170,7 @@ SET(FemObjects_SRCS
     femobjects/constraint_bodyheatsource.py
     femobjects/constraint_centrif.py
     femobjects/constraint_electrostaticpotential.py
+    femobjects/constraint_universal.py
     femobjects/constraint_flowvelocity.py
     femobjects/constraint_initialflowvelocity.py
     femobjects/constraint_sectionprint.py
@@ -564,6 +565,7 @@ SET(FemGuiTaskPanels_SRCS
     femtaskpanels/__init__.py
     femtaskpanels/task_constraint_centrif.py
     femtaskpanels/task_constraint_electrostaticpotential.py
+    femtaskpanels/task_constraint_universal.py
     femtaskpanels/task_constraint_flowvelocity.py
     femtaskpanels/task_constraint_initialflowvelocity.py
     femtaskpanels/task_constraint_sectionprint.py
@@ -601,6 +603,7 @@ SET(FemGuiViewProvider_SRCS
     femviewprovider/view_constraint_bodyheatsource.py
     femviewprovider/view_constraint_centrif.py
     femviewprovider/view_constraint_electrostaticpotential.py
+    femviewprovider/view_constraint_universal.py
     femviewprovider/view_constraint_flowvelocity.py
     femviewprovider/view_constraint_initialflowvelocity.py
     femviewprovider/view_constraint_sectionprint.py
