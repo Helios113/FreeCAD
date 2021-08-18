@@ -183,6 +183,16 @@ class _ConstraintElectrostaticPotential(CommandManager):
         self.is_active = "with_analysis"
         self.do_activated = "add_obj_on_gui_set_edit"
 
+class _ConstraintUniversal(CommandManager):
+    "The FEM_ConstraintUniversal command definition"
+
+    def __init__(self):
+        super(_ConstraintUniversal, self).__init__()
+        self.menuetext = "Constraint universal"
+        self.tooltip = "Creates a FEM universal constraint"
+        self.is_active = "with_analysis"
+        self.do_activated = "add_obj_on_gui_set_edit"
+
 
 class _ConstraintFlowVelocity(CommandManager):
     "The FEM_ConstraintFlowVelocity command definition"
@@ -845,6 +855,10 @@ FreeCADGui.addCommand(
 FreeCADGui.addCommand(
     "FEM_ConstraintElectrostaticPotential",
     _ConstraintElectrostaticPotential()
+)
+FreeCADGui.addCommand(
+    "FEM_ConstraintUniversal",
+    _ConstraintUniversal()
 )
 FreeCADGui.addCommand(
     "FEM_ConstraintFlowVelocity",
