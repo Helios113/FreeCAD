@@ -196,9 +196,10 @@ class _TaskPanel(object):
 
     # File Tab settings
     def _fileSelect(self, a):
+        self._paramWidget.tw_file.clear()
         f = open(a,)
         data = json.load(f)
-        print(data)
+        
         for key, value in data.items():
             # TODO get info from json file
             n = len(value)
@@ -217,7 +218,7 @@ class _TaskPanel(object):
         # TODO add widget to list of widgets
         f.close()
         # self._paramWidget.tw_file
-        
+
     def _addFileBC(self):
         
         i = self._paramWidget.tw_file.currentIndex()
