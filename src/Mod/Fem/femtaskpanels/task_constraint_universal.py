@@ -41,6 +41,7 @@ from femtools import membertools
 
 import json
 from PySide import QtCore, QtGui
+import FemGui
 
 class _TaskPanel(object):
 
@@ -99,9 +100,17 @@ class _TaskPanel(object):
                 self._part.ViewObject.hide()
 
     def _initParamWidget(self):
+        self._paramWidget.tabWidget.setTabEnabled(2, False)
+        analysis = FemGui.getActiveAnalysis()
+        if analysis:
+            solver = membertools.get_single_member(analysis, "Fem::SolverMoFEM")
+            if solver:
+                #TODO load json and reveal auto tab
+                #self._paramWidget.tabWidget.setTabEnabled(2, True)
+                pass
         
         self._paramWidget.fc_file.setFilter("*.json")
-        self._paramWidget.tw_file.clear()
+        self._clearWindow()
         self._paramWidget.fc_file.fileNameChanged.connect(self._fileSelect)
         self._paramWidget.btn_file.clicked.connect(self._addFileBC)
 
@@ -195,6 +204,11 @@ class _TaskPanel(object):
         self.accept()
 
     # File Tab settings
+    def _clearWindow(self):
+        self._paramWidget.tw_file.clear()
+        empt = QtGui.QWidget()
+        self._paramWidget.tw_file.addTab(empt, "Empty")
+    
     def _fileSelect(self, a):
         self._paramWidget.tw_file.clear()
         f = open(a,)
