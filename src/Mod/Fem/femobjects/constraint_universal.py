@@ -45,65 +45,12 @@ class ConstraintUniversal(base_fempythonobject.BaseFemPythonObject):
         self.add_properties(obj)
 
     def add_properties(self, obj):
-        if not hasattr(obj, "Potential"):
+        if not hasattr(obj, "Blockset"):
             obj.addProperty(
-                "App::PropertyFloat",
-                "Potential",
+                "App::PropertyString",
+                "Blockset",
                 "Parameter",
-                "Potential"
+                "Blockset"
             ),
-            obj.Potential = 0.0
+            obj.Blockset = ""
 
-        if not hasattr(obj, "PotentialEnabled"):
-            obj.addProperty(
-                "App::PropertyBool",
-                "PotentialEnabled",
-                "Parameter",
-                "Potential Enabled"
-            ),
-            obj.PotentialEnabled = False
-
-        if not hasattr(obj, "PotentialConstant"):
-            obj.addProperty(
-                "App::PropertyBool",
-                "PotentialConstant",
-                "Parameter",
-                "Potential Constant"
-            ),
-            obj.PotentialConstant = False
-
-        if not hasattr(obj, "ElectricInfinity"):
-            obj.addProperty(
-                "App::PropertyBool",
-                "ElectricInfinity",
-                "Parameter",
-                "Electric Infinity"
-            ),
-            obj.ElectricInfinity = False
-
-        if not hasattr(obj, "ElectricForcecalculation"):
-            obj.addProperty(
-                "App::PropertyBool",
-                "ElectricForcecalculation",
-                "Parameter",
-                "Electric Force Calculation"
-            ),
-            obj.ElectricForcecalculation = False
-
-        if not hasattr(obj, "CapacitanceBody"):
-            obj.addProperty(
-                "App::PropertyInteger",
-                "CapacitanceBody",
-                "Parameter",
-                "Capacitance Body"
-            ),
-            obj.CapacitanceBody = 0
-
-        if not hasattr(obj, "CapacitanceBodyEnabled"):
-            obj.addProperty(
-                "App::PropertyBool",
-                "CapacitanceBodyEnabled",
-                "Parameter",
-                "Capacitance Body Enabled"
-            )
-            obj.CapacitanceBodyEnabled = False
