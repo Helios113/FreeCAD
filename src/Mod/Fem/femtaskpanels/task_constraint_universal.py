@@ -23,7 +23,7 @@
 # *                                                                                 *
 # ***********************************************************************************
 
-__title__ = "FreeCAD FEM constraint electrostatic potential task panel for the document object"
+__title__ = "FreeCAD FEM constraint universal task panel for the document object"
 __author__ = "Prelsav Aleksandrov"
 __url__ = "https://www.freecadweb.org"
 
@@ -39,6 +39,8 @@ from femguiutils import selection_widgets
 from femtools import femutils
 from femtools import membertools
 
+import json
+from PySide import QtCore, QtGui
 
 class _TaskPanel(object):
 
@@ -51,7 +53,7 @@ class _TaskPanel(object):
             False
         )
         self._paramWidget = FreeCADGui.PySideUic.loadUi(
-            FreeCAD.getHomePath() + "Mod/Fem/Resources/ui/ElectrostaticPotential.ui")
+            FreeCAD.getHomePath() + "Mod/Fem/Resources/ui/ConstraintUniversal.ui")
         self._initParamWidget()
         self.form = [self._refWidget, self._paramWidget]
         analysis = obj.getParentGroup()
@@ -77,8 +79,8 @@ class _TaskPanel(object):
         return True
 
     def accept(self):
-        if self._obj.References != self._refWidget.references():
-            self._obj.References = self._refWidget.references()
+        if self._obj.References != self._refWidget.references:
+            self._obj.References = self._refWidget.references
         self._applyWidgetChanges()
         self._obj.Document.recompute()
         FreeCADGui.ActiveDocument.resetEdit()
@@ -97,6 +99,15 @@ class _TaskPanel(object):
                 self._part.ViewObject.hide()
 
     def _initParamWidget(self):
+        
+        self._paramWidget.fc_file.setFilter("*.json")
+        self._paramWidget.tw_file.clear()
+        self._paramWidget.fc_file.fileNameChanged.connect(self._fileSelect)
+        self._paramWidget.btn_file.clicked.connect(self._addFileBC)
+
+        self._paramWidget.btn_manual.clicked.connect(self._addManualBC)
+        self._paramWidget.sb_manual.valueChanged.connect(self._updateMTable)
+        """
         unit = "V"
         q = Units.Quantity("{} {}".format(self._obj.Potential, unit))
 
@@ -117,8 +128,12 @@ class _TaskPanel(object):
             not self._obj.CapacitanceBodyEnabled)
         self._paramWidget.capacitanceBody_spinBox.setValue(
             self._obj.CapacitanceBody)
+        """
+        return
 
     def _applyWidgetChanges(self):
+        return
+        """
         unit = "V"
         self._obj.PotentialEnabled = \
             not self._paramWidget.potentialBox.isChecked()
@@ -149,3 +164,84 @@ class _TaskPanel(object):
         if self._obj.CapacitanceBodyEnabled:
             self._paramWidget.capacitanceBody_spinBox.setEnabled(True)
             self._obj.CapacitanceBody = self._paramWidget.capacitanceBody_spinBox.value()
+
+            """
+
+    # Manual Tab settings
+    def _updateMTable(self):
+        n = self._paramWidget.sb_manual.value()
+        self._paramWidget.tw_manual.setRowCount(n)
+
+    def _addManualBC(self):
+        #TODO check if name is empty
+        self._obj.Blockset = self._paramWidget.in_manual.text()
+        for i in range(self._paramWidget.tw_manual.rowCount()):
+            name = self._paramWidget.tw_manual.item(i, 0)
+            val = self._paramWidget.tw_manual.item(i, 1)
+            if name is None:
+                continue
+            name = name.text()
+            print(name, val)
+            if not hasattr(self._obj, name):
+                self._obj.addProperty(
+                "App::PropertyString",
+                name,
+                "Parameter",
+                name
+                )
+                if val is None:
+                    continue
+                setattr(self._obj, name, val.text())
+        self.accept()
+
+    # File Tab settings
+    def _fileSelect(self, a):
+        f = open(a,)
+        data = json.load(f)
+        print(data)
+        for key, value in data.items():
+            # TODO get info from json file
+            n = len(value)
+            table = QtGui.QTableWidget(n, 2, None)
+            table.setObjectName("ab_"+key)
+            table.setHorizontalHeaderLabels(["Name", "Values"])
+            table.horizontalHeader().setStretchLastSection(True)
+            rows = 0
+            for i, j in value.items():
+                newItem = QtGui.QTableWidgetItem(i)
+                table.setItem(rows, 0, newItem)
+                newItem = QtGui.QTableWidgetItem(j)
+                table.setItem(rows, 1, newItem)
+                rows += 1
+            self._paramWidget.tw_file.addTab(table, key)
+        # TODO add widget to list of widgets
+        f.close()
+        # self._paramWidget.tw_file
+        
+    def _addFileBC(self):
+        
+        i = self._paramWidget.tw_file.currentIndex()
+
+        self._obj.Blockset = self._paramWidget.tw_file.tabText(i)
+        table = self._paramWidget.tw_file.currentWidget()
+
+        for i in range(table.rowCount()):
+            name = table.item(i, 0)
+            val = table.item(i, 1)
+            if name is None:
+                continue
+            name = name.text()
+            print(name, val)
+            if not hasattr(self._obj, name):
+                self._obj.addProperty(
+                "App::PropertyString",
+                name,
+                "Parameter",
+                name
+                )
+                if val is None:
+                    continue
+                setattr(self._obj, name, val.text())
+        self.accept()
+        return
+
