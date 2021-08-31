@@ -73,6 +73,7 @@ void PropertyPostDataObject::setValue(const vtkSmartPointer<vtkDataObject>& ds)
     if(ds) {
         createDataObjectByExternalType(ds);
         m_dataObject->DeepCopy(ds);
+        test_vector.push_back(m_dataObject)
     }
     else
         m_dataObject = NULL;
@@ -82,7 +83,7 @@ void PropertyPostDataObject::setValue(const vtkSmartPointer<vtkDataObject>& ds)
 
 const vtkSmartPointer<vtkDataObject>& PropertyPostDataObject::getValue(void)const
 {
-    return m_dataObject;
+    return test_vector.at(0);
 }
 
 bool PropertyPostDataObject::isComposite() {
