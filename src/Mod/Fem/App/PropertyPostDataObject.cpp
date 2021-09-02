@@ -73,7 +73,7 @@ void PropertyPostDataObject::setValue(const vtkSmartPointer<vtkDataObject>& ds)
     if(ds) {
         createDataObjectByExternalType(ds);
         m_dataObject->DeepCopy(ds);
-        test_vector.push_back(m_dataObject)
+        data_vector.push_back(m_dataObject)
     }
     else
         m_dataObject = NULL;
@@ -83,25 +83,25 @@ void PropertyPostDataObject::setValue(const vtkSmartPointer<vtkDataObject>& ds)
 
 const vtkSmartPointer<vtkDataObject>& PropertyPostDataObject::getValue(void)const
 {
-    return test_vector.at(0);
+    return data_vector.at(frame);
 }
 
 bool PropertyPostDataObject::isComposite() {
 
-    return m_dataObject && !m_dataObject->IsA("vtkDataSet");
+    return data_vector.at(frame) && !data_vector.at(frame)->IsA("vtkDataSet");
 }
 
 bool PropertyPostDataObject::isDataSet() {
 
-    return m_dataObject && m_dataObject->IsA("vtkDataSet");
+    return data_vector.at(frame) && data_vector.at(frame)->IsA("vtkDataSet");
 }
 
 int PropertyPostDataObject::getDataType() {
 
-    if(!m_dataObject)
+    if(!data_vector.at(frame))
         return -1;
 
-    return m_dataObject->GetDataObjectType();
+    return data_vector.at(frame)->GetDataObjectType();
 }
 
 

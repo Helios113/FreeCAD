@@ -80,7 +80,7 @@ public:
 protected:
     void createDataObjectByExternalType(vtkSmartPointer<vtkDataObject> ex);
     vtkSmartPointer<vtkDataObject> m_dataObject;
-    std::vector<vtkSmartPointer<vtkDataObject>> test_vector;
+    std::vector<vtkSmartPointer<vtkDataObject>> data_vector;
 };
 
 } //namespace FEM
