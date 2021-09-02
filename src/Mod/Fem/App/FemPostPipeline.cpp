@@ -79,7 +79,7 @@ short FemPostPipeline::mustExecute(void) const
 
     return FemPostFilter::mustExecute();
 }
-void setFrame(unsigned int frame)
+void FemPostPipeline::setFrame(unsigned int frame)
 {
     Data.setFrame(frame);
 }

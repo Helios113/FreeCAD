@@ -50,7 +50,7 @@ public:
     /// get the current frame
     unsigned int getFrame();
     /// get the frame count
-    unsigned int getFrameCount()
+    unsigned int getFrameCount();
     /// set the dataset
     void setValue(const vtkSmartPointer<vtkDataObject>&);
     /// get the part shape

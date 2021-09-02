@@ -209,6 +209,7 @@ private Q_SLOTS:
     void on_Field_activated(int i);
     void on_VectorMode_activated(int i);
     void on_Transparency_valueChanged(int i);
+    void on_Frame_valueChanged(unsigned int i);
 
 private:
     QWidget* proxy;

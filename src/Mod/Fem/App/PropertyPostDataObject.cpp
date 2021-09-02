@@ -88,7 +88,7 @@ void PropertyPostDataObject::setValue(const vtkSmartPointer<vtkDataObject>& ds)
     if(ds) {
         createDataObjectByExternalType(ds);
         m_dataObject->DeepCopy(ds);
-        data_vector.push_back(m_dataObject)
+        data_vector.push_back(m_dataObject);
     }
     else
         m_dataObject = NULL;

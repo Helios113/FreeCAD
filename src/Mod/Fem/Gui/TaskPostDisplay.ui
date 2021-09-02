@@ -174,13 +174,13 @@
     </widget>
    </item>
    <item>
-    <widget class="QGroupBox" name="Frame">
+    <widget class="QGroupBox" name="FrameBox">
      <property name="title">
       <string>Frame 1/1</string>
      </property>
      <layout class="QGridLayout" name="gridLayout">
       <item row="2" column="0" colspan="3">
-       <widget class="QSlider" name="slider">
+       <widget class="QSlider" name="Frame">
         <property name="maximum">
          <number>98</number>
         </property>

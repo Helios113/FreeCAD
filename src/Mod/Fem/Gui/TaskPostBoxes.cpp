@@ -383,7 +383,6 @@ void TaskPostDisplay::on_Field_activated(int i) {
     getTypedView<ViewProviderFemPostObject>()->Field.setValue(i);
     updateEnumerationList(getTypedView<ViewProviderFemPostObject>()->VectorMode, ui->VectorMode);
 }
-
 void TaskPostDisplay::on_VectorMode_activated(int i) {
 
     getTypedView<ViewProviderFemPostObject>()->VectorMode.setValue(i);
@@ -392,6 +391,11 @@ void TaskPostDisplay::on_VectorMode_activated(int i) {
 void TaskPostDisplay::on_Transparency_valueChanged(int i) {
 
     getTypedView<ViewProviderFemPostObject>()->Transparency.setValue(i);
+}
+
+void TaskPostDisplay::on_Frame_valueChanged(unsigned int i) {
+
+    getTypedView<ViewProviderFemPostObject>()->Frame.setValue(i);
 }
 
 void TaskPostDisplay::applyPythonCode() {
