@@ -52,6 +52,8 @@ public:
     virtual App::DocumentObjectExecReturn* execute(void);
     PyObject* getPyObject();
 
+    void setFrame(unsigned int);
+
     virtual const char* getViewProviderName(void) const {
         return "FemGui::ViewProviderFemPostPipeline";
     }

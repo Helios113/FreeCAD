@@ -45,6 +45,12 @@ public:
 
     /** @name Getter/setter */
     //@{
+    /// set the current frame
+    void setFrame(unsigned int);
+    /// get the current frame
+    unsigned int getFrame();
+    /// get the frame count
+    unsigned int getFrameCount()
     /// set the dataset
     void setValue(const vtkSmartPointer<vtkDataObject>&);
     /// get the part shape
@@ -78,6 +84,7 @@ public:
     virtual void getPaths(std::vector<App::ObjectIdentifier> & paths) const;
 
 protected:
+    unsigned int frame = 0;
     void createDataObjectByExternalType(vtkSmartPointer<vtkDataObject> ex);
     vtkSmartPointer<vtkDataObject> m_dataObject;
     std::vector<vtkSmartPointer<vtkDataObject>> data_vector;

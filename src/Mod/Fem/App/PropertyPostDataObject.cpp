@@ -66,6 +66,21 @@ PropertyPostDataObject::~PropertyPostDataObject()
 {
 }
 
+void PropertyPostDataObject::setFrame(unsigned int frame_select)
+{
+    frame = frame_select;
+}
+
+unsigned int PropertyPostDataObject::getFrame()
+{
+    return frame;
+}
+
+unsigned int PropertyPostDataObject::getFrameCount()
+{
+    return data_vector.size();
+}
+
 void PropertyPostDataObject::setValue(const vtkSmartPointer<vtkDataObject>& ds)
 {
     aboutToSetValue();

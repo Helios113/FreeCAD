@@ -79,7 +79,10 @@ short FemPostPipeline::mustExecute(void) const
 
     return FemPostFilter::mustExecute();
 }
-
+void setFrame(unsigned int frame)
+{
+    Data.setFrame(frame);
+}
 DocumentObjectExecReturn* FemPostPipeline::execute(void) {
 
     //if we are the toplevel pipeline our data object is not created by filters, we are the main source!
