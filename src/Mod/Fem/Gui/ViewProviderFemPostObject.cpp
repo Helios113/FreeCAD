@@ -71,6 +71,7 @@ ViewProviderFemPostObject::ViewProviderFemPostObject() : m_blockPropertyChanges(
     ADD_PROPERTY_TYPE(Field,((long)0), "Coloring", App::Prop_None, "Select the field used for calculating the color");
     ADD_PROPERTY_TYPE(VectorMode,((long)0), "Coloring", App::Prop_None, "Select what to show for a vector field");
     ADD_PROPERTY(Transparency, (0));
+    ADD_PROPERTY(Frame, (0));
 
     sPixmap = "fem-femmesh-from-shape";
 
@@ -310,6 +311,7 @@ void ViewProviderFemPostObject::updateProperties() {
         VectorMode.setValue(val.c_str());
 
     m_blockPropertyChanges = false;
+
 }
 
 void ViewProviderFemPostObject::update3D() {
@@ -505,6 +507,13 @@ void ViewProviderFemPostObject::WriteTransparency() {
     m_material->transparency.setValue(trans);
 }
 
+void ViewProviderFemPostObject::SetFrame() {
+    int frameCount = static_cast<Fem::FemPostObject*>(getObject())->Data.getFrameCount();
+    int frame = int(Frame.getValue());
+    Base::Console().Error("The frame is %i\n", frame);
+    Base::Console().Error("The frameCount is %i\n", frameCount);
+    static_cast<Fem::FemPostObject*>(getObject())->Data.setFrame(frame);
+}
 
 
 void ViewProviderFemPostObject::updateData(const App::Property* p) {
@@ -548,6 +557,12 @@ void ViewProviderFemPostObject::onChanged(const App::Property* prop) {
     }
     else if(prop == &Transparency) {
         WriteTransparency();
+    }
+    else if(prop == &Frame && setupPipeline()) {
+        Base::Console().Error("Change detected");
+        SetFrame();
+        WriteTransparency();
+        updateVtk();
     }
 
     ViewProviderDocumentObject::onChanged(prop);

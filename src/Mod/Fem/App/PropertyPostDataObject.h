@@ -46,7 +46,7 @@ public:
     /** @name Getter/setter */
     //@{
     /// set the current frame
-    void setFrame(unsigned int);
+    void setFrame(int);
     /// get the current frame
     unsigned int getFrame();
     /// get the frame count

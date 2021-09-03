@@ -81,6 +81,7 @@ public:
     App::PropertyEnumeration            Field;
     App::PropertyEnumeration            VectorMode;
     App::PropertyPercent                Transparency;
+    App::PropertyInteger                Frame;
 
     void attach(App::DocumentObject *pcObject);
     void setDisplayMode(const char* ModeName);
@@ -151,6 +152,7 @@ private:
                         vtkDataArray *tcoords);
     void WriteColorData(bool ResetColorBarRange);
     void WriteTransparency();
+    void SetFrame();
 
     App::Enumeration m_coloringEnum, m_vectorEnum;
     bool m_blockPropertyChanges;

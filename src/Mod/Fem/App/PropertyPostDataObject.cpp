@@ -66,7 +66,7 @@ PropertyPostDataObject::~PropertyPostDataObject()
 {
 }
 
-void PropertyPostDataObject::setFrame(unsigned int frame_select)
+void PropertyPostDataObject::setFrame(int frame_select)
 {
     frame = frame_select;
 }

@@ -176,7 +176,7 @@
    <item>
     <widget class="QGroupBox" name="FrameBox">
      <property name="title">
-      <string>Frame 1/1</string>
+      <string>Frame</string>
      </property>
      <layout class="QGridLayout" name="gridLayout">
       <item row="2" column="0" colspan="3">

@@ -36,6 +36,11 @@ import FreeCAD
 from FreeCAD import Console
 
 import Fem
+import re
+import os
+from os import listdir
+from os.path import isfile, join
+
 
 
 # ********* generic FreeCAD import and export methods *********
@@ -133,7 +138,14 @@ def importVtkVtkResult(
     resultname
 ):
     vtk_result_obj = FreeCAD.ActiveDocument.addObject("Fem::FemPostPipeline", resultname)
-    vtk_result_obj.read(filename)
+    print("og file",filename)
+    dir = os.path.dirname(filename)
+    print(dir)
+    onlyfiles = [join(dir, f) for f in listdir(dir) if isfile(join(dir, f)) and os.path.splitext(f)[1]=='.vtk']
+    for i in sorted(onlyfiles):
+        print(i)
+        vtk_result_obj.read(i)
+
     vtk_result_obj.touch()
     FreeCAD.ActiveDocument.recompute()
     return vtk_result_obj

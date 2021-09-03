@@ -364,6 +364,17 @@ TaskPostDisplay::TaskPostDisplay(Gui::ViewProviderDocumentObject* view, QWidget 
     Base::Console().Log("Transparency %i: \n", trans);
     // sync the trancparency slider
     ui->Transparency->setValue(trans);
+
+
+    // get Frame from ViewProvider
+    int frame = getTypedView<ViewProviderFemPostObject>()->Frame.getValue();
+    int frame_count = static_cast<Fem::FemPostObject*>(getObject())->Data.getFrameCount();
+    Base::Console().Error("Line 372 at TaskPostBoxes %i: \n", frame);
+    Base::Console().Error("Line 373 at TaskPostBoxes, Frame count %i: \n", frame_count);
+    // sync the trancparency slider
+    //ui->Frame->
+    ui->Frame->setMaximum(frame_count-1);
+    ui->Frame->setValue(frame);
 }
 
 TaskPostDisplay::~TaskPostDisplay()
@@ -393,8 +404,11 @@ void TaskPostDisplay::on_Transparency_valueChanged(int i) {
     getTypedView<ViewProviderFemPostObject>()->Transparency.setValue(i);
 }
 
-void TaskPostDisplay::on_Frame_valueChanged(unsigned int i) {
+void TaskPostDisplay::on_Frame_valueChanged(int i) {
 
+    int frame_count = static_cast<Fem::FemPostObject*>(getObject())->Data.getFrameCount();
+    ui->Frame->setMaximum(frame_count-1);
+    Base::Console().Error("Frame count is %i\n", frame_count);
     getTypedView<ViewProviderFemPostObject>()->Frame.setValue(i);
 }
 
