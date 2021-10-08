@@ -1,5 +1,5 @@
 # ***********************************************************************************
-# *   Copyright (c) 2017 Markus Hovorka <m.hovorka@live.de>                         * 
+# *   Copyright (c) 2017 Markus Hovorka <m.hovorka@live.de>                         *
 # *   Copyright (c) 2020 Bernd Hahnebach <bernd@bimstatik.org>                      *
 # *   Copyright (c) 2021 Preslav Aleksandrov <preslav.aleksandrov@protonmail.com>   *
 # *                                                                                 *
@@ -27,21 +27,26 @@ __title__ = "FreeCAD FEM constraint universal task panel for the document object
 __author__ = "Prelsav Aleksandrov"
 __url__ = "https://www.freecadweb.org"
 
-## @package task_constraint_universal
+# @package task_constraint_universal
 #  \ingroup FEM
 #  \brief task panel for constraint universal object
+
+import posix
+from subprocess import check_output
 
 import FreeCAD
 import FreeCADGui
 from FreeCAD import Units
-
+from femtools.femutils import is_of_type
 from femguiutils import selection_widgets
 from femtools import femutils
 from femtools import membertools
 
 import json
+import os
 from PySide import QtCore, QtGui
 import FemGui
+
 
 class _TaskPanel(object):
 
@@ -58,14 +63,31 @@ class _TaskPanel(object):
         self._initParamWidget()
         self.form = [self._refWidget, self._paramWidget]
         analysis = obj.getParentGroup()
+        if analysis is None:
+            print(
+                "An analysis is needed to use the automatic boundary detection.")
+        # check if MoFEM is in analysis
+        sel = FreeCADGui.Selection.getSelection()
+        if len(sel) == 1 and is_of_type(sel[0], "Fem::SolverMoFEM"):
+            self.solver = sel[0]
+            self._mofem_params = FreeCAD.ParamGet(
+                "User parameter:BaseApp/Preferences/Mod/Fem/MoFEM")
+            # get the module from the solver
+            self._module = self.solver.getProperty("Module").split(']')[
+                0].lstrip('[')
+        else:
+            print(
+                "MoFEM is needed to use the automatic boundary detection")
         self._mesh = None
         self._part = None
         if analysis is not None:
-            self._mesh = membertools.get_single_member(analysis, "Fem::FemMeshObject")
+            self._mesh = membertools.get_single_member(
+                analysis, "Fem::FemMeshObject")
         if self._mesh is not None:
             self._part = femutils.get_part_to_mesh(self._mesh)
         self._partVisible = None
         self._meshVisible = None
+        self._isPosix = (os.name == "posix")
 
     def open(self):
         if self._mesh is not None and self._part is not None:
@@ -103,12 +125,20 @@ class _TaskPanel(object):
         self._paramWidget.tabWidget.setTabEnabled(2, False)
         analysis = FemGui.getActiveAnalysis()
         if analysis:
-            solver = membertools.get_single_member(analysis, "Fem::SolverMoFEM")
+            solver = membertools.get_single_member(
+                analysis, "Fem::SolverMoFEM")
             if solver:
-                #TODO load json and reveal auto tab
-                #self._paramWidget.tabWidget.setTabEnabled(2, True)
-                pass
-        
+                # TODO load json and reveal auto tab
+                if self._isPosix:
+                    #binary = settings.get_binary("MoFEMSolver")
+                    arguments = ['-module', self._module, '-bc']
+                    self._json_path = check_output(arguments)
+
+                    # sets the tab to enabled
+                    self._paramWidget.tabWidget.setTabEnabled(2, True)
+                else:
+                    pass
+
         self._paramWidget.fc_file.setFilter("*.json")
         self._clearWindow()
         self._paramWidget.fc_file.fileNameChanged.connect(self._fileSelect)
@@ -116,29 +146,6 @@ class _TaskPanel(object):
 
         self._paramWidget.btn_manual.clicked.connect(self._addManualBC)
         self._paramWidget.sb_manual.valueChanged.connect(self._updateMTable)
-        """
-        unit = "V"
-        q = Units.Quantity("{} {}".format(self._obj.Potential, unit))
-
-        self._paramWidget.potentialTxt.setText(
-            q.UserString)
-        self._paramWidget.potentialBox.setChecked(
-            not self._obj.PotentialEnabled)
-        self._paramWidget.potentialConstantBox.setChecked(
-            self._obj.PotentialConstant)
-
-        self._paramWidget.electricInfinityBox.setChecked(
-            self._obj.ElectricInfinity)
-
-        self._paramWidget.electricForcecalculationBox.setChecked(
-            self._obj.ElectricForcecalculation)
-
-        self._paramWidget.capacitanceBodyBox.setChecked(
-            not self._obj.CapacitanceBodyEnabled)
-        self._paramWidget.capacitanceBody_spinBox.setValue(
-            self._obj.CapacitanceBody)
-        """
-        return
 
     def _applyWidgetChanges(self):
         return
@@ -182,7 +189,7 @@ class _TaskPanel(object):
         self._paramWidget.tw_manual.setRowCount(n)
 
     def _addManualBC(self):
-        #TODO check if name is empty
+        # TODO check if name is empty
         self._obj.Blockset = self._paramWidget.in_manual.text()
         for i in range(self._paramWidget.tw_manual.rowCount()):
             name = self._paramWidget.tw_manual.item(i, 0)
@@ -193,10 +200,10 @@ class _TaskPanel(object):
             print(name, val)
             if not hasattr(self._obj, name):
                 self._obj.addProperty(
-                "App::PropertyString",
-                name,
-                "Parameter",
-                name
+                    "App::PropertyString",
+                    name,
+                    "Parameter",
+                    name
                 )
                 if val is None:
                     continue
@@ -208,12 +215,13 @@ class _TaskPanel(object):
         self._paramWidget.tw_file.clear()
         empt = QtGui.QWidget()
         self._paramWidget.tw_file.addTab(empt, "Empty")
-    
+
     def _fileSelect(self, a):
         self._paramWidget.tw_file.clear()
         f = open(a,)
         data = json.load(f)
-        
+        print("I got to here")
+        print(data.items())
         for key, value in data.items():
             # TODO get info from json file
             n = len(value)
@@ -234,7 +242,7 @@ class _TaskPanel(object):
         # self._paramWidget.tw_file
 
     def _addFileBC(self):
-        
+
         i = self._paramWidget.tw_file.currentIndex()
 
         self._obj.Blockset = self._paramWidget.tw_file.tabText(i)
@@ -249,14 +257,13 @@ class _TaskPanel(object):
             print(name, val)
             if not hasattr(self._obj, name):
                 self._obj.addProperty(
-                "App::PropertyString",
-                name,
-                "Parameter",
-                name
+                    "App::PropertyString",
+                    name,
+                    "Parameter",
+                    name
                 )
                 if val is None:
                     continue
                 setattr(self._obj, name, val.text())
         self.accept()
         return
-
