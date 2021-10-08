@@ -1,5 +1,6 @@
 # ***************************************************************************
 # *   Copyright (c) 2017 Markus Hovorka <m.hovorka@live.de>                 *
+# *   Copyright (c) 2020 Bernd Hahnebach <bernd@bimstatik.org>              *
 # *                                                                         *
 # *   This file is part of the FreeCAD CAx development system.              *
 # *                                                                         *
@@ -21,78 +22,64 @@
 # *                                                                         *
 # ***************************************************************************
 
-__title__ = "FreeCAD FEM solver object Elmer"
-__author__ = "Markus Hovorka"
+__title__ = "FreeCAD FEM MoFEM solver"
+__author__ = "Preslav Aleksandrov"
 __url__ = "https://www.freecadweb.org"
 
 # \addtogroup FEM
 #  @{
-
 from . import tasks
-from .equations import elasticity
-from .equations import electrostatic
-from .equations import flow
-from .equations import flux
-from .equations import electricforce
-from .equations import heat
+from .type import elasticity
+from .type import bone
 from .. import run
 from .. import solverbase
 from femtools import femutils
+import FreeCAD
 
 
-def create(doc, name="ElmerSolver"):
+"""
+Document object visible in the tree-view.
+Implemented in python via a document proxy and view proxy.
+"""
+
+
+def create(doc, name="MoFEMSolver"):
     return femutils.createObject(
         doc, name, Proxy, ViewProxy)
 
 
-class Proxy(solverbase.Proxy):
-    """Proxy for FemSolverElmers Document Object."""
+# Types of supported analysis
+# For MoFEM these are:
+# TODO get all analysis tipes
+# for not just do linear elastic
+ANALYSIS_TYPES = ["Linear Elasticity",
+                  "Linear Thermoelasticity", "Bone remodeling"]
 
-    Type = "Fem::SolverElmer"
+
+# Implementation of the Proxy class
+# This class is called from the GUI
+# to create a solver object
+# It defines all parameters that the user
+# can amend through addAttribute
+
+
+class Proxy(solverbase.Proxy):
+    """Proxy for FemSolverMoFEM """
+
+    Type = "FEM::SolverMoFEM"
+    # Name of command which is called
+    # Has to be the same as in GUI/workbench.cpp
+
+    # Ad the properties needed to solve the mesh
 
     _EQUATIONS = {
-        "Heat": heat,
-        "Elasticity": elasticity,
-        "Electrostatic": electrostatic,
-        "Flux": flux,
-        "Electricforce": electricforce,
-        "Flow": flow,
+        "Linear Elasticity": elasticity,
+        "Bone Remodeling": bone
     }
 
     def __init__(self, obj):
         super(Proxy, self).__init__(obj)
-
-        obj.addProperty(
-            "App::PropertyInteger",
-            "SteadyStateMaxIterations",
-            "Steady State",
-            ""
-        )
-        obj.SteadyStateMaxIterations = 1
-
-        obj.addProperty(
-            "App::PropertyInteger",
-            "SteadyStateMinIterations",
-            "Steady State",
-            ""
-        )
-        obj.SteadyStateMinIterations = 0
-
-        obj.addProperty(
-            "App::PropertyLink",
-            "ElmerResult",
-            "Base",
-            "",
-            4 | 8
-        )
-
-        obj.addProperty(
-            "App::PropertyLink",
-            "ElmerOutput",
-            "Base",
-            "",
-            4 | 8
-        )
+        add_attributes(obj)
 
     def createMachine(self, obj, directory, testmode=False):
         return run.Machine(
@@ -110,10 +97,38 @@ class Proxy(solverbase.Proxy):
         return eqId in self._EQUATIONS
 
 
+def add_attributes(obj):
+    obj.addProperty(
+        "App::PropertyEnumeration",
+        "AnalysisType",
+        "Fem",
+        "Type of the analysis"
+    )
+    obj.AnalysisType = ANALYSIS_TYPES
+    obj.AnalysisType = ANALYSIS_TYPES[0]
+    obj.addProperty(
+            "App::PropertyLink",
+            "GmshMesh",
+            "Base",
+            "",
+            4 | 8
+        )
+    obj.addProperty(
+            "App::PropertyLink",
+            "MoFEMResult",
+            "Base",
+            "",
+            4 | 8
+        )
+
+# Implementation of the ViewProxy class
+# This class is called from the GUI
+# to create a solver object
+# It gives the solver icon
 class ViewProxy(solverbase.ViewProxy):
-    """Proxy for FemSolverElmers View Provider."""
+    """Proxy for FemSolverMoFEMs View Provider."""
 
     def getIcon(self):
-        return ":/icons/FEM_SolverElmer.svg"
+        return ":/icons/FEM_SolverMoFEM.svg"
 
 # @}

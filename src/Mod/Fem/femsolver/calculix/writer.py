@@ -26,7 +26,7 @@ __title__ = "FreeCAD FEM solver CalculiX writer"
 __author__ = "Przemo Firszt, Bernd Hahnebach"
 __url__ = "https://www.freecadweb.org"
 
-## \addtogroup FEM
+# \addtogroup FEM
 #  @{
 
 import time

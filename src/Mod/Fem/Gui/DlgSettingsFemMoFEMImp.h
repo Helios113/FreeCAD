@@ -1,5 +1,7 @@
-/***************************************************************************
- *   Copyright (c) 2015 Werner Mayer <wmayer[at]users.sourceforge.net>     *
+ /**************************************************************************
+ *   Copyright (c) 2016 FreeCAD Developers                                 *
+ *   Author: Bernd Hahnebach <bernd@bimstatik.ch>                          *
+ *   Based on src/Mod/Fem/Gui/DlgSettingsFemCcx.h                          *
  *                                                                         *
  *   This file is part of the FreeCAD CAx development system.              *
  *                                                                         *
@@ -21,59 +23,32 @@
  ***************************************************************************/
 
 
-#ifndef FEM_TOOLS_H
-#define FEM_TOOLS_H
+#ifndef FEMGUI_DLGSETTINGSFEMMOFEMIMP_H
+#define FEMGUI_DLGSETTINGSFEMMOFEMIMP_H
 
-#include <Base/Vector3D.h>
-#include <gp_XYZ.hxx>
+#include <Gui/PropertyPage.h>
+#include <memory>
 
-class TopoDS_Shape;
-class TopoDS_Edge;
-class TopoDS_Face;
-/* 
+namespace FemGui {
+class Ui_DlgSettingsFemMoFEMImp;
 
-Some direction header,
-Not needed for solver implementation
-
-*/
-namespace Fem
+class DlgSettingsFemMoFEMImp : public Gui::Dialog::PreferencePage
 {
+    Q_OBJECT
 
-class AppFemExport Tools
-{
 public:
-    /*!
-     Get the direction of the shape. If the shape is a planar face
-     then get its normal direction. If it's 'linear' then get its
-     direction vector.
-     @see isLinear
-     @see isPlanar
-     */
-    static Base::Vector3d getDirectionFromShape(const TopoDS_Shape&);
-    /*!
-     Checks whether the curve of the edge is 'linear' which is the case
-     for a line or a spline or Bezier curve with collinear control points.
-     */
-    static bool isLinear(const TopoDS_Edge&);
-    /*!
-     Checks whether the surface of the face is planar.
-     */
-    static bool isPlanar(const TopoDS_Face&);
-    /*!
-     It is assumed that the edge is 'linear'.
-     The direction vector of the line is returned.
-     @see isLinear
-     */
-    static gp_XYZ getDirection(const TopoDS_Edge&);
-    /*!
-     It is assumed that the face is 'planar'.
-     The normal vector of the plane is returned.
-     @see isPlanar
-     */
-    static gp_XYZ getDirection(const TopoDS_Face&);
+    DlgSettingsFemMoFEMImp( QWidget* parent = 0 );
+    ~DlgSettingsFemMoFEMImp();
+
+protected:
+    void saveSettings();
+    void loadSettings();
+    void changeEvent(QEvent *e);
+
+private:
+    std::unique_ptr<Ui_DlgSettingsFemMoFEMImp> ui;
 };
 
-} //namespace Fem
+} // namespace FemGui
 
-
-#endif // FEM_TOOLS_H
+#endif // FEMGUI_DLGSETTINGSFEMMoFEMIMP_H

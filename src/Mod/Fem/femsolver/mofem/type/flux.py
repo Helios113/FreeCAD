@@ -1,5 +1,6 @@
 # ***************************************************************************
 # *   Copyright (c) 2017 Markus Hovorka <m.hovorka@live.de>                 *
+# *   Copyright (c) 2020 Bernd Hahnebach <bernd@bimstatik.org>              *
 # *                                                                         *
 # *   This file is part of the FreeCAD CAx development system.              *
 # *                                                                         *
@@ -21,11 +22,11 @@
 # *                                                                         *
 # ***************************************************************************
 
-__title__ = "FreeCAD FEM solver Elmer equation object Elasticity"
+__title__ = "FreeCAD FEM solver Elmer equation object Flux"
 __author__ = "Markus Hovorka"
 __url__ = "https://www.freecadweb.org"
 
-# \addtogroup FEM
+## \addtogroup FEM
 #  @{
 
 from femtools import femutils
@@ -33,58 +34,73 @@ from ... import equationbase
 from . import linear
 
 
-def create(doc, name="Elasticity"):
+def create(doc, name="Flux"):
     return femutils.createObject(
         doc, name, Proxy, ViewProxy)
 
 
-class Proxy(linear.Proxy, equationbase.ElasticityProxy):
+class Proxy(linear.Proxy, equationbase.FluxProxy):
 
-    Type = "Fem::EquationElmerElasticity"
+    Type = "Fem::EquationElmerFlux"
 
     def __init__(self, obj):
         super(Proxy, self).__init__(obj)
         obj.addProperty(
             "App::PropertyBool",
-            "DoFrequencyAnalysis",
-            "Elasticity",
+            "CalculateFlux",
+            "Flux",
             ""
         )
         obj.addProperty(
-            "App::PropertyInteger",
-            "EigenmodesCount",
-            "Elasticity",
-            ""
+            "App::PropertyString",
+            "FluxVariable",
+            "Flux",
+            "Insert variable name for flux calculation"
+        )
+        """
+        obj.addProperty(
+            "App::PropertyBool",
+            "CalculateFluxAbs",
+            "Flux",
+            "Select calculation of abs of flux"
         )
         obj.addProperty(
             "App::PropertyBool",
-            "CalculateStrains",
-            "Elasticity",
-            ""
+            "CalculateFluxMagnitude",
+            "Flux",
+            "Select calculation of magnitude of flux"
+        )
+        """
+        obj.addProperty(
+            "App::PropertyBool",
+            "CalculateGrad",
+            "Flux",
+            "Select calculation of gradient"
+        )
+        """
+        obj.addProperty(
+            "App::PropertyBool",
+            "CalculateGradAbs",
+            "Flux",
+            "Select calculation of abs of gradient"
         )
         obj.addProperty(
             "App::PropertyBool",
-            "CalculateStresses",
-            "Elasticity",
-            ""
+            "CalculateGradMagnitude",
+            "Flux",
+            "Select calculation of magnitude of gradient"
         )
         obj.addProperty(
             "App::PropertyBool",
-            "CalculatePrincipal",
-            "Elasticity",
-            ""
+            "EnforcePositiveMagnitude",
+            "Flux",
+            "Select calculation of positive magnitude"
         )
-        obj.addProperty(
-            "App::PropertyBool",
-            "CalculatePangle",
-            "Elasticity",
-            ""
-        )
-        obj.EigenmodesCount = 5
-        obj.Priority = 10
+        """
+        obj.Priority = 5
 
 
-class ViewProxy(linear.ViewProxy, equationbase.ElasticityViewProxy):
+class ViewProxy(linear.ViewProxy, equationbase.FluxViewProxy):
     pass
 
-# @}
+##  @}

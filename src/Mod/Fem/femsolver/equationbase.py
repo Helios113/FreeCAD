@@ -25,7 +25,7 @@ __title__ = "FreeCAD FEM solver equation base object"
 __author__ = "Markus Hovorka"
 __url__ = "https://www.freecadweb.org"
 
-## \addtogroup FEM
+# \addtogroup FEM
 #  @{
 
 import FreeCAD
@@ -89,6 +89,26 @@ class ElasticityViewProxy(BaseViewProxy):
         return ":/icons/FEM_EquationElasticity.svg"
 
 
+class TypeElasticityProxy(BaseProxy):
+    pass
+
+
+class TypeElasticityViewProxy(BaseViewProxy):
+
+    def getIcon(self):
+        return ":/icons/FEM_EquationElasticity.svg"
+
+
+class TypeBoneProxy(BaseProxy):
+    pass
+
+
+class TypeBoneViewProxy(BaseViewProxy):
+
+    def getIcon(self):
+        return ":/Resources/icons/FEM_TypeBone.svg"
+
+
 class ElectrostaticViewProxy(BaseViewProxy):
 
     def getIcon(self):
@@ -128,4 +148,4 @@ class FlowViewProxy(BaseViewProxy):
     def getIcon(self):
         return ":/icons/FEM_EquationFlow.svg"
 
-##  @}
+# @}

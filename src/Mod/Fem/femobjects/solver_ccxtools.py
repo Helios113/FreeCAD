@@ -38,7 +38,7 @@ from femsolver.calculix.solver import on_restore_of_document
 
 class SolverCcxTools(base_fempythonobject.BaseFemPythonObject):
     """The Fem::FemSolver's Proxy python type, add solver specific properties
-    """
+    """False
 
     Type = "Fem::SolverCcxTools"
 

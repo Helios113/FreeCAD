@@ -1,5 +1,5 @@
 # ***************************************************************************
-# *   Copyright (c) 2020 Bernd Hahnebach <bernd@bimstatik.org>              *
+# *   Copyright (c) 2017 Markus Hovorka <m.hovorka@live.de>                 *
 # *                                                                         *
 # *   This file is part of the FreeCAD CAx development system.              *
 # *                                                                         *
@@ -21,18 +21,38 @@
 # *                                                                         *
 # ***************************************************************************
 
-__title__ = "FreeCAD FEM constant vacuum permittivity ViewProvider for the document object"
-__author__ = "Bernd Hahnebach"
+__title__ = "FreeCAD FEM solver MoFEM analysis type object Elasticity"
+__author__ = "Preslav Aleksandrov"
 __url__ = "https://www.freecadweb.org"
 
-# @package view_constant_vacuumpermittivity
-#  \ingroup FEM
-#  \brief FreeCAD FEM Constant VacuumPermittivity ViewProvider
+# \addtogroup FEM
+#  @{
 
-from . import view_base_femconstraint
+from femtools import femutils
+from ... import equationbase
+from . import linear
 
 
-class VPConstantVacuumPermittivity(view_base_femconstraint.VPBaseFemConstraint):
+def create(doc, name="Bone Remodeling"):
+    return femutils.createObject(
+        doc, name, Proxy, ViewProxy)
 
-    def getIcon(self):
-        return ":/icons/fem-solver-analysis-thermomechanical.svg"
+
+class Proxy(equationbase.TypeElasticityProxy):  # add linear proxy later
+
+    Type = "Fem::TypeMoFEMBone"
+
+    def __init__(self, obj):
+        super(Proxy, self).__init__(obj)
+        obj.addProperty(
+            "App::PropertyBool",
+            "DoFrequencyAnalysis",
+            "Bone",
+            ""
+        )
+
+
+class ViewProxy(equationbase.TypeElasticityViewProxy):
+    pass
+
+# @}

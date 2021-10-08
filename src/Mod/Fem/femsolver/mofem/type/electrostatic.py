@@ -1,5 +1,5 @@
 # ***************************************************************************
-# *   Copyright (c) 2020 Bernd Hahnebach <bernd@bimstatik.org>              *
+# *   Copyright (c) 2017 Markus Hovorka <m.hovorka@live.de>                 *
 # *                                                                         *
 # *   This file is part of the FreeCAD CAx development system.              *
 # *                                                                         *
@@ -21,18 +21,72 @@
 # *                                                                         *
 # ***************************************************************************
 
-__title__ = "FreeCAD FEM constant vacuum permittivity ViewProvider for the document object"
-__author__ = "Bernd Hahnebach"
+__title__ = "FreeCAD FEM solver Elmer equation object Electrostatic"
+__author__ = "Markus Hovorka"
 __url__ = "https://www.freecadweb.org"
 
-# @package view_constant_vacuumpermittivity
-#  \ingroup FEM
-#  \brief FreeCAD FEM Constant VacuumPermittivity ViewProvider
+## \addtogroup FEM
+#  @{
 
-from . import view_base_femconstraint
+from femtools import femutils
+from ... import equationbase
+from . import linear
 
 
-class VPConstantVacuumPermittivity(view_base_femconstraint.VPBaseFemConstraint):
+def create(doc, name="Electrostatic"):
+    return femutils.createObject(
+        doc, name, Proxy, ViewProxy)
 
-    def getIcon(self):
-        return ":/icons/fem-solver-analysis-thermomechanical.svg"
+
+class Proxy(linear.Proxy, equationbase.ElectrostaticProxy):
+
+    Type = "Fem::EquationElmerElectrostatic"
+
+    def __init__(self, obj):
+        super(Proxy, self).__init__(obj)
+        obj.addProperty(
+            "App::PropertyBool",
+            "CalculateElectricField",
+            "Electrostatic",
+            ""
+        )
+        obj.addProperty(
+            "App::PropertyBool",
+            "CalculateElectricFlux",
+            "Electrostatic",
+            ""
+        )
+        obj.addProperty(
+            "App::PropertyBool",
+            "CalculateElectricEnergy",
+            "Electrostatic",
+            ""
+        )
+        obj.addProperty(
+            "App::PropertyBool",
+            "CalculateSurfaceCharge",
+            "Electrostatic",
+            ""
+        )
+        obj.addProperty(
+            "App::PropertyBool",
+            "CalculateCapacitanceMatrix",
+            "Electrostatic",
+            ""
+        )
+        """
+        obj.addProperty(
+            "App::PropertyInteger",
+            "CapacitanceBodies",
+            "Electrostatic",
+            ""
+        )
+        """
+
+        obj.Priority = 10
+
+
+class ViewProxy(linear.ViewProxy, equationbase.ElectrostaticViewProxy):
+    pass
+
+##  @}

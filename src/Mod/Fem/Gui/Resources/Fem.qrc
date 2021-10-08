@@ -43,6 +43,8 @@
         <file>icons/FEM_EquationFlow.svg</file>
         <file>icons/FEM_EquationFlux.svg</file>
         <file>icons/FEM_EquationHeat.svg</file>
+        <file>icons/FEM_TypeElasticity.svg</file>
+        <file>icons/FEM_TypeBone.svg</file>
 
         <!-- gui command icons: meshes -->
         <file>icons/FEM_CreateNodesSet.svg</file>
@@ -76,6 +78,7 @@
         <!-- gui command icons: solver -->
         <file>icons/FEM_SolverControl.svg</file>
         <file>icons/FEM_SolverElmer.svg</file>
+        <file>icons/FEM_SolverMoFEM.svg</file>
         <file>icons/FEM_SolverRun.svg</file>
         <file>icons/FEM_SolverStandard.svg</file>
         <file>icons/FEM_SolverZ88.svg</file>
