@@ -260,6 +260,26 @@ SET(FemSolverElmerEquations_SRCS
     femsolver/elmer/equations/linear.py
     femsolver/elmer/equations/nonlinear.py
 )
+SET(FemSolverMoFEM_SRCS
+    femsolver/mofem/__init__.py
+    femsolver/mofem/solver.py
+    femsolver/mofem/tasks.py
+    femsolver/mofem/writer.py
+)
+
+SET(FemSolverMoFEMType_SRCS
+    femsolver/mofem/type/__init__.py
+    femsolver/mofem/type/electricforce.py
+    femsolver/mofem/type/electrostatic.py
+    femsolver/mofem/type/elasticity.py
+    femsolver/mofem/type/equation.py
+    femsolver/mofem/type/flow.py
+    femsolver/mofem/type/flux.py
+    femsolver/mofem/type/heat.py
+    femsolver/mofem/type/linear.py
+    femsolver/mofem/type/nonlinear.py
+    femsolver/mofem/type/bone.py
+)
 
 SET(FemSolverFenics_SRCS
     femsolver/fenics/__init__.py
@@ -489,6 +509,8 @@ SET(FemAllScripts
     ${FemSolverCalculix_SRCS}
     ${FemSolverElmer_SRCS}
     ${FemSolverElmerEquations_SRCS}
+    ${FemSolverMoFEM_SRCS}
+    ${FemSolverMoFEMType_SRCS}
     ${FemSolverFenics_SRCS}
     ${FemSolverMystran_SRCS}
     ${FemSolverZ88_SRCS}
@@ -528,6 +550,8 @@ INSTALL(FILES ${FemSolver_SRCS} DESTINATION Mod/Fem/femsolver)
 INSTALL(FILES ${FemSolverCalculix_SRCS} DESTINATION Mod/Fem/femsolver/calculix)
 INSTALL(FILES ${FemSolverElmer_SRCS} DESTINATION Mod/Fem/femsolver/elmer)
 INSTALL(FILES ${FemSolverElmerEquations_SRCS} DESTINATION Mod/Fem/femsolver/elmer/equations)
+INSTALL(FILES ${FemSolverMoFEM_SRCS} DESTINATION Mod/Fem/femsolver/mofem)
+INSTALL(FILES ${FemSolverMoFEMType_SRCS} DESTINATION Mod/Fem/femsolver/mofem/type)
 INSTALL(FILES ${FemSolverFenics_SRCS} DESTINATION Mod/Fem/femsolver/fenics)
 INSTALL(FILES ${FemSolverMystran_SRCS} DESTINATION Mod/Fem/femsolver/mystran)
 INSTALL(FILES ${FemSolverZ88_SRCS} DESTINATION Mod/Fem/femsolver/z88)

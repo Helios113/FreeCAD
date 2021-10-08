@@ -1,0 +1,676 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>FemGui::DlgSettingsFemMoFEMImp</class>
+ <widget class="QWidget" name="FemGui::DlgSettingsFemMoFEMImp">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>600</width>
+    <height>481</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>MoFEM</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <layout class="QVBoxLayout" name="verticalLayout_2">
+     <item>
+      <widget class="QGroupBox" name="gb_mofem_param">
+       <property name="enabled">
+        <bool>true</bool>
+       </property>
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="layoutDirection">
+        <enum>Qt::LeftToRight</enum>
+       </property>
+       <property name="title">
+        <string>MoFEM paths</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+       </property>
+       <layout class="QHBoxLayout" name="horizontalLayout">
+        <property name="sizeConstraint">
+         <enum>QLayout::SetNoConstraint</enum>
+        </property>
+        <item>
+         <layout class="QGridLayout" name="gl_mofem">
+          <item row="0" column="2">
+           <widget class="Gui::PrefCheckBox" name="cb_mofem_binary_std">
+            <property name="text">
+             <string>Search in known binary directories</string>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
+            </property>
+            <property name="prefEntry" stdset="0">
+             <cstring>UseStandardMoFEMLocation</cstring>
+            </property>
+            <property name="prefPath" stdset="0">
+             <cstring>Mod/Fem/MoFEM</cstring>
+            </property>
+           </widget>
+          </item>
+          <item row="8" column="2">
+           <widget class="Gui::PrefFileChooser" name="fc_mofem_readmed_path">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+            <property name="prefEntry" stdset="0">
+             <cstring>MoFEMMedPath</cstring>
+            </property>
+            <property name="prefPath" stdset="0">
+             <cstring>Mod/Fem/MoFEM</cstring>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="2">
+           <widget class="Gui::PrefCheckBox" name="cb_bone_std">
+            <property name="text">
+             <string>Search in known binary directories</string>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
+            </property>
+            <property name="prefEntry" stdset="0">
+             <cstring>UseStandardBoneLocation</cstring>
+            </property>
+            <property name="prefPath" stdset="0">
+             <cstring>Mod/Fem/MoFEM</cstring>
+            </property>
+           </widget>
+          </item>
+          <item row="10" column="0">
+           <widget class="QLabel" name="l_mbconver_path">
+            <property name="text">
+             <string>mbconver path</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="2">
+           <widget class="Gui::PrefCheckBox" name="cb_elasticity_std">
+            <property name="text">
+             <string>Search in known binary directories</string>
+            </property>
+            <property name="checkable">
+             <bool>true</bool>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
+            </property>
+            <property name="prefEntry" stdset="0">
+             <cstring>UseStandardElasticityLocation</cstring>
+            </property>
+            <property name="prefPath" stdset="0">
+             <cstring>Mod/Fem/MoFEM</cstring>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="0">
+           <widget class="QLabel" name="l_bone_std">
+            <property name="text">
+             <string>Bone Remodeling</string>
+            </property>
+           </widget>
+          </item>
+          <item row="6" column="0">
+           <widget class="QLabel" name="l_bone_path">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+            <property name="text">
+             <string>Bone Remodeling path</string>
+            </property>
+           </widget>
+          </item>
+          <item row="9" column="0">
+           <widget class="QLabel" name="l_mbconver_std">
+            <property name="text">
+             <string>Mbconver tool</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="0">
+           <widget class="QLabel" name="l_elasticity_std">
+            <property name="text">
+             <string>Linear Elasticity</string>
+            </property>
+           </widget>
+          </item>
+          <item row="9" column="2">
+           <widget class="Gui::PrefCheckBox" name="cb_mbconvert_std">
+            <property name="text">
+             <string>Search in known binary directories</string>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
+            </property>
+            <property name="prefEntry" stdset="0">
+             <cstring>UseStandardMbconvertLocation</cstring>
+            </property>
+            <property name="prefPath" stdset="0">
+             <cstring>Mod/Fem/MoFEM</cstring>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QLabel" name="l_mofem_binary_path">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>MoFEM binary path</string>
+            </property>
+           </widget>
+          </item>
+          <item row="7" column="0">
+           <widget class="QLabel" name="l_readmed_std">
+            <property name="text">
+             <string>Read_med tool</string>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="0">
+           <widget class="QLabel" name="l_elasticity_path">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+            <property name="text">
+             <string>Linear Elasticity path</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="2">
+           <widget class="Gui::PrefFileChooser" name="fc_mofem_binary_path">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="sizeIncrement">
+             <size>
+              <width>0</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="baseSize">
+             <size>
+              <width>0</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="toolTip">
+             <string>Leave blank to use default MoFEM binary file</string>
+            </property>
+            <property name="prefEntry" stdset="0">
+             <cstring>MoFEMBinaryPath</cstring>
+            </property>
+            <property name="prefPath" stdset="0">
+             <cstring>Mod/Fem/MoFEM</cstring>
+            </property>
+           </widget>
+          </item>
+          <item row="6" column="2">
+           <widget class="Gui::PrefFileChooser" name="fc_bone_path">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+            <property name="prefEntry" stdset="0">
+             <cstring>Bone_remodelingPath</cstring>
+            </property>
+            <property name="prefPath" stdset="0">
+             <cstring>Mod/Fem/MoFEM</cstring>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="2">
+           <widget class="Gui::PrefFileChooser" name="fc_elasticity_path">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+            <property name="prefEntry" stdset="0">
+             <cstring>Linear_elasticityPath</cstring>
+            </property>
+            <property name="prefPath" stdset="0">
+             <cstring>Mod/Fem/MoFEM</cstring>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="0">
+           <widget class="QLabel" name="l_mofem_binary_std">
+            <property name="text">
+             <string>MoFEM</string>
+            </property>
+           </widget>
+          </item>
+          <item row="8" column="0">
+           <widget class="QLabel" name="l_readmed_path">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>read_med path</string>
+            </property>
+           </widget>
+          </item>
+          <item row="7" column="2">
+           <widget class="Gui::PrefCheckBox" name="cb_readmed_std">
+            <property name="text">
+             <string>Search in known binary directories</string>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
+            </property>
+            <property name="prefEntry" stdset="0">
+             <cstring>UseStandardMedLocation</cstring>
+            </property>
+            <property name="prefPath" stdset="0">
+             <cstring>Mod/Fem/MoFEM</cstring>
+            </property>
+           </widget>
+          </item>
+          <item row="10" column="2">
+           <widget class="Gui::PrefFileChooser" name="fc_mbconvert_path">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+            <property name="prefEntry" stdset="0">
+             <cstring>mbconvertPath</cstring>
+            </property>
+            <property name="prefPath" stdset="0">
+             <cstring>Mod/Fem/MoFEM</cstring>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <spacer name="verticalSpacer">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>20</width>
+       <height>40</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+  </layout>
+ </widget>
+ <layoutdefault spacing="6" margin="11"/>
+ <customwidgets>
+  <customwidget>
+   <class>Gui::FileChooser</class>
+   <extends>QWidget</extends>
+   <header>Gui/FileDialog.h</header>
+  </customwidget>
+  <customwidget>
+   <class>Gui::PrefFileChooser</class>
+   <extends>Gui::FileChooser</extends>
+   <header>Gui/PrefWidgets.h</header>
+  </customwidget>
+  <customwidget>
+   <class>Gui::PrefCheckBox</class>
+   <extends>QCheckBox</extends>
+   <header>Gui/PrefWidgets.h</header>
+  </customwidget>
+ </customwidgets>
+ <resources>
+  <include location="Resources/Fem.qrc"/>
+ </resources>
+ <connections>
+  <connection>
+   <sender>cb_mofem_binary_std</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>l_mofem_binary_path</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>406</x>
+     <y>45</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>148</x>
+     <y>68</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>cb_mofem_binary_std</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>fc_mofem_binary_path</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>406</x>
+     <y>45</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>406</x>
+     <y>68</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>cb_mofem_binary_std</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>l_mofem_binary_path</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>406</x>
+     <y>45</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>148</x>
+     <y>68</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>cb_mofem_binary_std</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>fc_mofem_binary_path</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>406</x>
+     <y>45</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>406</x>
+     <y>68</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>cb_elasticity_std</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>l_elasticity_path</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>292</x>
+     <y>107</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>91</x>
+     <y>135</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>cb_elasticity_std</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>fc_elasticity_path</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>292</x>
+     <y>107</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>292</x>
+     <y>135</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>cb_elasticity_std</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>l_elasticity_path</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>292</x>
+     <y>107</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>91</x>
+     <y>135</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>cb_elasticity_std</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>fc_elasticity_path</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>292</x>
+     <y>107</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>292</x>
+     <y>135</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>cb_bone_std</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>l_bone_path</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>292</x>
+     <y>163</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>91</x>
+     <y>191</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>cb_bone_std</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>fc_bone_path</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>292</x>
+     <y>163</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>292</x>
+     <y>191</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>cb_bone_std</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>l_bone_path</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>292</x>
+     <y>163</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>91</x>
+     <y>191</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>cb_bone_std</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>fc_bone_path</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>292</x>
+     <y>163</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>292</x>
+     <y>191</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>cb_readmed_std</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>l_readmed_path</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>371</x>
+     <y>219</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>91</x>
+     <y>247</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>cb_readmed_std</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>fc_mofem_readmed_path</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>371</x>
+     <y>219</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>371</x>
+     <y>247</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>cb_readmed_std</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>l_readmed_path</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>371</x>
+     <y>219</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>91</x>
+     <y>247</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>cb_readmed_std</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>fc_mofem_readmed_path</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>371</x>
+     <y>219</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>371</x>
+     <y>247</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>cb_mbconvert_std</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>l_mbconver_path</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>371</x>
+     <y>275</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>91</x>
+     <y>303</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>cb_mbconvert_std</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>fc_mbconvert_path</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>371</x>
+     <y>275</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>371</x>
+     <y>303</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>cb_mbconvert_std</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>l_mbconver_path</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>371</x>
+     <y>275</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>91</x>
+     <y>303</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>cb_mbconvert_std</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>fc_mbconvert_path</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>371</x>
+     <y>275</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>371</x>
+     <y>303</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>

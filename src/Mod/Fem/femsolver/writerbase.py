@@ -25,7 +25,7 @@ __title__ = "FreeCAD FEM solver writer base object"
 __author__ = "Bernd Hahnebach"
 __url__ = "https://www.freecadweb.org"
 
-## \addtogroup FEM
+# \addtogroup FEM
 #  @{
 
 import os
@@ -256,4 +256,4 @@ class FemInputWriter():
         self.meshdatagetter.get_constraints_heatflux_faces()
 
 
-##  @}
+# @}

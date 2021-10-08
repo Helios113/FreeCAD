@@ -2271,7 +2271,6 @@ void FemMesh::writeZ88(const std::string &FileName) const
 void FemMesh::write(const char *FileName) const
 {
     Base::FileInfo File(FileName);
-
     if (File.hasExtension("unv") ) {
         Base::Console().Log("FEM mesh object will be exported to unv format.\n");
         // write UNV file

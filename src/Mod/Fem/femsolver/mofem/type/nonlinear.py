@@ -1,5 +1,5 @@
 # ***************************************************************************
-# *   Copyright (c) 2020 Bernd Hahnebach <bernd@bimstatik.org>              *
+# *   Copyright (c) 2017 Markus Hovorka <m.hovorka@live.de>                 *
 # *                                                                         *
 # *   This file is part of the FreeCAD CAx development system.              *
 # *                                                                         *
@@ -21,18 +21,63 @@
 # *                                                                         *
 # ***************************************************************************
 
-__title__ = "FreeCAD FEM constant vacuum permittivity ViewProvider for the document object"
-__author__ = "Bernd Hahnebach"
+__title__ = "FreeCAD FEM solver Elmer equation object _NonLinear"
+__author__ = "Markus Hovorka"
 __url__ = "https://www.freecadweb.org"
 
-# @package view_constant_vacuumpermittivity
-#  \ingroup FEM
-#  \brief FreeCAD FEM Constant VacuumPermittivity ViewProvider
+## \addtogroup FEM
+#  @{
 
-from . import view_base_femconstraint
+from . import linear
 
 
-class VPConstantVacuumPermittivity(view_base_femconstraint.VPBaseFemConstraint):
+# the linear equation object defines some attributes for some various elmer equations
+# these various elmer equations are based on the linear equation object
+# thus in ObjectsFem module is no method to add a linear equation object
 
-    def getIcon(self):
-        return ":/icons/fem-solver-analysis-thermomechanical.svg"
+
+class Proxy(linear.Proxy):
+
+    def __init__(self, obj):
+        super(Proxy, self).__init__(obj)
+        obj.addProperty(
+            "App::PropertyFloat",
+            "NonlinearTolerance",
+            "Nonlinear System",
+            ""
+        )
+        obj.addProperty(
+            "App::PropertyInteger",
+            "NonlinearIterations",
+            "Nonlinear System",
+            ""
+        )
+        obj.addProperty(
+            "App::PropertyFloat",
+            "RelaxationFactor",
+            "Nonlinear System",
+            ""
+        )
+        obj.addProperty(
+            "App::PropertyInteger",
+            "NonlinearNewtonAfterIterations",
+            "Nonlinear System",
+            ""
+        )
+        obj.addProperty(
+            "App::PropertyFloat",
+            "NonlinearNewtonAfterTolerance",
+            "Nonlinear System",
+            ""
+        )
+        obj.NonlinearTolerance = 1e-8
+        obj.NonlinearIterations = 500
+        obj.RelaxationFactor = 1
+        obj.NonlinearNewtonAfterIterations = 3
+        obj.NonlinearNewtonAfterTolerance = 1e-3
+
+
+class ViewProxy(linear.ViewProxy):
+    pass
+
+##  @}

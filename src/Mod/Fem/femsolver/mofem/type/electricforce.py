@@ -1,5 +1,5 @@
 # ***************************************************************************
-# *   Copyright (c) 2020 Bernd Hahnebach <bernd@bimstatik.org>              *
+# *   Copyright (c) 2020 Wilfried Hortschitz  <w.hortschitz@gmail.com>      *
 # *                                                                         *
 # *   This file is part of the FreeCAD CAx development system.              *
 # *                                                                         *
@@ -21,18 +21,33 @@
 # *                                                                         *
 # ***************************************************************************
 
-__title__ = "FreeCAD FEM constant vacuum permittivity ViewProvider for the document object"
-__author__ = "Bernd Hahnebach"
+__title__ = "FreeCAD FEM solver Elmer equation object Electricforce"
+__author__ = "Wilfried Hortschitz"
 __url__ = "https://www.freecadweb.org"
 
-# @package view_constant_vacuumpermittivity
-#  \ingroup FEM
-#  \brief FreeCAD FEM Constant VacuumPermittivity ViewProvider
+## \addtogroup FEM
+#  @{
 
-from . import view_base_femconstraint
+from femtools import femutils
+from ... import equationbase
+from . import linear
 
 
-class VPConstantVacuumPermittivity(view_base_femconstraint.VPBaseFemConstraint):
+def create(doc, name="Electricforce"):
+    return femutils.createObject(
+        doc, name, Proxy, ViewProxy)
 
-    def getIcon(self):
-        return ":/icons/fem-solver-analysis-thermomechanical.svg"
+
+class Proxy(linear.Proxy, equationbase.ElectricforceProxy):
+
+    Type = "Fem::EquationElmerElectricforce"
+
+    def __init__(self, obj):
+        super(Proxy, self).__init__(obj)
+        obj.Priority = 5
+
+
+class ViewProxy(linear.ViewProxy, equationbase.ElectricforceViewProxy):
+    pass
+
+##  @}

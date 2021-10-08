@@ -243,6 +243,10 @@ class AnalysisMember():
         constraints_transform : list of dictionaries
             list of transform constraints from the analysis.
             [{"Object":transform_obj, "xxxxxxxx":value}, {}, ...]
+
+        constraints_spring : list of dictionaries
+            list of spring constraints from the analysis.
+            [{"Object":transform_obj, "xxxxxxxx":value}, {}, ...]
         """
 
         # get member
@@ -320,6 +324,9 @@ class AnalysisMember():
         )
         self.cons_transform = self.get_several_member(
             "Fem::ConstraintTransform"
+        )
+        self.cons_spring = self.get_several_member(
+            "Fem::ConstraintSpring"
         )
 
     def get_several_member(self, t):

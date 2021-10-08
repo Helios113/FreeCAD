@@ -24,7 +24,7 @@ __title__ = "Tools for the work with Gmsh mesher"
 __author__ = "Bernd Hahnebach"
 __url__ = "https://www.freecadweb.org"
 
-## \addtogroup FEM
+# \addtogroup FEM
 #  @{
 
 import os
@@ -61,12 +61,14 @@ class GmshTools():
         self.part_obj = self.mesh_obj.Part
 
         # clmax, CharacteristicLengthMax: float, 0.0 = 1e+22
-        self.clmax = Units.Quantity(self.mesh_obj.CharacteristicLengthMax).Value
+        self.clmax = Units.Quantity(
+            self.mesh_obj.CharacteristicLengthMax).Value
         if self.clmax == 0.0:
             self.clmax = 1e+22
 
         # clmin, CharacteristicLengthMin: float
-        self.clmin = Units.Quantity(self.mesh_obj.CharacteristicLengthMin).Value
+        self.clmin = Units.Quantity(
+            self.mesh_obj.CharacteristicLengthMin).Value
 
         # geotol, GeometryTolerance: float, 0.0 = 1e-08
         self.geotol = self.mesh_obj.GeometryTolerance
@@ -270,7 +272,8 @@ class GmshTools():
                         "and create parameter is set to False.\n"
                         .format(self.working_dir)
                     )
-                    self.working_dir = femutils.get_pref_working_dir(self.mesh_obj)
+                    self.working_dir = femutils.get_pref_working_dir(
+                        self.mesh_obj)
                     Console.PrintMessage(
                         "Dir \'{}\' will be used instead.\n"
                         .format(self.working_dir)
@@ -294,9 +297,11 @@ class GmshTools():
         _geometry_name = self.part_obj.Name + "_Geometry"
         self.mesh_name = self.part_obj.Name + "_Mesh"
         # geometry file
-        self.temp_file_geometry = os.path.join(self.working_dir, _geometry_name + ".brep")
+        self.temp_file_geometry = os.path.join(
+            self.working_dir, _geometry_name + ".brep")
         # mesh file
-        self.temp_file_mesh = os.path.join(self.working_dir, self.mesh_name + ".unv")
+        self.temp_file_mesh = os.path.join(
+            self.working_dir, self.mesh_name + ".unv")
         # Gmsh input file
         self.temp_file_geo = os.path.join(self.working_dir, "shape2mesh.geo")
         Console.PrintMessage("  " + self.temp_file_geometry + "\n")
@@ -316,7 +321,8 @@ class GmshTools():
                 ).SetString("gmshBinaryPath", gmsh_path)
                 self.gmsh_bin = gmsh_path
             elif system() == "Linux":
-                p1 = subprocess.Popen(["which", "gmsh"], stdout=subprocess.PIPE)
+                p1 = subprocess.Popen(
+                    ["which", "gmsh"], stdout=subprocess.PIPE)
                 if p1.wait() == 0:
                     output = p1.stdout.read()
                     if sys.version_info.major >= 3:
@@ -361,14 +367,17 @@ class GmshTools():
             # print("  No mesh group objects.")
             pass
         else:
-            Console.PrintMessage("  Mesh group objects, we need to get the elements.\n")
+            Console.PrintMessage(
+                "  Mesh group objects, we need to get the elements.\n")
             for mg in self.mesh_obj.MeshGroupList:
-                new_group_elements = meshtools.get_mesh_group_elements(mg, self.part_obj)
+                new_group_elements = meshtools.get_mesh_group_elements(
+                    mg, self.part_obj)
                 for ge in new_group_elements:
                     if ge not in self.group_elements:
                         self.group_elements[ge] = new_group_elements[ge]
                     else:
-                        Console.PrintError("  A group with this name exists already.\n")
+                        Console.PrintError(
+                            "  A group with this name exists already.\n")
 
         # group meshing for analysis
         analysis_group_meshing = FreeCAD.ParamGet(
@@ -388,7 +397,8 @@ class GmshTools():
                 if ge not in self.group_elements:
                     self.group_elements[ge] = new_group_elements[ge]
                 else:
-                    Console.PrintError("  A group with this name exists already.\n")
+                    Console.PrintError(
+                        "  A group with this name exists already.\n")
         else:
             Console.PrintMessage("  No Group meshing for analysis.\n")
 
@@ -442,7 +452,8 @@ class GmshTools():
             # print("  No mesh regions.")
             pass
         else:
-            Console.PrintMessage("  Mesh regions, we need to get the elements.\n")
+            Console.PrintMessage(
+                "  Mesh regions, we need to get the elements.\n")
             # by the use of MeshRegion object and a BooleanSplitCompound
             # there could be problems with node numbers see
             # http://forum.freecadweb.org/viewtopic.php?f=18&t=18780&start=40#p149467
@@ -495,7 +506,8 @@ class GmshTools():
                                     # Shape to mesh and use the found element as elems
                                     # the method getElement(element)
                                     # does not return Solid elements
-                                    ele_shape = geomtools.get_element(sub[0], elems)
+                                    ele_shape = geomtools.get_element(
+                                        sub[0], elems)
                                     found_element = geomtools.find_element_in_shape(
                                         self.part_obj.Shape, ele_shape
                                     )
@@ -533,7 +545,8 @@ class GmshTools():
             for eleml in self.ele_length_map:
                 # the method getElement(element) does not return Solid elements
                 ele_shape = geomtools.get_element(self.part_obj, eleml)
-                ele_vertexes = geomtools.get_vertexes_by_element(self.part_obj.Shape, ele_shape)
+                ele_vertexes = geomtools.get_vertexes_by_element(
+                    self.part_obj.Shape, ele_shape)
                 self.ele_node_map[eleml] = ele_vertexes
             Console.PrintMessage("  {}\n".format(self.ele_length_map))
             Console.PrintMessage("  {}\n".format(self.ele_node_map))
@@ -548,7 +561,8 @@ class GmshTools():
             # print("  No mesh boundary layer setting document object.")
             pass
         else:
-            Console.PrintMessage("  Mesh boundary layers, we need to get the elements.\n")
+            Console.PrintMessage(
+                "  Mesh boundary layers, we need to get the elements.\n")
             if self.part_obj.Shape.ShapeType == "Compound":
                 # see http://forum.freecadweb.org/viewtopic.php?f=18&t=18780&start=40#p149467 and
                 # http://forum.freecadweb.org/viewtopic.php?f=18&t=18780&p=149520#p149520
@@ -583,7 +597,8 @@ class GmshTools():
                                     # we try to find the element it in the Shape to mesh
                                     # and use the found element as elems
                                     # the method getElement(element) does not return Solid elements
-                                    ele_shape = geomtools.get_element(sub[0], elems)
+                                    ele_shape = geomtools.get_element(
+                                        sub[0], elems)
                                     found_element = geomtools.find_element_in_shape(
                                         self.part_obj.Shape,
                                         ele_shape
@@ -611,7 +626,8 @@ class GmshTools():
                                         .format(elems, mr_obj.Name)
                                     )
                         setting = {}
-                        setting["hwall_n"] = Units.Quantity(mr_obj.MinimumThickness).Value
+                        setting["hwall_n"] = Units.Quantity(
+                            mr_obj.MinimumThickness).Value
                         setting["ratio"] = mr_obj.GrowthRate
                         setting["thickness"] = sum([
                             setting["hwall_n"] * setting["ratio"] ** i for i in range(
@@ -709,8 +725,10 @@ class GmshTools():
                         # the element name of FreeCAD which starts
                         # with 1 (example: "Face1"), same as Gmsh
                         # el_id = int(el[4:])  # FIXME:  strip `face` or `edge` prefix
-                        ele_nodes = ("".join((str(el[4:]) + ", ") for el in v)).rstrip(", ")
-                        line = prefix + "." + str(k) + " = {" + ele_nodes + " };\n"
+                        ele_nodes = (
+                            "".join((str(el[4:]) + ", ") for el in v)).rstrip(", ")
+                        line = prefix + "." + \
+                            str(k) + " = {" + ele_nodes + " };\n"
                         geo.write(line)
                     else:
                         line = prefix + "." + str(k) + " = " + str(v) + ";\n"
@@ -729,9 +747,10 @@ class GmshTools():
     def write_part_file(self):
         self.part_obj.Shape.exportBrep(self.temp_file_geometry)
 
-    def write_geo(self):
+    def write_geo(self, mesh_format=2):
         geo = open(self.temp_file_geo, "w")
-        geo.write("// geo file for meshing with Gmsh meshing software created by FreeCAD\n")
+        geo.write(
+            "// geo file for meshing with Gmsh meshing software created by FreeCAD\n")
         geo.write("\n")
         geo.write("// open brep geometry\n")
         # explicit use double quotes in geo file
@@ -746,7 +765,8 @@ class GmshTools():
         if self.ele_length_map:
             # we use the index FreeCAD which starts with 0
             # we need to add 1 for the index in Gmsh
-            geo.write("// Characteristic Length according CharacteristicLengthMap\n")
+            geo.write(
+                "// Characteristic Length according CharacteristicLengthMap\n")
             for e in self.ele_length_map:
                 ele_nodes = (
                     "".join((str(n + 1) + ", ") for n in self.ele_node_map[e])
@@ -777,7 +797,8 @@ class GmshTools():
             # it is safer to set it as zero (default value) to avoid error
             geo.write("Mesh.CharacteristicLengthMin = " + str(0) + ";\n")
         else:
-            geo.write("Mesh.CharacteristicLengthMin = " + str(self.clmin) + ";\n")
+            geo.write("Mesh.CharacteristicLengthMin = " +
+                      str(self.clmin) + ";\n")
         if hasattr(self.mesh_obj, "MeshSizeFromCurvature"):
             geo.write(
                 "Mesh.MeshSizeFromCurvature = {}"
@@ -792,11 +813,13 @@ class GmshTools():
             geo.write("// recombination for volumes\n")
             geo.write("Mesh.Recombine3DAll = 1;\n")
         if (
-            (hasattr(self.mesh_obj, "RecombineAll") and self.mesh_obj.RecombineAll is True)
+            (hasattr(self.mesh_obj, "RecombineAll")
+             and self.mesh_obj.RecombineAll is True)
             or (hasattr(self.mesh_obj, "Recombine3DAll") and self.mesh_obj.Recombine3DAll is True)
         ):
             geo.write("// recombination algorithm\n")
-            geo.write("Mesh.RecombinationAlgorithm = " + self.RecombinationAlgorithm + ";\n")
+            geo.write("Mesh.RecombinationAlgorithm = " +
+                      self.RecombinationAlgorithm + ";\n")
             geo.write("\n")
 
         geo.write("// optimize the mesh\n")
@@ -845,7 +868,8 @@ class GmshTools():
             "5=Delaunay, 6=Frontal, 7=BAMG, 8=DelQuad, 9=Packing Parallelograms)\n"
         )
         if len(self.bl_setting_list) and self.dimension == 3:
-            geo.write("Mesh.Algorithm = " + "DelQuad" + ";\n")  # Frontal/DelQuad are tested
+            # Frontal/DelQuad are tested
+            geo.write("Mesh.Algorithm = " + "DelQuad" + ";\n")
         else:
             geo.write("Mesh.Algorithm = " + self.algorithm2D + ";\n")
         geo.write(
@@ -872,9 +896,10 @@ class GmshTools():
 
         # save mesh
         geo.write("// save\n")
-        geo.write("Mesh.Format = 2;\n")  # unv
+        geo.write("Mesh.Format = {mesh_format};\n".format(mesh_format = mesh_format))  # Format = 2 unv, 10 auto, 33 med
         if self.group_elements and self.group_nodes_export:
-            geo.write("// For each group save not only the elements but the nodes too.;\n")
+            geo.write(
+                "// For each group save not only the elements but the nodes too.;\n")
             geo.write("Mesh.SaveGroupsOfNodes = 1;\n")
             # belongs to Mesh.SaveAll but only needed if there are groups
             geo.write(
@@ -899,13 +924,13 @@ class GmshTools():
         geo.write("// to see full Gmsh log, run in bash:\n")
         geo.write("// " + self.gmsh_bin + " - " + self.temp_file_geo + "\n")
         geo.write("//\n")
-        geo.write("// to run Gmsh and keep file in Gmsh GUI (with log), run in bash:\n")
+        geo.write(
+            "// to run Gmsh and keep file in Gmsh GUI (with log), run in bash:\n")
         geo.write("// " + self.gmsh_bin + " " + self.temp_file_geo + "\n")
         geo.close()
 
     def run_gmsh_with_geo(self):
         command_list = [self.gmsh_bin, "-", self.temp_file_geo]
-        # print(command_list)
         try:
             p = subprocess.Popen(
                 command_list,
@@ -914,6 +939,7 @@ class GmshTools():
                 stderr=subprocess.PIPE
             )
             output, error = p.communicate()
+            output = output.decode("utf-8")
             if sys.version_info.major >= 3:
                 # output = output.decode("utf-8")
                 error = error.decode("utf-8")
@@ -938,7 +964,8 @@ class GmshTools():
         )
         new_err = error.replace(useless_warning, "")
         # remove empty lines, https://stackoverflow.com/a/1140967
-        new_err = "".join([s for s in new_err.splitlines(True) if s.strip("\r\n")])
+        new_err = "".join(
+            [s for s in new_err.splitlines(True) if s.strip("\r\n")])
 
         return new_err
 
@@ -950,7 +977,7 @@ class GmshTools():
         else:
             Console.PrintError("No mesh was created.\n")
 
-##  @}
+# @}
 
 
 """

@@ -199,13 +199,13 @@ class _SolverDlg(object):
         # without any additional user input
         # see ccxttols, it works for Windows and Linux there
         binary = self.default
-        FreeCAD.Console.PrintLog("Solver binary path default: {} \n".format(binary))
+        FreeCAD.Console.PrintLog("Solver binary path: {} \n".format(binary))
 
         # check if use_default is set to True
         # if True the standard binary path will be overwritten with a user binary path
         if self.param_group.GetBool(self.use_default, True) is False:
             binary = self.param_group.GetString(self.custom_path)
-        FreeCAD.Console.PrintLog("Solver binary path user setting: {} \n".format(binary))
+        FreeCAD.Console.PrintLog("Solver binary path: {} \n".format(binary))
 
         # get the whole binary path name for the given command or binary path and return it
         # None is returned if the binary has not been found
@@ -235,6 +235,11 @@ _SOLVER_PARAM = {
         param_path=_PARAM_PATH + "Elmer",
         use_default="UseStandardElmerLocation",
         custom_path="elmerBinaryPath"),
+    "MoFEMSolver": _SolverDlg(
+        default="MoFEMSolver",
+        param_path=_PARAM_PATH + "MoFEM",
+        use_default="UseStandardMoFEMLocation",
+        custom_path="MoFEMBinaryPath"),
     "ElmerGrid": _SolverDlg(
         default="ElmerGrid",
         param_path=_PARAM_PATH + "Elmer",
@@ -250,4 +255,24 @@ _SOLVER_PARAM = {
         param_path=_PARAM_PATH + "Z88",
         use_default="UseStandardZ88Location",
         custom_path="z88BinaryPath"),
+    "Linear Elasticity": _SolverDlg(
+        default="elasticity",
+        param_path=_PARAM_PATH + "MoFEM",
+        use_default="UseStandardElasticityLocation",
+        custom_path="Linear_elasticityPath"),
+    "Bone remodeling": _SolverDlg(
+        default="Bone remodeling",
+        param_path=_PARAM_PATH + "MoFEM",
+        use_default="UseStandardBoneLocation",
+        custom_path="Bone_remodelingPath"),
+    "read_med": _SolverDlg(
+        default="read_med",
+        param_path=_PARAM_PATH + "MoFEM",
+        use_default="UseStandardMedLocation",
+        custom_path="MoFEMMedPath"),
+    "mbconvert": _SolverDlg(
+        default="mbconvert",
+        param_path=_PARAM_PATH + "MoFEM",
+        use_default="UseStandardMbconvertLocation",
+        custom_path="mbconvertPath"),
 }

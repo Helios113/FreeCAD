@@ -288,7 +288,8 @@ def getBoundBoxOfAllDocumentShapes(doc):
 
         if bb is None:
             try:
-                FreeCAD.Console.PrintMessage("trying: {}: FemMesh\n".format(o.Label))  # debug only
+                FreeCAD.Console.PrintMessage(
+                    "trying: {}: FemMesh\n".format(o.Label))  # debug only
                 bb = o.FemMesh.BoundBox
                 FreeCAD.Console.PrintMessage("{}\n".format(bb))  # debug only
             except Exception:
@@ -301,9 +302,11 @@ def getBoundBoxOfAllDocumentShapes(doc):
                 else:
                     overallboundbox.add(bb)
         else:                                                                   # debug only
-            FreeCAD.Console.PrintMessage("no bb\n")                             # debug only
+            FreeCAD.Console.PrintMessage(
+                "no bb\n")                             # debug only
 
-    FreeCAD.Console.PrintMessage("overallBB:" + str(overallboundbox) + "\n")    # debug only
+    FreeCAD.Console.PrintMessage(
+        "overallBB:" + str(overallboundbox) + "\n")    # debug only
     return overallboundbox
 
 

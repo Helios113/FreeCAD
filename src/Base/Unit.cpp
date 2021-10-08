@@ -451,6 +451,7 @@ QString Unit::getTypeString(void) const
     if(*this == Unit::AmountOfSubstance           )       return QString::fromLatin1("AmountOfSubstance");
     if(*this == Unit::LuminousIntensity           )       return QString::fromLatin1("LuminousIntensity");
     if(*this == Unit::Pressure                    )       return QString::fromLatin1("Pressure");
+    if(*this == Unit::Stiffness                   )       return QString::fromLatin1("Stiffness");
     if(*this == Unit::Force                       )       return QString::fromLatin1("Force");
     if(*this == Unit::Work                        )       return QString::fromLatin1("Work");
     if(*this == Unit::Power                       )       return QString::fromLatin1("Power");

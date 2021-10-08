@@ -174,6 +174,7 @@ Gui::ToolBarItem* Workbench::setupToolBars() const
      Gui::ToolBarItem* solve = new Gui::ToolBarItem(root);
      solve->setCommand("Solve");
      *solve
+        << "FEM_SolverMoFEM"
         << "FEM_SolverCalculixCxxtools"
         << "FEM_SolverCalculiX"
         << "FEM_SolverElmer"
@@ -184,6 +185,8 @@ Gui::ToolBarItem* Workbench::setupToolBars() const
         << "FEM_EquationFlow"
         << "FEM_EquationFlux"
         << "FEM_EquationHeat"
+        << "MoFEM_Elasticity"
+        << "MoFEM_Bone"
         << "Separator"
         << "FEM_SolverControl"
         << "FEM_SolverRun";
@@ -336,6 +339,7 @@ Gui::MenuItem* Workbench::setupMenuBar() const
     root->insertItem(item, solve);
     solve->setCommand("&Solve");
     *solve
+        << "FEM_SolverMoFEM" 
         << "FEM_SolverCalculixCxxtools"
         << "FEM_SolverCalculiX"
         << "FEM_SolverElmer"
@@ -348,6 +352,8 @@ Gui::MenuItem* Workbench::setupMenuBar() const
         << "FEM_EquationFlow"
         << "FEM_EquationFlux"
         << "FEM_EquationHeat"
+        << "MoFEM_Elasticity"
+        << "MoFEM_Bone"
         << "Separator"
         << "FEM_SolverControl"
         << "FEM_SolverRun";
