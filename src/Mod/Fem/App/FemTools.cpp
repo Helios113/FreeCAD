@@ -44,11 +44,6 @@
 
 #include "FemTools.h"
 
-/*
-Implementation of some physics things
-Has no relevance to solver implementation
-*/
-
 Base::Vector3d Fem::Tools::getDirectionFromShape(const TopoDS_Shape& shape)
 {
     gp_XYZ dir(0, 0, 0);

@@ -32,7 +32,12 @@ from . import tasks
 from .type import elasticity
 from .type import bone
 from .. import run
+import re
+import os
+from subprocess import check_output
 from .. import solverbase
+
+from .. import settings
 from femtools import femutils
 import FreeCAD
 
@@ -46,14 +51,6 @@ Implemented in python via a document proxy and view proxy.
 def create(doc, name="MoFEMSolver"):
     return femutils.createObject(
         doc, name, Proxy, ViewProxy)
-
-
-# Types of supported analysis
-# For MoFEM these are:
-# TODO get all analysis tipes
-# for not just do linear elastic
-ANALYSIS_TYPES = ["Linear Elasticity",
-                  "Linear Thermoelasticity", "Bone remodeling"]
 
 
 # Implementation of the Proxy class
@@ -79,7 +76,7 @@ class Proxy(solverbase.Proxy):
 
     def __init__(self, obj):
         super(Proxy, self).__init__(obj)
-        add_attributes(obj)
+        add_attributes(self, obj)
 
     def createMachine(self, obj, directory, testmode=False):
         return run.Machine(
@@ -97,15 +94,35 @@ class Proxy(solverbase.Proxy):
         return eqId in self._EQUATIONS
 
 
-def add_attributes(obj):
+def add_attributes(self, obj):
+
+
+    # get analysis types from executable
+    
+    # Assume for now we have the binary
+    
+    self.mofem = settings.get_binary("read_med")
+
+    self._isPosix = (os.name == "posix")
+    if self._isPosix:
+        arguments = [self.mofem, '-get_modules']
+        ANALYSIS_TYPES = check_output(arguments).decode("utf-8").splitlines()
+        print(ANALYSIS_TYPES)
+    obj.addProperty(
+            "App::PropertyString",
+            "Path",
+            "Base",
+            "",
+            4 | 8
+        )
+    obj.Path = self.mofem
     obj.addProperty(
         "App::PropertyEnumeration",
-        "AnalysisType",
+        "Module",
         "Fem",
         "Type of the analysis"
     )
-    obj.AnalysisType = ANALYSIS_TYPES
-    obj.AnalysisType = ANALYSIS_TYPES[0]
+    obj.Module = ANALYSIS_TYPES
     obj.addProperty(
             "App::PropertyLink",
             "GmshMesh",

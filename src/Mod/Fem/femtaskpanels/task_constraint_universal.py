@@ -41,7 +41,7 @@ from femtools.femutils import is_of_type
 from femguiutils import selection_widgets
 from femtools import femutils
 from femtools import membertools
-
+import re
 import json
 import os
 from PySide import QtCore, QtGui
@@ -60,29 +60,32 @@ class _TaskPanel(object):
         )
         self._paramWidget = FreeCADGui.PySideUic.loadUi(
             FreeCAD.getHomePath() + "Mod/Fem/Resources/ui/ConstraintUniversal.ui")
-        self._initParamWidget()
+        
         self.form = [self._refWidget, self._paramWidget]
-        analysis = obj.getParentGroup()
-        if analysis is None:
+        self._analysis = obj.getParentGroup()
+        self._solver = None
+        self._json_path = None
+        self._mesh = None
+        if self._analysis is None:
             print(
                 "An analysis is needed to use the automatic boundary detection.")
-        # check if MoFEM is in analysis
-        sel = FreeCADGui.Selection.getSelection()
-        if len(sel) == 1 and is_of_type(sel[0], "Fem::SolverMoFEM"):
-            self.solver = sel[0]
-            self._mofem_params = FreeCAD.ParamGet(
-                "User parameter:BaseApp/Preferences/Mod/Fem/MoFEM")
-            # get the module from the solver
-            self._module = self.solver.getProperty("Module").split(']')[
-                0].lstrip('[')
+            # check if MoFEM is in analysis
         else:
-            print(
-                "MoFEM is needed to use the automatic boundary detection")
-        self._mesh = None
-        self._part = None
-        if analysis is not None:
             self._mesh = membertools.get_single_member(
-                analysis, "Fem::FemMeshObject")
+                self._analysis, "Fem::FemMeshObject")
+            for i in self._analysis.Group:
+                if is_of_type(i, "FEM::SolverMoFEM"):
+                    if i.Module is not None:
+                        mod_number = re.search(r'\d+', i.Module).group(0)
+                        arguments = [i.Path, '-module', mod_number, '-bc']
+                        self._json_path = check_output(arguments).decode("utf-8").splitlines()[0]
+                        self._solver = i
+                        print(self._json_path)
+            if self._solver is None:
+                print(
+                "A mofem solver is needed to use the automatic boundary detection.")
+        self._initParamWidget()
+        self._part = None            
         if self._mesh is not None:
             self._part = femutils.get_part_to_mesh(self._mesh)
         self._partVisible = None
@@ -123,21 +126,9 @@ class _TaskPanel(object):
 
     def _initParamWidget(self):
         self._paramWidget.tabWidget.setTabEnabled(2, False)
-        analysis = FemGui.getActiveAnalysis()
-        if analysis:
-            solver = membertools.get_single_member(
-                analysis, "Fem::SolverMoFEM")
-            if solver:
-                # TODO load json and reveal auto tab
-                if self._isPosix:
-                    #binary = settings.get_binary("MoFEMSolver")
-                    arguments = ['-module', self._module, '-bc']
-                    self._json_path = check_output(arguments)
-
-                    # sets the tab to enabled
-                    self._paramWidget.tabWidget.setTabEnabled(2, True)
-                else:
-                    pass
+        if self._json_path is not None:
+            self._paramWidget.tabWidget.setTabEnabled(2, True)
+            self._loadAutoFile()
 
         self._paramWidget.fc_file.setFilter("*.json")
         self._clearWindow()
@@ -146,6 +137,8 @@ class _TaskPanel(object):
 
         self._paramWidget.btn_manual.clicked.connect(self._addManualBC)
         self._paramWidget.sb_manual.valueChanged.connect(self._updateMTable)
+
+        self._paramWidget.btn_automatic.clicked.connect(self._addManualBC)
 
     def _applyWidgetChanges(self):
         return
@@ -220,8 +213,6 @@ class _TaskPanel(object):
         self._paramWidget.tw_file.clear()
         f = open(a,)
         data = json.load(f)
-        print("I got to here")
-        print(data.items())
         for key, value in data.items():
             # TODO get info from json file
             n = len(value)
@@ -267,3 +258,24 @@ class _TaskPanel(object):
                 setattr(self._obj, name, val.text())
         self.accept()
         return
+    # Auto tab settings
+    def _loadAutoFile(self):
+        table = self._paramWidget.tw_automatic
+        table.clear()
+        table.setHorizontalHeaderLabels(["Name", "Values"])
+        f = open(self._json_path)
+        data = json.load(f)
+        self._paramWidget.tw_automatic.setRowCount(len(data)-1)
+        
+        rows = 0
+        for key, value in list(data.items())[1:]:
+            newItem = QtGui.QTableWidgetItem(key)
+            table.setItem(rows, 0, newItem)
+            newItem = QtGui.QTableWidgetItem(value)
+            table.setItem(rows, 1, newItem)
+            rows += 1
+        # TODO add widget to list of widgets
+        f.close()
+        # self._paramWidget.tw_file
+    def _addAutoBC(self):
+        print("Apply auto")

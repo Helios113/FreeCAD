@@ -285,7 +285,7 @@ class CommandManager(object):
             return True
         else:
             return False
-
+    
     def analysis_has_solver(self):
         solver = False
         analysis_members = FemGui.getActiveAnalysis().Group
