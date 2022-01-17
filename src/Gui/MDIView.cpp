@@ -183,6 +183,9 @@ bool MDIView::onHasMsg(const char* pMsg) const
 
 bool MDIView::canClose(void)
 {
+    if (getAppDocument() && getAppDocument()->testStatus(App::Document::TempDoc))
+        return true;
+
     if (!bIsPassive && getGuiDocument() && getGuiDocument()->isLastView()) {
         this->setFocus(); // raises the view to front
         return (getGuiDocument()->canClose(true,true));
@@ -239,6 +242,34 @@ void MDIView::printPdf()
 void MDIView::printPreview()
 {
     std::cerr << "Printing preview not implemented for " << this->metaObject()->className() << std::endl;
+}
+
+QStringList MDIView::undoActions() const
+{
+    QStringList actions;
+    Gui::Document* doc = getGuiDocument();
+    if (doc) {
+        std::vector<std::string> vecUndos = doc->getUndoVector();
+        for (std::vector<std::string>::iterator i = vecUndos.begin(); i != vecUndos.end(); ++i) {
+            actions << QCoreApplication::translate("Command", i->c_str());
+        }
+    }
+
+    return actions;
+}
+
+QStringList MDIView::redoActions() const
+{
+    QStringList actions;
+    Gui::Document* doc = getGuiDocument();
+    if (doc) {
+        std::vector<std::string> vecRedos = doc->getRedoVector();
+        for (std::vector<std::string>::iterator i = vecRedos.begin(); i != vecRedos.end(); ++i) {
+            actions << QCoreApplication::translate("Command", i->c_str());
+        }
+    }
+
+    return actions;
 }
 
 QSize MDIView::minimumSizeHint () const

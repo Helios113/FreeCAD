@@ -58,7 +58,6 @@ enum ObjectStatus {
     Recompute2 = 9, // set when the object is being recomputed in the second pass
     PartialObject = 10,
     PendingRecompute = 11, // set by Document, indicating the object is in recomputation queue
-    PendingRemove = 12, // set by Document, indicating the object is in pending for remove after recompute
     ObjImporting = 13, // Mark the object as importing
     NoTouch = 14, // no touch on any property change
     GeoExcluded = 15, // mark as a member but not claimed by GeoFeatureGroup
@@ -66,6 +65,7 @@ enum ObjectStatus {
     NoAutoExpand = 17, // disable tree item auto expand on selection for this object
     PendingTransactionUpdate = 18, // mark that the object expects a call to onUndoRedoFinished() after transaction is finished.
     RecomputeExtension = 19, // mark the object to recompute its extensions
+    TouchOnColorChange = 20, // inform view provider touch object on color change
 };
 
 /** Return object for feature execution

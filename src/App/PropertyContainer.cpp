@@ -101,6 +101,12 @@ void PropertyContainer::getPropertyList(std::vector<Property*> &List) const
     getPropertyData().getPropertyList(this,List);
 }
 
+void PropertyContainer::getPropertyNamedList(std::vector<std::pair<const char*, Property*> > &List) const
+{
+    dynamicProps.getPropertyNamedList(List);
+    getPropertyData().getPropertyNamedList(this,List);
+}
+
 void PropertyContainer::setPropertyStatus(unsigned char bit,bool value)
 {
     std::vector<Property*> List;
@@ -332,27 +338,27 @@ void PropertyContainer::Restore(Base::XMLReader &reader)
         reader.readElement("Property");
         std::string PropName = reader.getAttribute("name");
         std::string TypeName = reader.getAttribute("type");
-        auto prop = dynamicProps.restore(*this,PropName.c_str(),TypeName.c_str(),reader);
-        if(!prop)
-            prop = getPropertyByName(PropName.c_str());
-
-        decltype(Property::StatusBits) status;
-        if(reader.hasAttribute("status")) {
-            status = decltype(status)(reader.getAttributeAsUnsigned("status"));
-            if(prop)
-                prop->setStatusValue(status.to_ulong());
-        }
         // NOTE: We must also check the type of the current property because a
         // subclass of PropertyContainer might change the type of a property but
         // not its name. In this case we would force to read-in a wrong property
         // type and the behaviour would be undefined.
         try {
+            auto prop = getPropertyByName(PropName.c_str());
+            if(!prop)
+                prop = dynamicProps.restore(*this,PropName.c_str(),TypeName.c_str(),reader);
+
+            decltype(Property::StatusBits) status;
+            if(reader.hasAttribute("status")) {
+                status = decltype(status)(reader.getAttributeAsUnsigned("status"));
+                if(prop)
+                    prop->setStatusValue(status.to_ulong());
+            }
             // name and type match
             if (prop && strcmp(prop->getTypeId().getName(), TypeName.c_str()) == 0) {
                 if (!prop->testStatus(Property::Transient) 
                         && !status.test(Property::Transient)
                         && !status.test(Property::PropTransient)
-                        && !(getPropertyType(prop) & Prop_Transient))
+                        && !prop->testStatus(Property::PropTransient))
                 {
                     FC_TRACE("restore property '" << prop->getName() << "'");
                     prop->Restore(reader);
@@ -584,6 +590,18 @@ void PropertyData::getPropertyList(OffsetBase offsetBase,std::vector<Property*> 
     List.reserve(base+propertyData.size());
     for (auto &spec : propertyData.get<0>())
         List.push_back((Property *) (spec.Offset + offsetBase.getOffset()));
+}
+
+void PropertyData::getPropertyNamedList(OffsetBase offsetBase,
+        std::vector<std::pair<const char*,Property*> > &List) const
+{
+    merge();
+    size_t base = List.size();
+    List.reserve(base+propertyData.size());
+    for (auto &spec : propertyData.get<0>()) {
+        auto prop = (Property *) (spec.Offset + offsetBase.getOffset());
+        List.emplace_back(prop->getName(),prop);
+    }
 }
 
 

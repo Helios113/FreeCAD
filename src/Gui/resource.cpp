@@ -50,6 +50,7 @@
 #include "DlgKeyboardImp.h"
 #include "DlgCustomizeSpaceball.h"
 #include "DlgCustomizeSpNavSettings.h"
+#include "DlgSettingsCacheDirectory.h"
 #include "InputField.h"
 #include "QuantitySpinBox.h"
 #include "PrefWidgets.h"
@@ -69,6 +70,7 @@ WidgetFactorySupplier::WidgetFactorySupplier()
   //new PrefPageProducer<DlgOnlineHelpImp>         ( QT_TRANSLATE_NOOP("QObject","General") );
     new PrefPageProducer<DlgSettingsDocumentImp>   ( QT_TRANSLATE_NOOP("QObject","General") );
     new PrefPageProducer<DlgSettingsSelection>     ( QT_TRANSLATE_NOOP("QObject","General") );
+    new PrefPageProducer<DlgSettingsCacheDirectory>( QT_TRANSLATE_NOOP("QObject","General") );
     new PrefPageProducer<DlgSettingsEditorImp>     ( QT_TRANSLATE_NOOP("QObject","General") );
     new PrefPageProducer<DlgReportViewImp>         ( QT_TRANSLATE_NOOP("QObject","General") );
     new PrefPageProducer<DlgSettingsMacroImp>      ( QT_TRANSLATE_NOOP("QObject","General") );
@@ -97,6 +99,7 @@ WidgetFactorySupplier::WidgetFactorySupplier()
     new WidgetProducer<Gui::PrefSpinBox>;
     new WidgetProducer<Gui::PrefDoubleSpinBox>;
     new WidgetProducer<Gui::PrefLineEdit>;
+    new WidgetProducer<Gui::PrefTextEdit>;
     new WidgetProducer<Gui::PrefComboBox>;
     new WidgetProducer<Gui::PrefFontBox>;
     new WidgetProducer<Gui::PrefCheckBox>;
@@ -111,6 +114,7 @@ WidgetFactorySupplier::WidgetFactorySupplier()
     new WidgetProducer<Gui::ActionSelector>;
     new WidgetProducer<Gui::ColorButton>;
     new WidgetProducer<Gui::UrlLabel>;
+    new WidgetProducer<Gui::StatefulLabel>;
     new WidgetProducer<Gui::FileChooser>;
     new WidgetProducer<Gui::UIntSpinBox>;
     new WidgetProducer<Gui::IntSpinBox>;

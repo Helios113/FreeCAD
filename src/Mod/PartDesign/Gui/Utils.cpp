@@ -1,5 +1,5 @@
 /***************************************************************************
- *  Copyright (C) 2015 Alexander Golubev (Fat-Zer) <fatzer2@gmail.com>     *
+ *   Copyright (C) 2015 Alexander Golubev (Fat-Zer) <fatzer2@gmail.com>    *
  *                                                                         *
  *   This file is part of the FreeCAD CAx development system.              *
  *                                                                         *
@@ -435,7 +435,7 @@ void relinkToBody (PartDesign::Feature *feature) {
                     }
                 }
 
-                if ( !valueStr.empty () ) {
+                if ( !valueStr.empty () && prop->hasName()) {
                     FCMD_OBJ_CMD(obj,prop->getName() << '=' << valueStr);
                 }
             }

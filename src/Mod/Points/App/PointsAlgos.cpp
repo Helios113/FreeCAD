@@ -46,6 +46,8 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/math/special_functions/fpclassify.hpp>
 
+#include <E57Format.h>
+
 using namespace Points;
 
 void PointsAlgos::Load(PointKernel &points, const char *FileName)
@@ -275,7 +277,7 @@ protected:
     }
     virtual pos_type seekoff(std::streambuf::off_type off,
         std::ios_base::seekdir way,
-        std::ios_base::openmode = 
+        std::ios_base::openmode =
             std::ios::in | std::ios::out) {
         int p_pos=-1;
         if (way == std::ios_base::beg)
@@ -308,7 +310,7 @@ private:
 };
 
 //Taken from https://github.com/PointCloudLibrary/pcl/blob/master/io/src/lzf.cpp
-unsigned int 
+unsigned int
 lzfDecompress (const void *const in_data,  unsigned int in_len,
                     void             *out_data, unsigned int out_len)
 {
@@ -1298,6 +1300,237 @@ void PcdReader::readBinary(bool transpose,
                 data(i, j) = value;
             }
         }
+    }
+}
+
+// ----------------------------------------------------------------------------
+
+E57Reader::E57Reader(const bool& Color, const bool& State, const float& Distance)
+{
+    useColor = Color;
+    checkState = State;
+    minDistance = Distance;
+}
+
+E57Reader::~E57Reader()
+{
+}
+
+void E57Reader::read(const std::string& filename)
+{
+    try {
+        // read file
+        e57::ImageFile imfi(filename, "r");
+        e57::StructureNode root = imfi.root();
+        if (root.isDefined("data3D")) {
+            e57::VectorNode data3D(root.get("data3D"));
+            for (int child = 0; child < data3D.childCount(); ++child) {
+                e57::StructureNode            scan_data(data3D.get(child));
+                e57::CompressedVectorNode     cvn(scan_data.get("points"));
+                e57::StructureNode            prototype(cvn.prototype());
+                // create buffers for the compressed vector reader
+                const size_t buf_size = 1024;
+                double* xyz = new double[buf_size * 3];
+                double* intensity = new double[buf_size];
+                int64_t* state = new int64_t[buf_size];
+                unsigned* rgb = new unsigned[buf_size * 3];
+                int64_t* nil = new int64_t[buf_size];
+
+                // check the channels which are needed
+                unsigned* ptr_xyz = new unsigned[3];
+                unsigned* ptr_rgb = new unsigned[3];
+                bool inty = false;
+                bool inv_state = false;
+                unsigned cnt_xyz = 0;
+                unsigned cnt_rgb = 0;
+                std::vector<e57::SourceDestBuffer> sdb;
+                for (int i = 0; i < prototype.childCount(); ++i) {
+                    e57::Node n(prototype.get(i));
+                    if ((n.type() == e57::E57_FLOAT) || (n.type() == e57::E57_SCALED_INTEGER)) {
+                        if (n.elementName() == "cartesianX") {
+                            ptr_xyz[0] = cnt_xyz++;
+                            sdb.push_back(
+                                e57::SourceDestBuffer(
+                                    imfi
+                                    , n.elementName()
+                                    , &(xyz[0])
+                                    , buf_size
+                                    , true
+                                    , true
+                                )
+                            );
+                        }
+                        else if (n.elementName() == "cartesianY") {
+                            ptr_xyz[1] = cnt_xyz++;
+                            sdb.push_back(
+                                e57::SourceDestBuffer(
+                                    imfi
+                                    , n.elementName()
+                                    , &(xyz[buf_size])
+                                    , buf_size
+                                    , true
+                                    , true
+                                )
+                            );
+                        }
+                        else if (n.elementName() == "cartesianZ") {
+                            ptr_xyz[2] = cnt_xyz++;
+                            sdb.push_back(
+                                e57::SourceDestBuffer(
+                                    imfi
+                                    , n.elementName()
+                                    , &(xyz[2 * buf_size])
+                                    , buf_size
+                                    , true
+                                    , true
+                                )
+                            );
+                        }
+                        else if (n.elementName() == "intensity") {
+                            inty = true;
+                            sdb.push_back(
+                                e57::SourceDestBuffer(
+                                    imfi
+                                    , n.elementName()
+                                    , &(intensity[0])
+                                    , buf_size
+                                    , true
+                                    , true
+                                )
+                            );
+                        }
+                        else {
+                            sdb.push_back(
+                                e57::SourceDestBuffer(
+                                    imfi
+                                    , n.elementName()
+                                    , &(nil[0])
+                                    , buf_size
+                                    , true
+                                    , true
+                                )
+                            );
+                        }
+
+                    }
+                    else if (n.type() == e57::E57_INTEGER) {
+                        if (n.elementName() == "colorRed") {
+                            ptr_rgb[0] = cnt_rgb++;
+                            sdb.push_back(
+                                e57::SourceDestBuffer(
+                                    imfi
+                                    , n.elementName()
+                                    , &(rgb[0])
+                                    , buf_size
+                                    , true
+                                    , true
+                                )
+                            );
+                        }
+                        else if (n.elementName() == "colorGreen") {
+                            ptr_rgb[1] = cnt_rgb++;
+                            sdb.push_back(
+                                e57::SourceDestBuffer(
+                                    imfi
+                                    , n.elementName()
+                                    , &(rgb[buf_size])
+                                    , buf_size
+                                    , true
+                                    , true
+                                )
+                            );
+                        }
+                        else if (n.elementName() == "colorBlue") {
+                            ptr_rgb[2] = cnt_rgb++;
+                            sdb.push_back(
+                                e57::SourceDestBuffer(
+                                    imfi
+                                    , n.elementName()
+                                    , &(rgb[2 * buf_size])
+                                    , buf_size
+                                    , true
+                                    , true
+                                )
+                            );
+                        }
+                        else if (n.elementName() == "cartesianInvalidState") {
+                            inv_state = true;
+                            sdb.push_back(
+                                e57::SourceDestBuffer(
+                                    imfi
+                                    , n.elementName()
+                                    , &(state[0])
+                                    , buf_size
+                                    , true
+                                    , true
+                                )
+                            );
+                        }
+                        else {
+                            sdb.push_back(
+                                e57::SourceDestBuffer(
+                                    imfi
+                                    , n.elementName()
+                                    , &(nil[0])
+                                    , buf_size
+                                    , true
+                                    , true
+                                )
+                            );
+                        }
+                    }
+                }
+
+                // read the data
+
+                if (cnt_xyz == 3) {
+                    unsigned count;
+                    unsigned cnt_pts = 0;
+                    Base::Vector3d pt, last;
+                    e57::CompressedVectorReader cvr(cvn.reader(sdb));
+                    bool hasColor = (cnt_rgb == 3) && useColor;
+                    bool hasState = inv_state && checkState;
+                    bool filter = false;
+
+                    while ((count = cvr.read())) {
+                        for (size_t i = 0; i < count; ++i) {
+                            filter = false;
+                            if (hasState) {
+                                if (state[i] != 0) { filter = true; }
+                            }
+                            pt.x = xyz[ptr_xyz[0] * buf_size + i];
+                            pt.y = xyz[ptr_xyz[1] * buf_size + i];
+                            pt.z = xyz[ptr_xyz[2] * buf_size + i];
+                            if ((!filter) && (cnt_pts > 0)) {
+                                if (Base::Distance(last, pt) < minDistance) {
+                                    filter = true;
+                                }
+                            }
+                            if (!filter) {
+                                cnt_pts++;
+                                points.push_back(pt);
+                                last = pt;
+                                if (hasColor) {
+                                    App::Color c;
+                                    c.r = static_cast<float>(rgb[ptr_rgb[0] * buf_size + i]) / 255.0f;
+                                    c.g = static_cast<float>(rgb[ptr_rgb[1] * buf_size + i]) / 255.0f;
+                                    c.b = static_cast<float>(rgb[ptr_rgb[2] * buf_size + i]) / 255.0f;
+                                    if (inty) { c.a = intensity[i]; }
+                                    colors.push_back(c);
+                                }
+                            }
+                        }
+                    }
+                }
+                else {
+                    Base::Console().Error("Missing channels xyz.");
+                }
+            }
+        }
+    }
+    catch (...) {
+        points.clear();
+        throw Base::BadFormatError("E57");
     }
 }
 

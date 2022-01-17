@@ -1,7 +1,6 @@
-/***************************************************************************
-*   Copyright (c) 2007                                                    *
-*   Joachim Zettler <Joachim.Zettler@gmx.de>                              *
-*   Human Rezai <human@mytum.de>                                          *
+/**************************************************************************
+*   Copyright (c) 2007 Joachim Zettler <Joachim.Zettler@gmx.de>           *
+*   Copyright (c) 2007 Human Rezai <human@mytum.de>                       *
 *                                                                         *
 *   This file is part of the FreeCAD CAx development system.              *
 *                                                                         *
@@ -81,7 +80,7 @@ bool Deviation::GenNormals()
 		MeshMap.insert(inp);
 	}
 
-	// explores all faces  ------------  Hauptschleife
+	// explores all faces  ------------  Main loop
 	for (aExpFace.Init(m_Cad,TopAbs_FACE);aExpFace.More();aExpFace.Next())
 	{
 		TopoDS_Face aFace = TopoDS::Face(aExpFace.Current());
@@ -174,7 +173,7 @@ bool Deviation::Compute()
 		if (malg.NearestFacetOnRay(*p_it, m_nlvec[i], aFacetGrid, projPoint, facetIndex))   // gridoptimiert
 		{
 			distVec  = projPoint - *p_it;
-			m_nlvec[i] = distVec;   // überschreibt normalenvektor
+			m_nlvec[i] = distVec;   // overwrites normal vector
 		}
 		else
 		{
@@ -187,7 +186,7 @@ bool Deviation::Compute()
 			else
 			{
 				distVec  = projPoint - *p_it;
-				m_nlvec[i] = distVec;   // überschreibt normalenvektor
+				m_nlvec[i] = distVec;   // overwrites normal vector
 			}
 		}
 

@@ -149,7 +149,7 @@ int App::validRow(const std::string &rowstr)
     char * end;
     int i = strtol(rowstr.c_str(), &end, 10);
 
-    if (i <0 || i >= CellAddress::MAX_ROWS || *end)
+    if (i <=0 || i > CellAddress::MAX_ROWS || *end)
         return -1;
 
     return i - 1;
@@ -234,24 +234,30 @@ App::CellAddress App::stringToAddress(const char * strAddress, bool silent)
   * @returns Address given as a string.
   */
 
-std::string App::CellAddress::toString(bool noAbsolute) const
+std::string App::CellAddress::toString(Cell cell) const
 {
     std::stringstream s;
 
-    if(_absCol && !noAbsolute)
-        s << '$';
-    if (col() < 26)
-        s << (char)('A' + col());
-    else {
-        int colnum = col() - 26;
+    Base::Flags<Cell> flags(cell);
+    if (flags.testFlag(Cell::ShowColumn)) {
+        if (_absCol && flags.testFlag(Cell::Absolute))
+            s << '$';
+        if (col() < 26) {
+            s << (char)('A' + col());
+        }
+        else {
+            int colnum = col() - 26;
 
-        s << (char)('A' + (colnum / 26));
-        s << (char)('A' + (colnum % 26));
+            s << (char)('A' + (colnum / 26));
+            s << (char)('A' + (colnum % 26));
+        }
     }
 
-    if(_absRow && !noAbsolute)
-        s << '$';
-    s << (row() + 1);
+    if (flags.testFlag(Cell::ShowRow)) {
+        if (_absRow && flags.testFlag(Cell::Absolute))
+            s << '$';
+        s << (row() + 1);
+    }
 
     return s.str();
 }

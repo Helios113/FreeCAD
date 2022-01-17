@@ -150,6 +150,8 @@
 
 #include "ViewProviderLink.h"
 
+#include "CornerCrossLetters.h"
+
 FC_LOG_LEVEL_INIT("3DViewer",true,true)
 
 //#define FC_LOGGING_CB
@@ -2595,7 +2597,7 @@ SbRotation View3DInventorViewer::getCameraOrientation() const
     return cam->orientation.getValue();
 }
 
-SbVec3f View3DInventorViewer::getPointOnScreen(const SbVec2s& pnt) const
+SbVec2f View3DInventorViewer::getNormalizedPosition(const SbVec2s& pnt) const
 {
     const SbViewportRegion& vp = this->getSoRenderManager()->getViewportRegion();
 
@@ -2618,6 +2620,12 @@ SbVec3f View3DInventorViewer::getPointOnScreen(const SbVec2s& pnt) const
         pY = (pY - 0.5f*dY) / fRatio + 0.5f*dY;
     }
 
+    return SbVec2f(pX, pY);
+}
+
+SbVec3f View3DInventorViewer::getPointOnFocalPlane(const SbVec2s& pnt) const
+{
+    SbVec2f pnt2d = getNormalizedPosition(pnt);
     SoCamera* pCam = this->getSoRenderManager()->getCamera();
 
     if (!pCam) return SbVec3f();  // return invalid point
@@ -2634,10 +2642,26 @@ SbVec3f View3DInventorViewer::getPointOnScreen(const SbVec2s& pnt) const
     SbLine line;
     SbVec3f pt;
     SbPlane focalPlane = vol.getPlane(focalDist);
-    vol.projectPointToLine(SbVec2f(pX,pY), line);
+    vol.projectPointToLine(pnt2d, line);
     focalPlane.intersect(line, pt);
 
     return pt;
+}
+
+SbVec2s View3DInventorViewer::getPointOnScreen(const SbVec3f& pnt) const
+{
+    const SbViewportRegion& vp = this->getSoRenderManager()->getViewportRegion();
+    float fRatio = vp.getViewportAspectRatio();
+    const SbVec2s& sp = vp.getViewportSizePixels();
+    SbViewVolume vv = this->getSoRenderManager()->getCamera()->getViewVolume(fRatio);
+
+    SbVec3f pt(pnt);
+    vv.projectToScreen(pt, pt);
+
+    short x = short(std::roundf(pt[0] * sp[0]));
+    short y = short(std::roundf(pt[1] * sp[1]));
+
+    return SbVec2s(x, y);
 }
 
 void View3DInventorViewer::getNearPlane(SbVec3f& rcPt, SbVec3f& rcNormal) const
@@ -2698,6 +2722,17 @@ SbVec3f View3DInventorViewer::projectOnFarPlane(const SbVec2f& pt) const
     SbViewVolume vol = cam->getViewVolume();
     vol.projectPointToLine(pt, pt1, pt2);
     return pt2;
+}
+
+void View3DInventorViewer::projectPointToLine(const SbVec2s& pt, SbVec3f& pt1, SbVec3f& pt2) const
+{
+    SbVec2f pnt2d = getNormalizedPosition(pt);
+    SoCamera* pCam = this->getSoRenderManager()->getCamera();
+
+    if (!pCam) return;
+
+    SbViewVolume vol = pCam->getViewVolume();
+    vol.projectPointToLine(pnt2d, pt1, pt2);
 }
 
 void View3DInventorViewer::toggleClippingPlane(int toggle, bool beforeEditing,
@@ -3266,13 +3301,6 @@ void View3DInventorViewer::setViewing(SbBool enable)
     inherited::setViewing(enable);
 }
 
-//****************************************************************************
-
-// Bitmap representations of an "X", a "Y" and a "Z" for the axis cross.
-static GLubyte xbmp[] = { 0x11,0x11,0x0a,0x04,0x0a,0x11,0x11 };
-static GLubyte ybmp[] = { 0x04,0x04,0x04,0x04,0x0a,0x11,0x11 };
-static GLubyte zbmp[] = { 0x1f,0x10,0x08,0x04,0x02,0x01,0x1f };
-
 void View3DInventorViewer::drawAxisCross(void)
 {
     // FIXME: convert this to a superimposition scenegraph instead of
@@ -3429,12 +3457,15 @@ void View3DInventorViewer::drawAxisCross(void)
     else
         glColor3fv(SbVec3f(0.0f, 0.0f, 0.0f).getValue());
 
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glPixelZoom((float)axiscrossSize/30, (float)axiscrossSize/30); // 30 = 3 (character pixmap ratio) * 10 (default axiscrossSize)
     glRasterPos2d(xpos[0], xpos[1]);
-    glBitmap(8, 7, 0, 0, 0, 0, xbmp);
+    glDrawPixels(XPM_WIDTH, XPM_HEIGHT, GL_RGBA, GL_UNSIGNED_BYTE, XPM_PIXEL_DATA);
     glRasterPos2d(ypos[0], ypos[1]);
-    glBitmap(8, 7, 0, 0, 0, 0, ybmp);
+    glDrawPixels(YPM_WIDTH, YPM_HEIGHT, GL_RGBA, GL_UNSIGNED_BYTE, YPM_PIXEL_DATA);
     glRasterPos2d(zpos[0], zpos[1]);
-    glBitmap(8, 7, 0, 0, 0, 0, zbmp);
+    glDrawPixels(ZPM_WIDTH, ZPM_HEIGHT, GL_RGBA, GL_UNSIGNED_BYTE, ZPM_PIXEL_DATA);
 
     glPixelStorei(GL_UNPACK_ALIGNMENT, unpack);
     glPopMatrix();
@@ -3453,11 +3484,33 @@ void View3DInventorViewer::drawAxisCross(void)
 // Draw an arrow for the axis representation directly through OpenGL.
 void View3DInventorViewer::drawArrow(void)
 {
-    glBegin(GL_LINES);
-    glVertex3f(0.0f, 0.0f, 0.0f);
-    glVertex3f(1.0f, 0.0f, 0.0f);
-    glEnd();
     glDisable(GL_CULL_FACE);
+    glBegin(GL_QUADS);
+    glVertex3f(0.0f, -0.02f, 0.02f);
+    glVertex3f(0.0f, 0.02f, 0.02f);
+    glVertex3f(1.0f - 1.0f / 3.0f, 0.02f, 0.02f);
+    glVertex3f(1.0f - 1.0f / 3.0f, -0.02f, 0.02f);
+
+    glVertex3f(0.0f, -0.02f, -0.02f);
+    glVertex3f(0.0f, 0.02f, -0.02f);
+    glVertex3f(1.0f - 1.0f / 3.0f, 0.02f, -0.02f);
+    glVertex3f(1.0f - 1.0f / 3.0f, -0.02f, -0.02f);
+
+    glVertex3f(0.0f, -0.02f, 0.02f);
+    glVertex3f(0.0f, -0.02f, -0.02f);
+    glVertex3f(1.0f - 1.0f / 3.0f, -0.02f, -0.02f);
+    glVertex3f(1.0f - 1.0f / 3.0f, -0.02f, 0.02f);
+
+    glVertex3f(0.0f, 0.02f, 0.02f);
+    glVertex3f(0.0f, 0.02f, -0.02f);
+    glVertex3f(1.0f - 1.0f / 3.0f, 0.02f, -0.02f);
+    glVertex3f(1.0f - 1.0f / 3.0f, 0.02f, 0.02f);
+
+    glVertex3f(0.0f, 0.02f, 0.02f);
+    glVertex3f(0.0f, 0.02f, -0.02f);
+    glVertex3f(0.0f, -0.02f, -0.02f);
+    glVertex3f(0.0f, -0.02f, 0.02f);
+    glEnd();
     glBegin(GL_TRIANGLES);
     glVertex3f(1.0f, 0.0f, 0.0f);
     glVertex3f(1.0f - 1.0f / 3.0f, +0.5f / 4.0f, 0.0f);

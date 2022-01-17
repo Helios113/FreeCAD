@@ -1,6 +1,5 @@
 /***************************************************************************
- *   Copyright (c) 2007                                                    *
- *   Joachim Zettler <Joachim.Zettler@gmx.de>                              *
+ *   Copyright (c) 2007 Joachim Zettler <Joachim.Zettler@gmx.de>           *
  *   Adapted by Joachim Zettler to use with a WireExplorer made            *
  *   by Stephane Routelous                                                 *
  *                                                                         *
@@ -93,7 +92,7 @@ class Geom_BSplineCurve;
 //! The Curve from BRepAdaptor allows to use a Wire of the BRep topology
 //! like a 3D curve. <br>
 //!  Warning: With this class of curve, C0 and C1 continuities
-//!           are not assumed. So be careful with some algorithm!
+//!           are not assumed. So be careful with some algorithms!
 class BRepAdaptor_CompCurve2  : public Adaptor3d_Curve
 {
 

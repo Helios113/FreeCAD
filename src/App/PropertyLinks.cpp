@@ -84,6 +84,29 @@ void PropertyLinkBase::hasSetValue() {
     Property::hasSetValue();
 }
 
+bool PropertyLinkBase::isSame(const Property &other) const
+{
+    if(&other == this)
+        return true;
+    if(other.isDerivedFrom(PropertyLinkBase::getClassTypeId())
+        || getScope() != static_cast<const PropertyLinkBase*>(&other)->getScope())
+        return false;
+
+    static std::vector<App::DocumentObject*> ret;
+    static std::vector<std::string> subs;
+    static std::vector<App::DocumentObject*> ret2;
+    static std::vector<std::string> subs2;
+
+    ret.clear();
+    subs.clear();
+    ret2.clear();
+    subs2.clear();
+    getLinks(ret,true,&subs,false);
+    static_cast<const PropertyLinkBase *>(&other)->getLinks(ret2,true,&subs2,true);
+
+    return ret==ret2 && subs==subs2;
+}
+
 void PropertyLinkBase::unregisterElementReference() {
 }
 
@@ -181,7 +204,7 @@ PropertyLinkBase::updateLabelReferences(App::DocumentObject *obj, const char *ne
 static std::string propertyName(const Property *prop) {
     if(!prop)
         return std::string();
-    if(!prop->getContainer() || !prop->getName()) {
+    if(!prop->getContainer() || !prop->hasName()) {
         auto xlink = Base::freecad_dynamic_cast<const PropertyXLink>(prop);
         if(xlink)
             return propertyName(xlink->parent());
@@ -1321,20 +1344,20 @@ void PropertyLinkSub::Save (Base::Writer &writer) const
         writer.Stream() << writer.ind() << "<Sub value=\"";
         if(exporting) {
             std::string exportName;
-            writer.Stream() << exportSubName(exportName,_pcLinkSub,sub.c_str());
+            writer.Stream() << encodeAttribute(exportSubName(exportName,_pcLinkSub,sub.c_str()));
             if(shadow.second.size() && shadow.first == _cSubList[i])
                 writer.Stream() << "\" " ATTR_MAPPED "=\"1";
         } else {
-            writer.Stream() << sub;
+            writer.Stream() << encodeAttribute(sub);
             if(_cSubList[i].size()) {
                 if(sub!=_cSubList[i]) {
                     // Stores the actual value that is shadowed. For new version FC,
                     // we will restore this shadowed value instead.
-                    writer.Stream() << "\" " ATTR_SHADOWED "=\"" << _cSubList[i];
+                    writer.Stream() << "\" " ATTR_SHADOWED "=\"" << encodeAttribute(_cSubList[i]);
                 }else if(shadow.first.size()){
                     // Here means the user set value is old style element name.
                     // We shall then store the shadow somewhere else.
-                    writer.Stream() << "\" " ATTR_SHADOW "=\"" << shadow.first;
+                    writer.Stream() << "\" " ATTR_SHADOW "=\"" << encodeAttribute(shadow.first);
                 }
             }
         }
@@ -1599,6 +1622,16 @@ PropertyLinkSubList::~PropertyLinkSubList()
 #endif
 }
 
+void PropertyLinkSubList::verifyObject(App::DocumentObject* obj, App::DocumentObject* parent)
+{
+    if (obj) {
+        if (!obj->getNameInDocument())
+            throw Base::ValueError("PropertyLinkSubList: invalid document object");
+        if (!testFlag(LinkAllowExternal) && parent && parent->getDocument() != obj->getDocument())
+            throw Base::ValueError("PropertyLinkSubList does not support external object");
+    }
+}
+
 void PropertyLinkSubList::setSize(int newSize)
 {
     _lValueList.resize(newSize);
@@ -1614,12 +1647,8 @@ int PropertyLinkSubList::getSize(void) const
 void PropertyLinkSubList::setValue(DocumentObject* lValue,const char* SubName)
 {
     auto parent = Base::freecad_dynamic_cast<App::DocumentObject>(getContainer());
-    if(lValue) {
-        if(!lValue->getNameInDocument())
-            throw Base::ValueError("PropertyLinkSubList: invalid document object");
-        if(!testFlag(LinkAllowExternal) && parent && parent->getDocument()!=lValue->getDocument())
-            throw Base::ValueError("PropertyLinkSubList does not support external object");
-    }
+    verifyObject(lValue, parent);
+
 #ifndef USE_OLD_DAG
     //maintain backlinks
     if(parent) {
@@ -1657,11 +1686,9 @@ void PropertyLinkSubList::setValues(const std::vector<DocumentObject*>& lValue,c
 {
     auto parent = Base::freecad_dynamic_cast<App::DocumentObject>(getContainer());
     for(auto obj : lValue) {
-        if(!obj || !obj->getNameInDocument())
-            throw Base::ValueError("PropertyLinkSubList: invalid document object");
-        if(!testFlag(LinkAllowExternal) && parent && parent->getDocument()!=obj->getDocument())
-            throw Base::ValueError("PropertyLinkSubList does not support external object");
+        verifyObject(obj, parent);
     }
+
     if (lValue.size() != lSubNames.size())
         throw Base::ValueError("PropertyLinkSubList::setValues: size of subelements list != size of objects list");
 
@@ -1713,10 +1740,7 @@ void PropertyLinkSubList::setValues(std::vector<DocumentObject*>&& lValue,
 {
     auto parent = Base::freecad_dynamic_cast<App::DocumentObject>(getContainer());
     for(auto obj : lValue) {
-        if(!obj || !obj->getNameInDocument())
-            throw Base::ValueError("PropertyLinkSubList: invalid document object");
-        if(!testFlag(LinkAllowExternal) && parent && parent->getDocument()!=obj->getDocument())
-            throw Base::ValueError("PropertyLinkSubList does not support external object");
+        verifyObject(obj, parent);
     }
     if (lValue.size() != lSubNames.size())
         throw Base::ValueError("PropertyLinkSubList::setValues: size of subelements list != size of objects list");
@@ -1758,12 +1782,8 @@ void PropertyLinkSubList::setValues(std::vector<DocumentObject*>&& lValue,
 void PropertyLinkSubList::setValue(DocumentObject* lValue, const std::vector<string> &SubList)
 {
     auto parent = dynamic_cast<App::DocumentObject*>(getContainer());
-    if(lValue) {
-        if(!lValue->getNameInDocument())
-            throw Base::ValueError("PropertyLinkSubList: invalid document object");
-        if(!testFlag(LinkAllowExternal) && parent && parent->getDocument()!=lValue->getDocument())
-            throw Base::ValueError("PropertyLinkSubList does not support external object");
-    }
+    verifyObject(lValue, parent);
+
 #ifndef USE_OLD_DAG
     //maintain backlinks.
     if(parent) {
@@ -1800,6 +1820,70 @@ void PropertyLinkSubList::setValue(DocumentObject* lValue, const std::vector<str
         this->_lValueList.insert(this->_lValueList.begin(), size, lValue);
     }
     updateElementReference(0);
+    checkLabelReferences(_lSubList);
+    hasSetValue();
+}
+
+void PropertyLinkSubList::addValue(App::DocumentObject *obj, const std::vector<std::string> &subs, bool reset)
+{
+    auto parent = Base::freecad_dynamic_cast<App::DocumentObject>(getContainer());
+    verifyObject(obj, parent);
+
+#ifndef USE_OLD_DAG
+    //maintain backlinks.
+    if (parent) {
+        // before accessing internals make sure the object is not about to be destroyed
+        // otherwise the backlink contains dangling pointers
+        if (!parent->testStatus(ObjectStatus::Destroy) && _pcScope != LinkScope::Hidden) {
+            //_lValueList can contain items multiple times, but we trust the document
+            //object to ensure that this works
+            if (reset) {
+                for(auto* value : _lValueList) {
+                    if (value && value == obj)
+                        value->_removeBackLink(parent);
+                }
+            }
+
+            //maintain backlinks. lValue can contain items multiple times, but we trust the document
+            //object to ensure that the backlink is only added once
+            if (obj)
+                obj->_addBackLink(parent);
+        }
+    }
+#endif
+
+    std::vector<DocumentObject*> valueList;
+    std::vector<std::string>     subList;
+
+    if (reset) {
+        for (std::size_t i=0; i<_lValueList.size(); i++) {
+            if (_lValueList[i] != obj) {
+                valueList.push_back(_lValueList[i]);
+                subList.push_back(_lSubList[i]);
+            }
+        }
+    }
+    else {
+        valueList = _lValueList;
+        subList = _lSubList;
+    }
+
+    std::size_t size = subs.size();
+    if (size == 0) {
+        if (obj) {
+            valueList.push_back(obj);
+            subList.emplace_back();
+        }
+    }
+    else if (obj) {
+        subList.insert(subList.end(), subs.begin(), subs.end());
+        valueList.insert(valueList.end(), size, obj);
+    }
+
+    aboutToSetValue();
+    _lValueList = valueList;
+    _lSubList = subList;
+    updateElementReference(nullptr);
     checkLabelReferences(_lSubList);
     hasSetValue();
 }
@@ -2103,20 +2187,20 @@ void PropertyLinkSubList::Save (Base::Writer &writer) const
         writer.Stream() << writer.ind() << "<Link obj=\"" << obj->getExportName() << "\" sub=\"";
         if(exporting) {
             std::string exportName;
-            writer.Stream() << exportSubName(exportName,obj,sub.c_str());
+            writer.Stream() << encodeAttribute(exportSubName(exportName,obj,sub.c_str()));
             if(shadow.second.size() && _lSubList[i]==shadow.first)
                 writer.Stream() << "\" " ATTR_MAPPED "=\"1";
         } else {
-            writer.Stream() << sub;
+            writer.Stream() << encodeAttribute(sub);
             if(_lSubList[i].size()) {
                 if(sub!=_lSubList[i]) {
                     // Stores the actual value that is shadowed. For new version FC,
                     // we will restore this shadowed value instead.
-                    writer.Stream() << "\" " ATTR_SHADOWED "=\"" << _lSubList[i];
+                    writer.Stream() << "\" " ATTR_SHADOWED "=\"" << encodeAttribute(_lSubList[i]);
                 }else if(shadow.first.size()) {
                     // Here means the user set value is old style element name.
                     // We shall then store the shadow somewhere else.
-                    writer.Stream() << "\" " ATTR_SHADOW "=\"" << shadow.first;
+                    writer.Stream() << "\" " ATTR_SHADOW "=\"" << encodeAttribute(shadow.first);
                 }
             }
         }
@@ -2178,6 +2262,36 @@ void PropertyLinkSubList::Restore(Base::XMLReader &reader)
     // assignment
     setValues(values,SubNames,std::move(shadows));
     _mapped.swap(mapped);
+}
+
+bool PropertyLinkSubList::upgrade(Base::XMLReader &reader, const char *typeName)
+{
+    Base::Type type = Base::Type::fromName(typeName);
+    if (type.isDerivedFrom(PropertyLink::getClassTypeId())) {
+        PropertyLink prop;
+        prop.setContainer(getContainer());
+        prop.Restore(reader);
+        setValue(prop.getValue());
+        return true;
+    }
+    else if (type.isDerivedFrom(PropertyLinkList::getClassTypeId())) {
+        PropertyLinkList prop;
+        prop.setContainer(getContainer());
+        prop.Restore(reader);
+        std::vector<std::string> subnames;
+        subnames.resize(prop.getSize());
+        setValues(prop.getValues(), subnames);
+        return true;
+    }
+    else if (type.isDerivedFrom(PropertyLinkSub::getClassTypeId())) {
+        PropertyLinkSub prop;
+        prop.setContainer(getContainer());
+        prop.Restore(reader);
+        setValue(prop.getValue(), prop.getSubValues());
+        return true;
+    }
+
+    return false;
 }
 
 Property *PropertyLinkSubList::CopyOnImportExternal(
@@ -2458,6 +2572,7 @@ class App::DocInfo :
 public:
     typedef boost::signals2::scoped_connection Connection;
     Connection connFinishRestoreDocument;
+    Connection connPendingReloadDocument;
     Connection connDeleteDocument;
     Connection connSaveDocument;
     Connection connDeletedObject;
@@ -2589,6 +2704,7 @@ public:
         FC_LOG("deinit " << (pcDoc?pcDoc->getName():filePath()));
         assert(links.empty());
         connFinishRestoreDocument.disconnect();
+        connPendingReloadDocument.disconnect();
         connDeleteDocument.disconnect();
         connSaveDocument.disconnect();
         connDeletedObject.disconnect();
@@ -2606,6 +2722,8 @@ public:
         App::Application &app = App::GetApplication();
         connFinishRestoreDocument = app.signalFinishRestoreDocument.connect(
             boost::bind(&DocInfo::slotFinishRestoreDocument,this,bp::_1));
+        connPendingReloadDocument = app.signalPendingReloadDocument.connect(
+            boost::bind(&DocInfo::slotFinishRestoreDocument,this,bp::_1));
         connDeleteDocument = app.signalDeleteDocument.connect(
             boost::bind(&DocInfo::slotDeleteDocument,this,bp::_1));
         connSaveDocument = app.signalSaveDocument.connect(
@@ -2617,6 +2735,8 @@ public:
         else{
             for(App::Document *doc : App::GetApplication().getDocuments()) {
                 if(getFullPath(doc->getFileName()) == fullpath) {
+                    if(doc->testStatus(App::Document::PartialDoc) && !doc->getObject(objName))
+                        break;
                     attach(doc);
                     return;
                 }
@@ -2642,22 +2762,36 @@ public:
                 continue;
             }
             auto obj = doc->getObject(link->objectName.c_str());
-            if(!obj)
+            if(obj)
+                link->restoreLink(obj);
+            else if (doc->testStatus(App::Document::PartialDoc)) {
+                App::GetApplication().addPendingDocument(
+                        doc->FileName.getValue(),
+                        link->objectName.c_str(),
+                        false);
+                FC_WARN("reloading partial document '" << doc->FileName.getValue()
+                        << "' due to object " << link->objectName);
+            } else
                 FC_WARN("object '" << link->objectName << "' not found in document '"
                         << doc->getName() << "'");
-            else
-                link->restoreLink(obj);
         }
         for(auto &v : parentLinks) {
             v.first->setFlag(PropertyLinkBase::LinkRestoring);
             v.first->aboutToSetValue();
             for(auto link : v.second) {
                 auto obj = doc->getObject(link->objectName.c_str());
-                if(!obj)
+                if(obj)
+                    link->restoreLink(obj);
+                else if (doc->testStatus(App::Document::PartialDoc)) {
+                    App::GetApplication().addPendingDocument(
+                            doc->FileName.getValue(),
+                            link->objectName.c_str(),
+                            false);
+                    FC_WARN("reloading partial document '" << doc->FileName.getValue()
+                            << "' due to object " << link->objectName);
+                } else
                     FC_WARN("object '" << link->objectName << "' not found in document '"
                             << doc->getName() << "'");
-                else
-                    link->restoreLink(obj);
             }
             v.first->hasSetValue();
             v.first->setFlag(PropertyLinkBase::LinkRestoring,false);
@@ -2723,16 +2857,17 @@ public:
             }
         }
 
-        // time stamp changed, touch the linking document. Unfortunately, there
-        // is no way to setModfied() for an App::Document. We don't want to touch
-        // all PropertyXLink for a document, because the linked object is
-        // potentially unchanged. So we just touch at most one.
+        // time stamp changed, touch the linking document.
         std::set<Document*> docs;
         for(auto link : links) {
             auto linkdoc = static_cast<DocumentObject*>(link->getContainer())->getDocument();
             auto ret = docs.insert(linkdoc);
-            if(ret.second && !linkdoc->isTouched())
-                link->touch();
+            if(ret.second) {
+                // This will signal the Gui::Document to call setModified();
+                FC_LOG("touch document " << linkdoc->getName() 
+                        << " on time stamp change of " << link->getFullName());
+                linkdoc->Comment.touch();
+            }
         }
     }
 
@@ -3204,16 +3339,17 @@ void PropertyXLink::Save (Base::Writer &writer) const {
         const auto &sub = shadowSub.second.empty()?subName:shadowSub.second;
         if(exporting) {
             std::string exportName;
-            writer.Stream() << "\" sub=\"" << exportSubName(exportName,_pcLink,sub.c_str());
+            writer.Stream() << "\" sub=\"" << 
+                encodeAttribute(exportSubName(exportName,_pcLink,sub.c_str()));
             if(shadowSub.second.size() && shadowSub.first==subName)
                 writer.Stream() << "\" " ATTR_MAPPED "=\"1";
         }else{
-            writer.Stream() << "\" sub=\"" << sub;
+            writer.Stream() << "\" sub=\"" << encodeAttribute(sub);
             if(sub.size()) {
                 if(sub!=subName)
-                    writer.Stream() << "\" " ATTR_SHADOWED "=\"" << subName;
+                    writer.Stream() << "\" " ATTR_SHADOWED "=\"" << encodeAttribute(subName);
                 else if(shadowSub.first.size())
-                    writer.Stream() << "\" " ATTR_SHADOW "=\"" << shadowSub.first;
+                    writer.Stream() << "\" " ATTR_SHADOW "=\"" << encodeAttribute(shadowSub.first);
             }
         }
         writer.Stream() << "\"/>" << std::endl;
@@ -3229,16 +3365,16 @@ void PropertyXLink::Save (Base::Writer &writer) const {
             writer.Stream() << writer.ind() << "<Sub value=\"";
             if(exporting) {
                 std::string exportName;
-                writer.Stream() << exportSubName(exportName,_pcLink,sub.c_str());
+                writer.Stream() << encodeAttribute(exportSubName(exportName,_pcLink,sub.c_str()));
                 if(shadow.second.size() && shadow.first == _SubList[i])
                     writer.Stream() << "\" " ATTR_MAPPED "=\"1";
             } else {
-                writer.Stream() << sub;
+                writer.Stream() << encodeAttribute(sub);
                 if(_SubList[i].size()) {
                     if(sub!=_SubList[i])
-                        writer.Stream() << "\" " ATTR_SHADOWED "=\"" << _SubList[i];
+                        writer.Stream() << "\" " ATTR_SHADOWED "=\"" << encodeAttribute(_SubList[i]);
                     else if(shadow.first.size())
-                        writer.Stream() << "\" " ATTR_SHADOW "=\"" << shadow.first;
+                        writer.Stream() << "\" " ATTR_SHADOW "=\"" << encodeAttribute(shadow.first);
                 }
             }
             writer.Stream()<<"\"/>" << endl;
@@ -3473,7 +3609,12 @@ PropertyXLink::getDocumentOutList(App::Document *doc) {
     std::map<App::Document*,std::set<App::Document*> > ret;
     for(auto &v : _DocInfoMap) {
         for(auto link : v.second->links) {
-            if(!v.second->pcDoc) continue;
+            if(!v.second->pcDoc
+                    || link->getScope() == LinkScope::Hidden
+                    || link->testStatus(Property::PropTransient)
+                    || link->testStatus(Property::Transient)
+                    || link->testStatus(Property::PropNoPersist))
+                continue;
             auto obj = dynamic_cast<App::DocumentObject*>(link->getContainer());
             if(!obj || !obj->getNameInDocument() || !obj->getDocument())
                 continue;
@@ -3493,6 +3634,11 @@ PropertyXLink::getDocumentInList(App::Document *doc) {
             continue;
         auto &docs = ret[v.second->pcDoc];
         for(auto link : v.second->links) {
+            if(link->getScope() == LinkScope::Hidden
+                    || link->testStatus(Property::PropTransient)
+                    || link->testStatus(Property::Transient)
+                    || link->testStatus(Property::PropNoPersist))
+                continue;
             auto obj = dynamic_cast<App::DocumentObject*>(link->getContainer());
             if(obj && obj->getNameInDocument() && obj->getDocument())
                 docs.insert(obj->getDocument());
@@ -4422,7 +4568,7 @@ void PropertyXLinkContainer::afterRestore() {
             if(info.docLabel != obj->getDocument()->Label.getValue())
                 _DocMap[App::quote(info.docLabel)] = obj->getDocument()->Label.getValue();
         }
-        if(_Deps.insert(obj).second)
+        if(_Deps.insert(std::make_pair(obj,info.xlink->getScope()==LinkScope::Hidden)).second)
             _XLinks[obj->getFullName()] = std::move(info.xlink);
     }
     _XLinkRestores.reset();
@@ -4435,24 +4581,27 @@ void PropertyXLinkContainer::breakLink(App::DocumentObject *obj, bool clear) {
     if(!owner || !owner->getNameInDocument())
         return;
     if(!clear || obj!=owner) {
-        if(!_Deps.erase(obj))
+        auto it = _Deps.find(obj);
+        if(it == _Deps.end())
             return;
         aboutToSetValue();
         onBreakLink(obj);
-        if(obj->getDocument() == owner->getDocument())
-            obj->_removeBackLink(owner);
-        else
+        if (obj->getDocument() != owner->getDocument())
             _XLinks.erase(obj->getFullName());
+        else if (!it->second)
+            obj->_removeBackLink(owner);
+        _Deps.erase(it);
         hasSetValue();
         return;
     }
     if(obj!=owner)
         return;
-    for(auto obj : _Deps) {
+    for(auto &v : _Deps) {
+        auto obj = v.first;
         if(!obj || !obj->getNameInDocument())
             continue;
         onBreakLink(obj);
-        if(obj->getDocument()==owner->getDocument())
+        if(!v.second && obj->getDocument()==owner->getDocument())
             obj->_removeBackLink(owner);
     }
     _XLinks.clear();
@@ -4460,12 +4609,12 @@ void PropertyXLinkContainer::breakLink(App::DocumentObject *obj, bool clear) {
 }
 
 int PropertyXLinkContainer::checkRestore(std::string *msg) const {
-    if(_LinkRestored)
-        return 1;
-    for(auto &v : _XLinks) {
-        int res = v.second->checkRestore(msg);
-        if(res)
-            return res;
+    if(_LinkRestored) {
+        for(auto &v : _XLinks) {
+            int res = v.second->checkRestore(msg);
+            if(res)
+                return res;
+        }
     }
     return 0;
 }
@@ -4492,6 +4641,19 @@ void PropertyXLinkContainer::Save (Base::Writer &writer) const {
             writer.Stream() << "\" docs=\"" << docSet.size();
     }
 
+    std::ostringstream ss;
+    int hidden = 0;
+    int i=-1;
+    for(auto &v : _XLinks) {
+        ++i;
+        if(v.second->getScope() == LinkScope::Hidden) {
+            ss << i << ' ';
+            ++hidden;
+        }
+    }
+    if(hidden)
+        writer.Stream() << "\" hidden=\"" << ss.str();
+
     writer.Stream() << "\">" << std::endl;
     writer.incInd();
 
@@ -4514,6 +4676,15 @@ void PropertyXLinkContainer::Restore(Base::XMLReader &reader) {
     auto count = reader.getAttributeAsUnsigned("count");
     _XLinkRestores.reset(new std::vector<RestoreInfo>(count));
 
+    if(reader.hasAttribute("hidden")) {
+        std::istringstream iss(reader.getAttribute("hidden"));
+        int index;
+        while(iss >> index) {
+            if(index>=0 && index<static_cast<int>(count))
+                _XLinkRestores->at(index).hidden = true;
+        }
+    }
+
     if(reader.hasAttribute("docs")) {
         auto docCount = reader.getAttributeAsUnsigned("docs");
         _DocMap.clear();
@@ -4532,6 +4703,8 @@ void PropertyXLinkContainer::Restore(Base::XMLReader &reader) {
 
     for(auto &info : *_XLinkRestores) {
         info.xlink.reset(createXLink());
+        if(info.hidden)
+            info.xlink->setScope(LinkScope::Hidden);
         info.xlink->Restore(reader);
     }
     reader.readEndElement("XLinks");
@@ -4563,16 +4736,23 @@ bool PropertyXLinkContainer::isLinkedToDocument(const App::Document &doc) const 
     return false;
 }
 
-void PropertyXLinkContainer::updateDeps(std::set<DocumentObject*> &&newDeps) {
+void PropertyXLinkContainer::updateDeps(std::map<DocumentObject*,bool> &&newDeps) {
     auto owner = Base::freecad_dynamic_cast<App::DocumentObject>(getContainer());
     if(!owner || !owner->getNameInDocument())
         return;
     newDeps.erase(owner);
 
-    for(auto obj : newDeps) {
+    for(auto &v : newDeps) {
+        auto obj = v.first;
         if(obj && obj->getNameInDocument()) {
             auto it = _Deps.find(obj);
             if(it != _Deps.end()) {
+                if(v.second != it->second) {
+                    if(v.second)
+                        obj->_removeBackLink(owner);
+                    else
+                        obj->_addBackLink(owner);
+                }
                 _Deps.erase(it);
                 continue;
             }
@@ -4582,21 +4762,21 @@ void PropertyXLinkContainer::updateDeps(std::set<DocumentObject*> &&newDeps) {
                     xlink.reset(createXLink());
                     xlink->setValue(obj);
                 }
+                xlink->setScope(v.second?LinkScope::Hidden:LinkScope::Global);
             }
-#ifndef USE_OLD_DAG
-            else
+            else if(!v.second)
                 obj->_addBackLink(owner);
-#endif
+
             onAddDep(obj);
         }
     }
-    for(auto obj : _Deps) {
+    for(auto &v : _Deps) {
+        auto obj = v.first;
         if(!obj || !obj->getNameInDocument())
             continue;
         if(obj->getDocument()==owner->getDocument()) {
-#ifndef USE_OLD_DAG
-            obj->_removeBackLink(owner);
-#endif
+            if(!v.second)
+                obj->_removeBackLink(owner);
         }else
             _XLinks.erase(obj->getFullName());
         onRemoveDep(obj);
@@ -4620,8 +4800,9 @@ void PropertyXLinkContainer::clearDeps() {
         return;
 #ifndef USE_OLD_DAG
     if (!owner->testStatus(ObjectStatus::Destroy)) {
-        for(auto obj : _Deps) {
-            if(obj && obj->getNameInDocument() && obj->getDocument()==owner->getDocument())
+        for(auto &v : _Deps) {
+            auto obj = v.first;
+            if(!v.second && obj && obj->getNameInDocument() && obj->getDocument()==owner->getDocument())
                 obj->_removeBackLink(owner);
         }
     }
@@ -4631,8 +4812,11 @@ void PropertyXLinkContainer::clearDeps() {
     _LinkRestored = false;
 }
 
-void PropertyXLinkContainer::getLinks(std::vector<App::DocumentObject *> &objs,
-        bool, std::vector<std::string> * /*subs*/, bool /*newStyle*/) const
+void PropertyXLinkContainer::getLinks(std::vector<App::DocumentObject *> &objs, 
+        bool all, std::vector<std::string> * /*subs*/, bool /*newStyle*/) const
 {
-    objs.insert(objs.end(),_Deps.begin(),_Deps.end());
+    for(auto &v : _Deps) {
+        if(all || !v.second)
+            objs.push_back(v.first);
+    }
 }

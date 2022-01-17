@@ -570,7 +570,7 @@ PyObject* SketchObjectPy::delConstraintOnPoint(PyObject *args)
     if (!PyArg_ParseTuple(args, "i|i", &Index, &pos))
         return 0;
 
-    if (pos>=Sketcher::none && pos<=Sketcher::mid) { // This is the whole range of valid positions
+    if (pos >= static_cast<int>(Sketcher::PointPos::none) && pos <= static_cast<int>(Sketcher::PointPos::mid)) { // This is the whole range of valid positions
         if (this->getSketchObjectPtr()->delConstraintOnPoint(Index,(Sketcher::PointPos)pos)) {
             std::stringstream str;
             str << "Not able to delete a constraint on point with the given index: " << Index
@@ -1030,7 +1030,7 @@ PyObject* SketchObjectPy::getGeoVertexIndex(PyObject *args)
     obj->getGeoVertexIndex(index, geoId, posId);
     Py::Tuple tuple(2);
     tuple.setItem(0, Py::Long(geoId));
-    tuple.setItem(1, Py::Long(posId));
+    tuple.setItem(1, Py::Long(static_cast<int>(posId)));
     return Py::new_reference_to(tuple);
 }
 
@@ -1136,7 +1136,7 @@ PyObject* SketchObjectPy::extend(PyObject *args)
     int GeoId;
 
     if (PyArg_ParseTuple(args, "idi", &GeoId, &increment, &endPoint)) {
-        if (this->getSketchObjectPtr()->extend(GeoId, increment, endPoint)) {
+        if (this->getSketchObjectPtr()->extend(GeoId, increment, static_cast<Sketcher::PointPos>(endPoint))) {
             std::stringstream str;
             str << "Not able to extend geometry with id : (" << GeoId  << ") for increment (" << increment << ") and point position (" << endPoint << ")";
             PyErr_SetString(PyExc_ValueError, str.str().c_str());
@@ -1173,7 +1173,7 @@ PyObject* SketchObjectPy::addSymmetric(PyObject *args)
 {
     PyObject *pcObj;
     int refGeoId;
-    int refPosId = Sketcher::none;
+    int refPosId = static_cast<int>(Sketcher::PointPos::none);
 
     if (!PyArg_ParseTuple(args, "Oi|i", &pcObj, &refGeoId, &refPosId))
         return 0;
@@ -1372,7 +1372,7 @@ PyObject* SketchObjectPy::calculateAngleViaPoint(PyObject *args)
 
 PyObject* SketchObjectPy::isPointOnCurve(PyObject *args)
 {
-    int GeoId=Constraint::GeoUndef;
+    int GeoId=GeoEnum::GeoUndef;
     double px=0, py=0;
     if (!PyArg_ParseTuple(args, "idd", &GeoId, &px, &py))
         return 0;
@@ -1551,6 +1551,25 @@ PyObject* SketchObjectPy::modifyBSplineKnotMultiplicity(PyObject *args)
     Py_Return;
 }
 
+PyObject* SketchObjectPy::insertBSplineKnot(PyObject *args)
+{
+    int GeoId;
+    double knotParam;
+    int multiplicity = 1;
+
+    if (!PyArg_ParseTuple(args, "id|i", &GeoId, &knotParam, &multiplicity))
+        return 0;
+
+    if (this->getSketchObjectPtr()->insertBSplineKnot(GeoId, knotParam, multiplicity)==false) {
+        std::stringstream str;
+        str << "Knot insertion failed for: " << GeoId;
+        PyErr_SetString(PyExc_ValueError, str.str().c_str());
+        return 0;
+    }
+
+    Py_Return;
+}
+
 PyObject* SketchObjectPy::autoconstraint(PyObject *args)
 {
     double precision = Precision::Confusion() * 1000;
@@ -1671,9 +1690,9 @@ Py::List SketchObjectPy::getMissingPointOnPointConstraints(void) const
     for (auto c : constraints) {
         Py::Tuple t(5);
         t.setItem(0, Py::Long(c.First));
-        t.setItem(1, Py::Long(((c.FirstPos == Sketcher::none)?0:(c.FirstPos == Sketcher::start)?1:(c.FirstPos == Sketcher::end)?2:3)));
+        t.setItem(1, Py::Long(((c.FirstPos == Sketcher::PointPos::none)?0:(c.FirstPos == Sketcher::PointPos::start)?1:(c.FirstPos == Sketcher::PointPos::end)?2:3)));
         t.setItem(2, Py::Long(c.Second));
-        t.setItem(3, Py::Long(((c.SecondPos == Sketcher::none)?0:(c.SecondPos == Sketcher::start)?1:(c.SecondPos == Sketcher::end)?2:3)));
+        t.setItem(3, Py::Long(((c.SecondPos == Sketcher::PointPos::none)?0:(c.SecondPos == Sketcher::PointPos::start)?1:(c.SecondPos == Sketcher::PointPos::end)?2:3)));
         t.setItem(4, Py::Long(c.Type));
         list.append(t);
     }
@@ -1686,7 +1705,7 @@ void SketchObjectPy::setMissingPointOnPointConstraints(Py::List arg)
 
     auto checkpos = [](Py::Tuple &t,int i) {
         auto checkitem = [](Py::Tuple &t,int i, int val) {return long(Py::Long(t.getItem(i)))==val;};
-        return (checkitem(t,i,0)?Sketcher::none:(checkitem(t,i,1)?Sketcher::start:(checkitem(t,i,2)?Sketcher::end:Sketcher::mid)));
+        return (checkitem(t,i,0)?Sketcher::PointPos::none:(checkitem(t,i,1)?Sketcher::PointPos::start:(checkitem(t,i,2)?Sketcher::PointPos::end:Sketcher::PointPos::mid)));
     };
 
     for (auto ti : arg) {
@@ -1712,9 +1731,9 @@ Py::List SketchObjectPy::getMissingVerticalHorizontalConstraints(void) const
     for (auto c : constraints) {
         Py::Tuple t(5);
         t.setItem(0, Py::Long(c.First));
-        t.setItem(1, Py::Long(((c.FirstPos == Sketcher::none)?0:(c.FirstPos == Sketcher::start)?1:(c.FirstPos == Sketcher::end)?2:3)));
+        t.setItem(1, Py::Long(((c.FirstPos == Sketcher::PointPos::none)?0:(c.FirstPos == Sketcher::PointPos::start)?1:(c.FirstPos == Sketcher::PointPos::end)?2:3)));
         t.setItem(2, Py::Long(c.Second));
-        t.setItem(3, Py::Long(((c.SecondPos == Sketcher::none)?0:(c.SecondPos == Sketcher::start)?1:(c.SecondPos == Sketcher::end)?2:3)));
+        t.setItem(3, Py::Long(((c.SecondPos == Sketcher::PointPos::none)?0:(c.SecondPos == Sketcher::PointPos::start)?1:(c.SecondPos == Sketcher::PointPos::end)?2:3)));
         t.setItem(4, Py::Long(c.Type));
         list.append(t);
     }
@@ -1727,7 +1746,7 @@ void SketchObjectPy::setMissingVerticalHorizontalConstraints(Py::List arg)
 
     auto checkpos = [](Py::Tuple &t,int i) {
         auto checkitem = [](Py::Tuple &t,int i, int val) {return long(Py::Long(t.getItem(i)))==val;};
-        return (checkitem(t,i,0)?Sketcher::none:(checkitem(t,i,1)?Sketcher::start:(checkitem(t,i,2)?Sketcher::end:Sketcher::mid)));
+        return (checkitem(t,i,0)?Sketcher::PointPos::none:(checkitem(t,i,1)?Sketcher::PointPos::start:(checkitem(t,i,2)?Sketcher::PointPos::end:Sketcher::PointPos::mid)));
     };
 
     for (auto ti : arg) {
@@ -1753,9 +1772,9 @@ Py::List SketchObjectPy::getMissingLineEqualityConstraints(void) const
     for (auto c : constraints) {
         Py::Tuple t(4);
         t.setItem(0, Py::Long(c.First));
-        t.setItem(1, Py::Long(((c.FirstPos == Sketcher::none)?0:(c.FirstPos == Sketcher::start)?1:(c.FirstPos == Sketcher::end)?2:3)));
+        t.setItem(1, Py::Long(((c.FirstPos == Sketcher::PointPos::none)?0:(c.FirstPos == Sketcher::PointPos::start)?1:(c.FirstPos == Sketcher::PointPos::end)?2:3)));
         t.setItem(2, Py::Long(c.Second));
-        t.setItem(3, Py::Long(((c.SecondPos == Sketcher::none)?0:(c.SecondPos == Sketcher::start)?1:(c.SecondPos == Sketcher::end)?2:3)));
+        t.setItem(3, Py::Long(((c.SecondPos == Sketcher::PointPos::none)?0:(c.SecondPos == Sketcher::PointPos::start)?1:(c.SecondPos == Sketcher::PointPos::end)?2:3)));
         list.append(t);
     }
     return list;
@@ -1767,7 +1786,7 @@ void SketchObjectPy::setMissingLineEqualityConstraints(Py::List arg)
 
     auto checkpos = [](Py::Tuple &t,int i) {
         auto checkitem = [](Py::Tuple &t,int i, int val) {return long(Py::Long(t.getItem(i)))==val;};
-        return (checkitem(t,i,0)?Sketcher::none:(checkitem(t,i,1)?Sketcher::start:(checkitem(t,i,2)?Sketcher::end:Sketcher::mid)));
+        return (checkitem(t,i,0)?Sketcher::PointPos::none:(checkitem(t,i,1)?Sketcher::PointPos::start:(checkitem(t,i,2)?Sketcher::PointPos::end:Sketcher::PointPos::mid)));
     };
 
     for (auto ti : arg) {
@@ -1793,9 +1812,9 @@ Py::List SketchObjectPy::getMissingRadiusConstraints(void) const
     for (auto c : constraints) {
         Py::Tuple t(4);
         t.setItem(0, Py::Long(c.First));
-        t.setItem(1, Py::Long(((c.FirstPos == Sketcher::none)?0:(c.FirstPos == Sketcher::start)?1:(c.FirstPos == Sketcher::end)?2:3)));
+        t.setItem(1, Py::Long(((c.FirstPos == Sketcher::PointPos::none)?0:(c.FirstPos == Sketcher::PointPos::start)?1:(c.FirstPos == Sketcher::PointPos::end)?2:3)));
         t.setItem(2, Py::Long(c.Second));
-        t.setItem(3, Py::Long(((c.SecondPos == Sketcher::none)?0:(c.SecondPos == Sketcher::start)?1:(c.SecondPos == Sketcher::end)?2:3)));
+        t.setItem(3, Py::Long(((c.SecondPos == Sketcher::PointPos::none)?0:(c.SecondPos == Sketcher::PointPos::start)?1:(c.SecondPos == Sketcher::PointPos::end)?2:3)));
         list.append(t);
     }
     return list;
@@ -1807,7 +1826,7 @@ void SketchObjectPy::setMissingRadiusConstraints(Py::List arg)
 
     auto checkpos = [](Py::Tuple &t,int i) {
         auto checkitem = [](Py::Tuple &t,int i, int val) {return long(Py::Long(t.getItem(i)))==val;};
-        return (checkitem(t,i,0)?Sketcher::none:(checkitem(t,i,1)?Sketcher::start:(checkitem(t,i,2)?Sketcher::end:Sketcher::mid)));
+        return (checkitem(t,i,0)?Sketcher::PointPos::none:(checkitem(t,i,1)?Sketcher::PointPos::start:(checkitem(t,i,2)?Sketcher::PointPos::end:Sketcher::PointPos::mid)));
     };
 
     for (auto ti : arg) {
@@ -1838,7 +1857,7 @@ PyObject* SketchObjectPy::getGeometryWithDependentParameters(PyObject *args)
     for (auto pair : geometrymap) {
         Py::Tuple t(2);
         t.setItem(0, Py::Long(pair.first));
-        t.setItem(1, Py::Long(((pair.second == Sketcher::none)?0:(pair.second == Sketcher::start)?1:(pair.second == Sketcher::end)?2:3)));
+        t.setItem(1, Py::Long(((pair.second == Sketcher::PointPos::none)?0:(pair.second == Sketcher::PointPos::start)?1:(pair.second == Sketcher::PointPos::end)?2:3)));
         list.append(t);
     }
     return Py::new_reference_to(list);

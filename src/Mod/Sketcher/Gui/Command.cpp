@@ -556,7 +556,7 @@ void CmdSketcherMapSketch::activated(int iMsg)
                 assert(0);
                 throw Base::ValueError("Unexpected null pointer in CmdSketcherMapSketch::activated");
             }
-            std::vector<App::DocumentObject*> input = part->getOutList();
+            std::vector<App::DocumentObject*> input = part->getOutListRecursive();
             if (std::find(input.begin(), input.end(), sketch) != input.end()) {
                 throw ExceptionWrongInput(QT_TR_NOOP("Some of the selected objects depend on the sketch to be mapped. "
                                                      "Circular dependencies are not allowed."));
@@ -621,7 +621,7 @@ void CmdSketcherMapSketch::activated(int iMsg)
                                      items,
                                      bCurIncompatible ? iSugg : iCurr,
                                      false,
-                                     &ok, 
+                                     &ok,
                                      Qt::MSWindowsFixedSizeDialogHint);
         // * collect dialog result
         if (!ok)
@@ -645,11 +645,13 @@ void CmdSketcherMapSketch::activated(int iMsg)
             Gui::cmdAppObjectArgs(sketch, "MapMode = \"%s\"",AttachEngine::getModeName(suggMapMode).c_str());
             Gui::cmdAppObjectArgs(sketch, "Support = %s",supportString.c_str());
             commitCommand();
+            doCommand(Gui,"App.activeDocument().recompute()");
         } else {
             openCommand(QT_TRANSLATE_NOOP("Command", "Detach sketch"));
             Gui::cmdAppObjectArgs(sketch, "MapMode = \"%s\"",AttachEngine::getModeName(suggMapMode).c_str());
             Gui::cmdAppObjectArgs(sketch, "Support = None");
             commitCommand();
+            doCommand(Gui,"App.activeDocument().recompute()");
         }
     } catch (ExceptionWrongInput &e) {
         QMessageBox::warning(Gui::getMainWindow(),
@@ -664,7 +666,8 @@ bool CmdSketcherMapSketch::isActive(void)
 {
     App::Document* doc = App::GetApplication().getActiveDocument();
     Base::Type sketch_type = Base::Type::fromName("Sketcher::SketchObject");
-    if (doc && doc->countObjectsOfType(sketch_type) > 0)
+    std::vector<Gui::SelectionObject> selobjs = Gui::Selection().getSelectionEx();
+    if (doc && doc->countObjectsOfType(sketch_type) > 0 && !selobjs.empty())
         return true;
 
     return false;
@@ -683,6 +686,7 @@ CmdSketcherViewSketch::CmdSketcherViewSketch()
     sWhatsThis      = "Sketcher_ViewSketch";
     sStatusTip      = sToolTipText;
     sPixmap         = "Sketcher_ViewSketch";
+    sAccel          = "Q, P";
     eType           = 0;
 }
 
@@ -776,7 +780,7 @@ void CmdSketcherMirrorSketch::activated(int iMsg)
     }
 
     int refgeoid = -1;
-    Sketcher::PointPos refposid = Sketcher::none;
+    Sketcher::PointPos refposid = Sketcher::PointPos::none;
     // Ask the user the type of mirroring
     SketchMirrorDialog smd;
     if (smd.exec() != QDialog::Accepted)
@@ -824,17 +828,17 @@ void CmdSketcherMirrorSketch::activated(int iMsg)
 
         for (std::vector<Sketcher::Constraint *>::const_iterator itc=mirrorconstr.begin(); itc != mirrorconstr.end(); ++itc) {
 
-            if ((*itc)->First != Sketcher::Constraint::GeoUndef
+            if ((*itc)->First != Sketcher::GeoEnum::GeoUndef
                     || (*itc)->First == Sketcher::GeoEnum::HAxis
                     || (*itc)->First == Sketcher::GeoEnum::VAxis)
                 // not x, y axes or origin
                 (*itc)->First -= (addedGeometries + 1);
-            if ((*itc)->Second != Sketcher::Constraint::GeoUndef
+            if ((*itc)->Second != Sketcher::GeoEnum::GeoUndef
                     || (*itc)->Second == Sketcher::GeoEnum::HAxis
                     || (*itc)->Second == Sketcher::GeoEnum::VAxis)
                 // not x, y axes or origin
                 (*itc)->Second -= (addedGeometries + 1);
-            if ((*itc)->Third != Sketcher::Constraint::GeoUndef
+            if ((*itc)->Third != Sketcher::GeoEnum::GeoUndef
                     || (*itc)->Third == Sketcher::GeoEnum::HAxis
                     || (*itc)->Third == Sketcher::GeoEnum::VAxis)
                 // not x, y axes or origin
@@ -902,17 +906,17 @@ void CmdSketcherMergeSketches::activated(int iMsg)
         for (int i=0; i<=(addedConstraints-baseConstraints); i++){
             Sketcher::Constraint * constraint= mergesketch->Constraints.getValues()[i+baseConstraints];
 
-            if (constraint->First != Sketcher::Constraint::GeoUndef &&
+            if (constraint->First != Sketcher::GeoEnum::GeoUndef &&
                     constraint->First != Sketcher::GeoEnum::HAxis &&
                     constraint->First != Sketcher::GeoEnum::VAxis)
                 // not x, y axes or origin
                 constraint->First += baseGeometry;
-            if (constraint->Second != Sketcher::Constraint::GeoUndef &&
+            if (constraint->Second != Sketcher::GeoEnum::GeoUndef &&
                     constraint->Second != Sketcher::GeoEnum::HAxis &&
                     constraint->Second != Sketcher::GeoEnum::VAxis)
                 // not x, y axes or origin
                 constraint->Second += baseGeometry;
-            if (constraint->Third != Sketcher::Constraint::GeoUndef &&
+            if (constraint->Third != Sketcher::GeoEnum::GeoUndef &&
                     constraint->Third != Sketcher::GeoEnum::HAxis &&
                     constraint->Third != Sketcher::GeoEnum::VAxis)
                 // not x, y axes or origin
@@ -951,6 +955,7 @@ CmdSketcherViewSection::CmdSketcherViewSection()
     sWhatsThis      = "Sketcher_ViewSection";
     sStatusTip      = sToolTipText;
     sPixmap         = "Sketcher_ViewSection";
+    sAccel          = "Q, S";
     eType           = 0;
 }
 

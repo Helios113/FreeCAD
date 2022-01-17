@@ -99,14 +99,14 @@ public:
     std::vector<std::weak_ptr<const GeometryExtension>> getExtensions() const;
 
     bool hasExtension(Base::Type type) const;
-    bool hasExtension(std::string name) const;
+    bool hasExtension(const std::string & name) const;
     std::weak_ptr<const GeometryExtension> getExtension(Base::Type type) const;
-    std::weak_ptr<const GeometryExtension> getExtension(std::string name) const;
+    std::weak_ptr<const GeometryExtension> getExtension(const std::string & name) const;
     std::weak_ptr<GeometryExtension> getExtension(Base::Type type);
-    std::weak_ptr<GeometryExtension> getExtension(std::string name);
+    std::weak_ptr<GeometryExtension> getExtension(const std::string & name);
     void setExtension(std::unique_ptr<GeometryExtension> &&geo);
     void deleteExtension(Base::Type type);
-    void deleteExtension(std::string name);
+    void deleteExtension(const std::string & name);
 
     void mirror(const Base::Vector3d& point);
     void mirror(const Base::Vector3d& point, const Base::Vector3d& dir);
@@ -197,11 +197,14 @@ public:
     double curvatureAt(double u) const;
     double length(double u, double v) const;
     bool normalAt(double u, Base::Vector3d& dir) const;
+    bool normalAt(const Base::Vector3d & curvepoint, Base::Vector3d& dir) const;
     bool intersect(const GeomCurve *c,
                    std::vector<std::pair<Base::Vector3d, Base::Vector3d>>& points,
                    double tol = Precision::Confusion()) const;
 
     void reverse(void);
+
+    Base::Vector3d value(double u) const;
 
 protected:
     static bool intersect(const Handle(Geom_Curve) c, const Handle(Geom_Curve) c2,
@@ -305,6 +308,7 @@ public:
     bool approximate(double tol3d, int maxSegments, int maxDegree, int continuity);
 
     void increaseMultiplicity(int index, int multiplicity);
+    void insertKnot(double param, int multiplicity);
     bool removeKnot(int index, int multiplicity, double tolerance = Precision::PConfusion());
 
     void Trim(double u, double v);

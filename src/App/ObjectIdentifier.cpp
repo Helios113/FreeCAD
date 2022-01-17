@@ -33,18 +33,19 @@
 
 /// Here the FreeCAD includes sorted by Base,App,Gui......
 #include <Base/GeometryPyCXX.h>
-#include <App/ComplexGeoData.h>
+#include <Base/Tools.h>
+#include <Base/Interpreter.h>
+#include <Base/QuantityPy.h>
+#include <Base/Console.h>
+#include <App/DocumentObjectPy.h>
+#include "ComplexGeoData.h"
 #include "Property.h"
 #include "Application.h"
 #include "Document.h"
 #include "DocumentObject.h"
 #include "ObjectIdentifier.h"
 #include "ExpressionParser.h"
-#include <Base/Tools.h>
-#include <Base/Interpreter.h>
-#include <Base/QuantityPy.h>
-#include <App/Link.h>
-#include <Base/Console.h>
+#include "Link.h"
 
 FC_LOG_LEVEL_INIT("Expression",true,true)
 
@@ -164,7 +165,9 @@ ObjectIdentifier::ObjectIdentifier(const Property &prop, int index)
     DocumentObject * docObj = freecad_dynamic_cast<DocumentObject>(prop.getContainer());
 
     if (!docObj)
-        FC_THROWM(Base::TypeError,"Property must be owned by a document object.");
+        FC_THROWM(Base::TypeError, "Property must be owned by a document object.");
+    if (!prop.hasName())
+        FC_THROWM(Base::RuntimeError, "Property must have a name.");
 
     owner = const_cast<DocumentObject*>(docObj);
 
@@ -306,7 +309,7 @@ bool ObjectIdentifier::verify(const App::Property &prop, bool silent) const {
     const std::string &name = components[result.propertyIndex].getName();
     CellAddress addr;
     bool isAddress = addr.parseAbsoluteAddress(name.c_str());
-    if((isAddress && addr.toString(true) != prop.getName()) ||
+    if((isAddress && addr.toString(CellAddress::Cell::ShowRowColumn) != prop.getName()) ||
        (!isAddress && name!=prop.getName()))
     {
         if(silent) return false;
@@ -1086,32 +1089,59 @@ enum PseudoPropertyType {
     PseudoCadquery,
 };
 
-std::pair<DocumentObject*,std::string> ObjectIdentifier::getDep(std::vector<std::string> *labels) const {
+void ObjectIdentifier::getDepLabels(std::vector<std::string> &labels) const {
+    getDepLabels(ResolveResults(*this),labels);
+}
+
+void ObjectIdentifier::getDepLabels(
+        const ResolveResults &result, std::vector<std::string> &labels) const
+{
+    if(documentObjectName.getString().size()) {
+        if(documentObjectName.isRealString())
+            labels.push_back(documentObjectName.getString());
+    } else if(result.propertyIndex == 1)
+        labels.push_back(components[0].name.getString());
+    if(subObjectName.getString().size()) 
+        PropertyLinkBase::getLabelReferences(labels,subObjectName.getString().c_str());
+}
+
+ObjectIdentifier::Dependencies
+ObjectIdentifier::getDep(bool needProps, std::vector<std::string> *labels) const 
+{
+    Dependencies deps;
+    getDep(deps,needProps,labels);
+    return deps;
+}
+
+void ObjectIdentifier::getDep(Dependencies &deps, bool needProps, std::vector<std::string> *labels) const
+{
     ResolveResults result(*this);
-    if(labels) {
-        if(documentObjectName.getString().size()) {
-            if(documentObjectName.isRealString())
-                labels->push_back(documentObjectName.getString());
-        } else if(result.propertyIndex == 1)
-            labels->push_back(components[0].name.getString());
-        if(subObjectName.getString().size())
-            PropertyLinkBase::getLabelReferences(*labels,subObjectName.getString().c_str());
+    if(labels) 
+        getDepLabels(result,*labels);
+
+    if(!result.resolvedDocumentObject)
+       return;
+
+    if(!needProps) {
+        deps[result.resolvedDocumentObject];
+        return;
     }
-    if(subObjectName.getString().empty()) {
-        if(result.propertyType==PseudoNone) {
-            CellAddress addr;
-            if(addr.parseAbsoluteAddress(result.propertyName.c_str()))
-                return std::make_pair(result.resolvedDocumentObject,addr.toString(true));
-            return std::make_pair(result.resolvedDocumentObject,result.propertyName);
-        }else if(result.propertyType == PseudoSelf
-                    && result.resolvedDocumentObject
-                    && result.propertyIndex+1 < (int)components.size())
-        {
-            return std::make_pair(result.resolvedDocumentObject,
-                    components[result.propertyIndex+1].getName());
-        }
+
+    if(!result.resolvedProperty) {
+        if(result.propertyName.size())
+            deps[result.resolvedDocumentObject].insert(result.propertyName);
+        return;
     }
-    return std::make_pair(result.resolvedDocumentObject,std::string());
+
+    Base::PyGILStateLocker lock;
+    try {
+        access(result, nullptr, &deps);
+    }
+    catch (Py::Exception& e) {
+        e.clear();
+    }
+    catch (Base::Exception &) {
+    }
 }
 
 /**
@@ -1241,7 +1271,7 @@ Property *ObjectIdentifier::resolveProperty(const App::DocumentObject *obj,
     if(!obj)
         return 0;
 
-    static std::map<std::string,int> _props = {
+    static std::unordered_map<const char*,int,CStringHasher,CStringHasher> _props = {
         {"_shape",PseudoShape},
         {"_pla",PseudoPlacement},
         {"_matrix",PseudoMatrix},
@@ -1270,23 +1300,8 @@ Property *ObjectIdentifier::resolveProperty(const App::DocumentObject *obj,
         }
         return &const_cast<App::DocumentObject*>(obj)->Label; //fake the property
     }
-
-    auto prop = obj->getPropertyByName(propertyName);
-    if(prop && !prop->testStatus(Property::Hidden) && !(prop->getType() & PropertyType::Prop_Hidden))
-        return prop;
-
-    auto linked = obj->getLinkedObject(true);
-    if(!linked || linked==obj) {
-        auto ext = obj->getExtensionByType<App::LinkBaseExtension>(true);
-        if(!ext)
-            return prop;
-        linked = ext->getTrueLinkedObject(true);
-        if(!linked || linked==obj)
-            return prop;
-    }
-
-    auto linkedProp = linked->getPropertyByName(propertyName);
-    return linkedProp?linkedProp:prop;
+    
+    return obj->getPropertyByName(propertyName);
 }
 
 
@@ -1503,7 +1518,8 @@ void ObjectIdentifier::String::checkImport(const App::DocumentObject *owner,
     }
 }
 
-Py::Object ObjectIdentifier::access(const ResolveResults &result, Py::Object *value) const
+Py::Object ObjectIdentifier::access(const ResolveResults &result,
+        Py::Object *value, Dependencies *deps) const
 {
     if(!result.resolvedDocumentObject || !result.resolvedProperty ||
        (subObjectName.getString().size() && !result.resolvedSubObject))
@@ -1647,13 +1663,69 @@ Py::Object ObjectIdentifier::access(const ResolveResults &result, Py::Object *va
             break;
         }}}
     }
+
+    auto setPropDep = [deps](DocumentObject *obj, Property *prop, const char *propName) {
+        if(!deps || !obj)
+            return;
+        if(prop && prop->getContainer()!=obj) {
+            auto linkTouched = Base::freecad_dynamic_cast<PropertyBool>(
+                    obj->getPropertyByName("_LinkTouched"));
+            if(linkTouched) 
+                propName = linkTouched->getName();
+            else {
+                auto propOwner = Base::freecad_dynamic_cast<DocumentObject>(prop->getContainer());
+                if(propOwner) 
+                    obj = propOwner;
+                else 
+                    propName = 0;
+            }
+        }
+        auto &propset = (*deps)[obj];
+        // inserting a blank name in the propset indicates the dependency is
+        // on all properties of the corresponding object.
+        if (propset.size() != 1 || propset.begin()->size()) {
+            if (!propName) {
+                propset.clear();
+                propset.insert("");
+            }
+            else {
+                propset.insert(propName);
+            }
+        }
+        return;
+    };
+
+    App::DocumentObject *lastObj = result.resolvedDocumentObject;
+    if(result.resolvedSubObject) {
+        setPropDep(lastObj,0,0);
+        lastObj = result.resolvedSubObject;
+    }
+    if(ptype == PseudoNone)
+        setPropDep(lastObj, result.resolvedProperty, result.resolvedProperty->getName());
+    else
+        setPropDep(lastObj,0,0);
+    lastObj = 0;
+
     if(components.empty())
         return pyobj;
+
     size_t count = components.size();
     if(value) --count;
     assert(idx<=count);
-    for(;idx<count;++idx)
+
+    for(;idx<count;++idx)  {
+        if(PyObject_TypeCheck(*pyobj, &DocumentObjectPy::Type))
+            lastObj = static_cast<DocumentObjectPy*>(*pyobj)->getDocumentObjectPtr();
+        else if(lastObj) {
+            const char *attr = components[idx].getName().c_str();
+            auto prop = lastObj->getPropertyByName(attr);
+            if(!prop && pyobj.hasAttr(attr))
+                attr = 0;
+            setPropDep(lastObj,prop,attr);
+            lastObj = 0;
+        }
         pyobj = components[idx].get(pyobj);
+    }
     if(value) {
         components[idx].set(pyobj,*value);
         return Py::Object();

@@ -29,6 +29,8 @@
 # include <Precision.hxx>
 # include <QApplication>
 # include <QMessageBox>
+
+# include <Inventor/SbString.h>
 #endif
 
 #include <Base/Console.h>
@@ -52,7 +54,7 @@
 
 #include "ViewProviderSketch.h"
 #include "SketchRectangularArrayDialog.h"
-#include "CommandConstraints.h"
+#include "Utils.h"
 
 using namespace std;
 using namespace SketcherGui;
@@ -106,7 +108,7 @@ CmdSketcherCloseShape::CmdSketcherCloseShape()
     sWhatsThis      = "Sketcher_CloseShape";
     sStatusTip      = sToolTipText;
     sPixmap         = "Sketcher_CloseShape";
-    sAccel          = "CTRL+SHIFT+S";
+    sAccel          = "Z, W";
     eType           = ForEdit;
 }
 
@@ -182,14 +184,14 @@ void CmdSketcherCloseShape::activated(int iMsg)
 
             Gui::cmdAppObjectArgs(selection[0].getObject(),
                                   "addConstraint(Sketcher.Constraint('Coincident', %d, %d, %d, %d)) ",
-                                  GeoId1, Sketcher::end, GeoId2, Sketcher::start);
+                                  GeoId1, static_cast<int>(Sketcher::PointPos::end), GeoId2, static_cast<int>(Sketcher::PointPos::start));
         }
     }
 
     // Close Last Edge with First Edge
     Gui::cmdAppObjectArgs(selection[0].getObject(),
                           "addConstraint(Sketcher.Constraint('Coincident', %d, %d, %d, %d)) ",
-                          GeoIdLast, Sketcher::end, GeoIdFirst, Sketcher::start);
+                          GeoIdLast, static_cast<int>(Sketcher::PointPos::end), GeoIdFirst, static_cast<int>(Sketcher::PointPos::start));
 
     // finish the transaction and update, and clear the selection (convenience)
     commitCommand();
@@ -217,7 +219,7 @@ CmdSketcherConnect::CmdSketcherConnect()
     sWhatsThis      = "Sketcher_ConnectLines";
     sStatusTip      = sToolTipText;
     sPixmap         = "Sketcher_ConnectLines";
-    sAccel          = "CTRL+SHIFT+K";
+    sAccel          = "Z, J";
     eType           = ForEdit;
 }
 
@@ -274,7 +276,7 @@ void CmdSketcherConnect::activated(int iMsg)
             }
 
             Gui::cmdAppObjectArgs(selection[0].getObject(),"addConstraint(Sketcher.Constraint('Coincident',%d,%d,%d,%d)) ",
-                GeoId1,Sketcher::end,GeoId2,Sketcher::start);
+                GeoId1,static_cast<int>(Sketcher::PointPos::end),GeoId2,static_cast<int>(Sketcher::PointPos::start));
         }
     }
 
@@ -304,7 +306,7 @@ CmdSketcherSelectConstraints::CmdSketcherSelectConstraints()
     sWhatsThis      = "Sketcher_SelectConstraints";
     sStatusTip      = sToolTipText;
     sPixmap         = "Sketcher_SelectConstraints";
-    sAccel          = "CTRL+SHIFT+C";
+    sAccel          = "Z, K";
     eType           = ForEdit;
 }
 
@@ -381,7 +383,7 @@ CmdSketcherSelectOrigin::CmdSketcherSelectOrigin()
     sWhatsThis      = "Sketcher_SelectOrigin";
     sStatusTip      = sToolTipText;
     sPixmap         = "Sketcher_SelectOrigin";
-    sAccel          = "CTRL+SHIFT+O";
+    sAccel          = "Z, O";
     eType           = ForEdit;
 }
 
@@ -427,7 +429,7 @@ CmdSketcherSelectVerticalAxis::CmdSketcherSelectVerticalAxis()
     sWhatsThis      = "Sketcher_SelectVerticalAxis";
     sStatusTip      = sToolTipText;
     sPixmap         = "Sketcher_SelectVerticalAxis";
-    sAccel          = "CTRL+SHIFT+V";
+    sAccel          = "Z, V";
     eType           = ForEdit;
 }
 
@@ -471,7 +473,7 @@ CmdSketcherSelectHorizontalAxis::CmdSketcherSelectHorizontalAxis()
     sWhatsThis      = "Sketcher_SelectHorizontalAxis";
     sStatusTip      = sToolTipText;
     sPixmap         = "Sketcher_SelectHorizontalAxis";
-    sAccel          = "CTRL+SHIFT+H";
+    sAccel          = "Z, H";
     eType           = ForEdit;
 }
 
@@ -514,7 +516,7 @@ CmdSketcherSelectRedundantConstraints::CmdSketcherSelectRedundantConstraints()
     sWhatsThis      = "Sketcher_SelectRedundantConstraints";
     sStatusTip      = sToolTipText;
     sPixmap         = "Sketcher_SelectRedundantConstraints";
-    sAccel          = "CTRL+SHIFT+R";
+    sAccel          = "Z, P, R";
     eType           = ForEdit;
 }
 
@@ -571,7 +573,7 @@ CmdSketcherSelectMalformedConstraints::CmdSketcherSelectMalformedConstraints()
     sWhatsThis      = "Sketcher_SelectMalformedConstraints";
     sStatusTip      = sToolTipText;
     sPixmap         = "Sketcher_SelectMalformedConstraints";
-    sAccel          = "CTRL+SHIFT+R";
+    sAccel          = "Z, P, M";
     eType           = ForEdit;
 }
 
@@ -627,7 +629,7 @@ CmdSketcherSelectPartiallyRedundantConstraints::CmdSketcherSelectPartiallyRedund
     sWhatsThis      = "Sketcher_SelectPartiallyRedundantConstraints";
     sStatusTip      = sToolTipText;
     sPixmap         = "Sketcher_SelectPartiallyRedundantConstraints";
-    sAccel          = "CTRL+SHIFT+R";
+    sAccel          = "Z, P, P";
     eType           = ForEdit;
 }
 
@@ -683,6 +685,7 @@ CmdSketcherSelectConflictingConstraints::CmdSketcherSelectConflictingConstraints
     sWhatsThis      = "Sketcher_SelectConflictingConstraints";
     sStatusTip      = sToolTipText;
     sPixmap         = "Sketcher_SelectConflictingConstraints";
+    sAccel          = "Z, P, C";
     eType           = ForEdit;
 }
 
@@ -737,7 +740,7 @@ CmdSketcherSelectElementsAssociatedWithConstraints::CmdSketcherSelectElementsAss
     sWhatsThis      = "Sketcher_SelectElementsAssociatedWithConstraints";
     sStatusTip      = sToolTipText;
     sPixmap         = "Sketcher_SelectElementsAssociatedWithConstraints";
-    sAccel          = "CTRL+SHIFT+E";
+    sAccel          = "Z, E";
     eType           = ForEdit;
 }
 
@@ -767,17 +770,17 @@ void CmdSketcherSelectElementsAssociatedWithConstraints::activated(int iMsg)
             int ConstrId = Sketcher::PropertyConstraintList::getIndexFromConstraintName(*it);
 
             if(ConstrId < static_cast<int>(vals.size())){
-                if(vals[ConstrId]->First!=Constraint::GeoUndef){
+                if(vals[ConstrId]->First!=GeoEnum::GeoUndef){
                     ss.str(std::string());
 
                     switch(vals[ConstrId]->FirstPos)
                     {
-                        case Sketcher::none:
+                        case Sketcher::PointPos::none:
                             ss << "Edge" << vals[ConstrId]->First + 1;
                             break;
-                        case Sketcher::start:
-                        case Sketcher::end:
-                        case Sketcher::mid:
+                        case Sketcher::PointPos::start:
+                        case Sketcher::PointPos::end:
+                        case Sketcher::PointPos::mid:
                             int vertex = Obj->getVertexIndexGeoPos(vals[ConstrId]->First,vals[ConstrId]->FirstPos);
                             if(vertex>-1)
                                 ss << "Vertex" <<  vertex + 1;
@@ -786,17 +789,17 @@ void CmdSketcherSelectElementsAssociatedWithConstraints::activated(int iMsg)
                     elementSubNames.push_back(ss.str());
                 }
 
-                if(vals[ConstrId]->Second!=Constraint::GeoUndef){
+                if(vals[ConstrId]->Second!=GeoEnum::GeoUndef){
                     ss.str(std::string());
 
                     switch(vals[ConstrId]->SecondPos)
                     {
-                        case Sketcher::none:
+                        case Sketcher::PointPos::none:
                             ss << "Edge" << vals[ConstrId]->Second + 1;
                             break;
-                        case Sketcher::start:
-                        case Sketcher::end:
-                        case Sketcher::mid:
+                        case Sketcher::PointPos::start:
+                        case Sketcher::PointPos::end:
+                        case Sketcher::PointPos::mid:
                             int vertex = Obj->getVertexIndexGeoPos(vals[ConstrId]->Second,vals[ConstrId]->SecondPos);
                             if(vertex>-1)
                                 ss << "Vertex" << vertex + 1;
@@ -806,17 +809,17 @@ void CmdSketcherSelectElementsAssociatedWithConstraints::activated(int iMsg)
                     elementSubNames.push_back(ss.str());
                 }
 
-                if(vals[ConstrId]->Third!=Constraint::GeoUndef){
+                if(vals[ConstrId]->Third!=GeoEnum::GeoUndef){
                     ss.str(std::string());
 
                     switch(vals[ConstrId]->ThirdPos)
                     {
-                        case Sketcher::none:
+                        case Sketcher::PointPos::none:
                             ss << "Edge" << vals[ConstrId]->Third + 1;
                             break;
-                        case Sketcher::start:
-                        case Sketcher::end:
-                        case Sketcher::mid:
+                        case Sketcher::PointPos::start:
+                        case Sketcher::PointPos::end:
+                        case Sketcher::PointPos::mid:
                             int vertex = Obj->getVertexIndexGeoPos(vals[ConstrId]->Third,vals[ConstrId]->ThirdPos);
                             if(vertex>-1)
                                 ss << "Vertex" <<  vertex + 1;
@@ -858,7 +861,7 @@ CmdSketcherSelectElementsWithDoFs::CmdSketcherSelectElementsWithDoFs()
     sWhatsThis      = "Sketcher_SelectElementsWithDoFs";
     sStatusTip      = sToolTipText;
     sPixmap         = "Sketcher_SelectElementsWithDoFs";
-    sAccel          = "";
+    sAccel          = "Z, F";
     eType           = ForEdit;
 }
 
@@ -912,11 +915,11 @@ void CmdSketcherSelectElementsWithDoFs::activated(int iMsg)
                     if (solvext->getEdge() == SolverGeometryExtension::Dependent)
                         testselectedge(geoid);
                     if (solvext->getStart() == SolverGeometryExtension::Dependent)
-                        testselectvertex(geoid, Sketcher::start);
+                        testselectvertex(geoid, Sketcher::PointPos::start);
                     if (solvext->getEnd() == SolverGeometryExtension::Dependent)
-                        testselectvertex(geoid, Sketcher::end);
+                        testselectvertex(geoid, Sketcher::PointPos::end);
                     if (solvext->getMid() == SolverGeometryExtension::Dependent)
-                        testselectvertex(geoid, Sketcher::mid);
+                        testselectvertex(geoid, Sketcher::PointPos::mid);
                 }
             }
         }
@@ -949,6 +952,7 @@ CmdSketcherRestoreInternalAlignmentGeometry::CmdSketcherRestoreInternalAlignment
     sWhatsThis      = "Sketcher_RestoreInternalAlignmentGeometry";
     sStatusTip      = sToolTipText;
     sPixmap         = "Sketcher_Element_Ellipse_All";
+    sAccel          = "Z, I";
     eType           = ForEdit;
 }
 
@@ -1044,7 +1048,7 @@ CmdSketcherSymmetry::CmdSketcherSymmetry()
     sWhatsThis      = "Sketcher_Symmetry";
     sStatusTip      = sToolTipText;
     sPixmap         = "Sketcher_Symmetry";
-    sAccel          = "";
+    sAccel          = "Z, S";
     eType           = ForEdit;
 }
 
@@ -1079,7 +1083,7 @@ void CmdSketcherSymmetry::activated(int iMsg)
     getSelection().clearSelection();
 
     int LastGeoId = 0;
-    Sketcher::PointPos LastPointPos = Sketcher::none;
+    Sketcher::PointPos LastPointPos = Sketcher::PointPos::none;
     const Part::Geometry *LastGeo;
     typedef enum { invalid = -1, line = 0, point = 1 } GeoType;
 
@@ -1096,11 +1100,11 @@ void CmdSketcherSymmetry::activated(int iMsg)
 
             if (it->substr(0,4) == "Edge") {
                 LastGeoId = std::atoi(it->substr(4,4000).c_str()) - 1;
-                LastPointPos = Sketcher::none;
+                LastPointPos = Sketcher::PointPos::none;
             }
             else {
                 LastGeoId = -std::atoi(it->substr(12,4000).c_str()) - 2;
-                LastPointPos = Sketcher::none;
+                LastPointPos = Sketcher::PointPos::none;
             }
 
             // reference can be external or non-external
@@ -1126,7 +1130,7 @@ void CmdSketcherSymmetry::activated(int iMsg)
 
             if (Obj->getGeometry(GeoId)->getTypeId() == Part::GeomPoint::getClassTypeId()) {
                 LastGeoId = GeoId;
-                LastPointPos = Sketcher::start;
+                LastPointPos = Sketcher::PointPos::start;
                 lastgeotype = point;
 
                 // points to make symmetric
@@ -1155,21 +1159,21 @@ void CmdSketcherSymmetry::activated(int iMsg)
     // check if last selected element is horizontal axis
     else if (SubNames.rbegin()->size() == 6 && SubNames.rbegin()->substr(0,6) == "H_Axis") {
         LastGeoId = Sketcher::GeoEnum::HAxis;
-        LastPointPos = Sketcher::none;
+        LastPointPos = Sketcher::PointPos::none;
         lastgeotype = line;
         lastvertexoraxis = true;
     }
     // check if last selected element is vertical axis
     else if (SubNames.rbegin()->size() == 6 && SubNames.rbegin()->substr(0,6) == "V_Axis") {
         LastGeoId = Sketcher::GeoEnum::VAxis;
-        LastPointPos = Sketcher::none;
+        LastPointPos = Sketcher::PointPos::none;
         lastgeotype = line;
         lastvertexoraxis = true;
     }
     // check if last selected element is the root point
     else if (SubNames.rbegin()->size() == 9 && SubNames.rbegin()->substr(0,9) == "RootPoint") {
         LastGeoId = Sketcher::GeoEnum::RtPnt;
-        LastPointPos = Sketcher::start;
+        LastPointPos = Sketcher::PointPos::start;
         lastgeotype = point;
         lastvertexoraxis = true;
     }
@@ -1217,7 +1221,7 @@ void CmdSketcherSymmetry::activated(int iMsg)
     try{
         Gui::cmdAppObjectArgs(Obj,
                               "addSymmetric(%s, %d, %d)",
-                              geoIdList.c_str(), LastGeoId, LastPointPos);
+                              geoIdList.c_str(), LastGeoId, static_cast<int>(LastPointPos));
         Gui::Command::commitCommand();
     }
     catch (const Base::Exception& e) {
@@ -1292,6 +1296,7 @@ public:
                           Sketcher::PointPos originpos, int nelements,
                           SketcherCopy::Op op)
     : Mode(STATUS_SEEK_First)
+    , snapMode(SnapMode::Free)
     , geoIdList(geoidlist)
     , Origin()
     , OriginGeoId(origingeoid)
@@ -1309,6 +1314,11 @@ public:
         STATUS_End
     };
 
+    enum class SnapMode {
+        Free,
+        Snap5Degree
+    };
+
     virtual void activated(ViewProviderSketch *sketchgui)
     {
         setCursor(QPixmap(cursor_createcopy), 7, 7);
@@ -1319,15 +1329,29 @@ public:
     virtual void mouseMove(Base::Vector2d onSketchPos)
     {
         if (Mode == STATUS_SEEK_First) {
+
+             if(QApplication::keyboardModifiers() == Qt::ControlModifier)
+                    snapMode = SnapMode::Snap5Degree;
+                else
+                    snapMode = SnapMode::Free;
+
             float length = (onSketchPos - EditCurve[0]).Length();
-            float angle = (onSketchPos - EditCurve[0]).GetAngle(Base::Vector2d(1.f,0.f));
+            float angle = (onSketchPos - EditCurve[0]).Angle();
+
+            Base::Vector2d endpoint = onSketchPos;
+
+            if (snapMode == SnapMode::Snap5Degree) {
+                angle = round(angle / (M_PI/36)) * M_PI/36;
+                endpoint = EditCurve[0] + length * Base::Vector2d(cos(angle),sin(angle));
+            }
+
             SbString text;
             text.sprintf(" (%.1f, %.1fdeg)", length, angle * 180 / M_PI);
-            setPositionText(onSketchPos, text);
+            setPositionText(endpoint, text);
 
-            EditCurve[1] = onSketchPos;
-            sketchgui->drawEdit(EditCurve);
-            if (seekAutoConstraint(sugConstr1, onSketchPos, Base::Vector2d(0.0, 0.0), AutoConstraint::VERTEX)) {
+            EditCurve[1] = endpoint;
+            drawEdit(EditCurve);
+            if (seekAutoConstraint(sugConstr1, endpoint, Base::Vector2d(0.0, 0.0), AutoConstraint::VERTEX)) {
                 renderSuggestConstraintsCursor(sugConstr1);
                 return;
             }
@@ -1335,11 +1359,10 @@ public:
         applyCursor();
     }
 
-    virtual bool pressButton(Base::Vector2d onSketchPos)
+    virtual bool pressButton(Base::Vector2d)
     {
         if (Mode == STATUS_SEEK_First) {
-            EditCurve[1] = onSketchPos;
-            sketchgui->drawEdit(EditCurve);
+            drawEdit(EditCurve);
             Mode = STATUS_End;
         }
         return true;
@@ -1392,7 +1415,7 @@ public:
 
             tryAutoRecomputeIfNotSolve(static_cast<Sketcher::SketchObject *>(sketchgui->getObject()));
             EditCurve.clear();
-            sketchgui->drawEdit(EditCurve);
+            drawEdit(EditCurve);
 
             // no code after this line, Handler gets deleted in ViewProvider
             sketchgui->purgeHandler();
@@ -1401,6 +1424,7 @@ public:
     }
 protected:
     SelectMode Mode;
+    SnapMode snapMode;
     string geoIdList;
     Base::Vector3d Origin;
     int OriginGeoId;
@@ -1441,7 +1465,7 @@ void SketcherCopy::activate(SketcherCopy::Op op)
     getSelection().clearSelection();
 
     int LastGeoId = 0;
-    Sketcher::PointPos LastPointPos = Sketcher::none;
+    Sketcher::PointPos LastPointPos = Sketcher::PointPos::none;
     const Part::Geometry *LastGeo = 0;
 
     // create python command with list of elements
@@ -1451,7 +1475,7 @@ void SketcherCopy::activate(SketcherCopy::Op op)
         // only handle non-external edges
         if (it->size() > 4 && it->substr(0,4) == "Edge") {
             LastGeoId = std::atoi(it->substr(4,4000).c_str()) - 1;
-            LastPointPos = Sketcher::none;
+            LastPointPos = Sketcher::PointPos::none;
             LastGeo = Obj->getGeometry(LastGeoId);
             // lines to copy
             if (LastGeoId >= 0) {
@@ -1467,7 +1491,7 @@ void SketcherCopy::activate(SketcherCopy::Op op)
             Obj->getGeoVertexIndex(VtId, GeoId, PosId);
             if (Obj->getGeometry(GeoId)->getTypeId() == Part::GeomPoint::getClassTypeId()) {
                 LastGeoId = GeoId;
-                LastPointPos = Sketcher::start;
+                LastPointPos = Sketcher::PointPos::start;
                 // points to copy
                 if (LastGeoId >= 0) {
                     geoids++;
@@ -1506,17 +1530,17 @@ void SketcherCopy::activate(SketcherCopy::Op op)
 
     // if the last element is not a point serving as a reference for the copy process
     // then make the start point of the last element the copy reference (if it exists, if not the center point)
-    if (LastPointPos == Sketcher::none) {
+    if (LastPointPos == Sketcher::PointPos::none) {
         if (LastGeo->getTypeId() == Part::GeomCircle::getClassTypeId() ||
             LastGeo->getTypeId() == Part::GeomEllipse::getClassTypeId()) {
-            LastPointPos = Sketcher::mid;
+            LastPointPos = Sketcher::PointPos::mid;
         }
         else {
-            LastPointPos = Sketcher::start;
+            LastPointPos = Sketcher::PointPos::start;
         }
     }
 
-    // Ask the user if he wants to clone or to simple copy
+    // Ask the user if they want to clone or to simple copy
 /*
     int ret = QMessageBox::question(Gui::getMainWindow(), QObject::tr("Dimensional/Geometric constraints"),
                                     QObject::tr("Do you want to clone the object, i.e. substitute dimensional constraints by geometric constraints?"),
@@ -1559,7 +1583,7 @@ CmdSketcherCopy::CmdSketcherCopy()
     sWhatsThis      = "Sketcher_Copy";
     sStatusTip      = sToolTipText;
     sPixmap         = "Sketcher_Copy";
-    sAccel          = "";
+    sAccel          = "Z, C";
     eType           = ForEdit;
 }
 
@@ -1605,7 +1629,7 @@ CmdSketcherClone::CmdSketcherClone()
     sWhatsThis      = "Sketcher_Clone";
     sStatusTip      = sToolTipText;
     sPixmap         = "Sketcher_Clone";
-    sAccel          = "";
+    sAccel          = "Z, L";
     eType           = ForEdit;
 }
 
@@ -1648,7 +1672,7 @@ CmdSketcherMove::CmdSketcherMove()
     sWhatsThis      = "Sketcher_Move";
     sStatusTip      = sToolTipText;
     sPixmap         = "Sketcher_Move";
-    sAccel          = "CTRL+M";
+    sAccel          = "Z, M";
     eType           = ForEdit;
 }
 
@@ -1681,7 +1705,7 @@ CmdSketcherCompCopy::CmdSketcherCompCopy()
     sToolTipText    = QT_TR_NOOP("Creates a clone of the geometry taking as reference the last selected point");
     sWhatsThis      = "Sketcher_CompCopy";
     sStatusTip      = sToolTipText;
-    sAccel          = "CTRL+C";
+    sAccel          = "";
     eType           = ForEdit;
 }
 
@@ -1841,7 +1865,7 @@ public:
 
     enum class SnapMode {
         Free,
-        Snap10Degree
+        Snap5Degree
     };
 
     virtual void activated(ViewProviderSketch *sketchgui)
@@ -1856,17 +1880,17 @@ public:
         if (Mode==STATUS_SEEK_First) {
 
             if(QApplication::keyboardModifiers() == Qt::ControlModifier)
-                    snapMode = SnapMode::Snap10Degree;
+                    snapMode = SnapMode::Snap5Degree;
                 else
                     snapMode = SnapMode::Free;
 
             float length = (onSketchPos - EditCurve[0]).Length();
-            float angle = (onSketchPos - EditCurve[0]).GetAngle(Base::Vector2d(1.f, 0.f));
+            float angle = (onSketchPos - EditCurve[0]).Angle();
 
             Base::Vector2d endpoint = onSketchPos;
 
-            if (snapMode == SnapMode::Snap10Degree) {
-                angle = round(angle / (M_PI/18)) * M_PI/18;
+            if (snapMode == SnapMode::Snap5Degree) {
+                angle = round(angle / (M_PI/36)) * M_PI/36;
                 endpoint = EditCurve[0] + length * Base::Vector2d(cos(angle),sin(angle));
             }
 
@@ -1875,7 +1899,7 @@ public:
             setPositionText(endpoint, text);
 
             EditCurve[1] = endpoint;
-            sketchgui->drawEdit(EditCurve);
+            drawEdit(EditCurve);
             if (seekAutoConstraint(sugConstr1, endpoint, Base::Vector2d(0.0, 0.0), AutoConstraint::VERTEX))
             {
                 renderSuggestConstraintsCursor(sugConstr1);
@@ -1889,7 +1913,7 @@ public:
     virtual bool pressButton(Base::Vector2d)
     {
         if (Mode == STATUS_SEEK_First) {
-            sketchgui->drawEdit(EditCurve);
+            drawEdit(EditCurve);
             Mode = STATUS_End;
         }
         return true;
@@ -1928,7 +1952,7 @@ public:
             tryAutoRecomputeIfNotSolve(static_cast<Sketcher::SketchObject *>(sketchgui->getObject()));
 
             EditCurve.clear();
-            sketchgui->drawEdit(EditCurve);
+            drawEdit(EditCurve);
 
             // no code after this line, Handler is deleted in ViewProvider
             sketchgui->purgeHandler();
@@ -1964,7 +1988,7 @@ CmdSketcherRectangularArray::CmdSketcherRectangularArray()
     sWhatsThis      = "Sketcher_RectangularArray";
     sStatusTip      = sToolTipText;
     sPixmap         = "Sketcher_RectangularArray";
-    sAccel          = "";
+    sAccel          = "Z, A";
     eType           = ForEdit;
 }
 
@@ -1997,7 +2021,7 @@ void CmdSketcherRectangularArray::activated(int iMsg)
     getSelection().clearSelection();
 
     int LastGeoId = 0;
-    Sketcher::PointPos LastPointPos = Sketcher::none;
+    Sketcher::PointPos LastPointPos = Sketcher::PointPos::none;
     const Part::Geometry *LastGeo = 0;
 
     // create python command with list of elements
@@ -2008,7 +2032,7 @@ void CmdSketcherRectangularArray::activated(int iMsg)
         // only handle non-external edges
         if (it->size() > 4 && it->substr(0,4) == "Edge") {
             LastGeoId = std::atoi(it->substr(4,4000).c_str()) - 1;
-            LastPointPos = Sketcher::none;
+            LastPointPos = Sketcher::PointPos::none;
             LastGeo = Obj->getGeometry(LastGeoId);
 
             // lines to copy
@@ -2025,7 +2049,7 @@ void CmdSketcherRectangularArray::activated(int iMsg)
             Obj->getGeoVertexIndex(VtId, GeoId, PosId);
             if (Obj->getGeometry(GeoId)->getTypeId() == Part::GeomPoint::getClassTypeId()) {
                 LastGeoId = GeoId;
-                LastPointPos = Sketcher::start;
+                LastPointPos = Sketcher::PointPos::start;
                 // points to copy
                 if (LastGeoId >= 0) {
                     geoids++;
@@ -2064,13 +2088,13 @@ void CmdSketcherRectangularArray::activated(int iMsg)
 
     // if the last element is not a point serving as a reference for the copy process
     // then make the start point of the last element the copy reference (if it exists, if not the center point)
-    if (LastPointPos == Sketcher::none) {
+    if (LastPointPos == Sketcher::PointPos::none) {
         if (LastGeo->getTypeId() == Part::GeomCircle::getClassTypeId() ||
             LastGeo->getTypeId() == Part::GeomEllipse::getClassTypeId()) {
-            LastPointPos = Sketcher::mid;
+            LastPointPos = Sketcher::PointPos::mid;
         }
         else {
-            LastPointPos = Sketcher::start;
+            LastPointPos = Sketcher::PointPos::start;
         }
     }
 
@@ -2231,7 +2255,7 @@ CmdSketcherRemoveAxesAlignment::CmdSketcherRemoveAxesAlignment()
     sWhatsThis      = "Sketcher_RemoveAxesAlignment";
     sStatusTip      = sToolTipText;
     sPixmap         = "Sketcher_RemoveAxesAlignment";
-    sAccel          = "";
+    sAccel          = "Z, R";
     eType           = ForEdit;
 }
 

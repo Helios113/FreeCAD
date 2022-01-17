@@ -53,7 +53,7 @@
  * So, to avoid entering Tilt mode, the style implements its own tap-and-hold
  * detection, and a special Pan state for the state machine - StickyPanState.
  *
- * This style wasn't tested with space mouse during development (I don't have one).
+ * This style wasn't tested with spacemouse during development (I don't have one).
  *
  * See also GestureNavigationStyle-state-machine-diagram.docx for a crude
  * diagram of the state machine.
@@ -72,6 +72,7 @@
 #include "GestureNavigationStyle.h"
 
 #include <App/Application.h>
+#include <Base/Interpreter.h>
 #include <Base/Console.h>
 #include "View3DInventorViewer.h"
 #include "Application.h"
@@ -918,9 +919,8 @@ SbBool GestureNavigationStyle::processSoEvent(const SoEvent* const ev)
         //whatever else, we don't track
         }
     }
-    this->ctrldown = ev->wasCtrlDown();
-    this->shiftdown = ev->wasShiftDown();
-    this->altdown = ev->wasAltDown();
+
+    syncModifierKeys(ev);
 
     smev.modifiers =
         (this->button1down ? NS::Event::BUTTON1DOWN : 0) |
@@ -1010,7 +1010,7 @@ void GestureNavigationStyle::onSetRotationCenter(SbVec2s cursor){
     SbBool ret = NavigationStyle::lookAtPoint(cursor);
     if(!ret){
         this->interactiveCountDec(); //this was in original gesture nav. Not sure what is it needed for --DeepSOIC
-        Base::Console().Warning(
+        Base::Console().Log(
             "No object under cursor! Can't set new center of rotation.\n");
     }
 

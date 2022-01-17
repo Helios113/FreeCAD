@@ -31,6 +31,8 @@
 #include <boost/any.hpp>
 #include <string>
 #include <bitset>
+#include <boost/signals2.hpp>
+#include <FCGlobal.h>
 
 namespace Py {
 class Object;
@@ -75,6 +77,8 @@ public:
                       // relevant for the container using it
         EvalOnRestore = 14, // In case of expression binding, evaluate the
                             // expression on restore and touch the object on value change.
+        Busy = 15, // internal use to avoid recursive signaling
+        CopyOnChange = 16, // for Link to copy the linked object on change of the property with this flag
 
         // The following bits are corresponding to PropertyType set when the
         // property added. These types are meant to be static, and cannot be
@@ -114,8 +118,20 @@ public:
         return sizeof(father) + sizeof(StatusBits);
     }
 
-    /// get the name of this property in the belonging container
+    /** Get the name of this property in the belonging container
+     * With \ref hasName() it can be checked beforehand if a valid name is set.
+     * @note If no name is set this function returns an empty string, i.e. "".
+     */
     const char* getName(void) const;
+    /** Check if the property has a name set.
+     * If no name is set then \ref getName() will return an empty string
+     */
+    bool hasName() const;
+    /** Check if the passed name is valid.
+     * If \a name is null or an empty string it's considered invalid,
+     * and valid otherwise.
+     */
+    static bool isValidName(const char* name);
 
     std::string getFullName() const;
 
@@ -233,6 +249,9 @@ public:
     /// Called before a child property changing value
     virtual void aboutToSetChildValue(Property &) {}
 
+    /// Compare if this property has the same content as the given one
+    virtual bool isSame(const Property &other) const;
+
     friend class PropertyContainer;
     friend struct PropertyData;
     friend class DynamicProperty;
@@ -269,6 +288,9 @@ private:
 private:
     PropertyContainer *father;
     const char *myName;
+
+public:
+    boost::signals2::signal<void (const App::Property&)> signalChanged;
 };
 
 
@@ -431,7 +453,7 @@ public:
     // if the order of the elements in the list relevant?
     // if yes, certain operations, like restoring must make sure that the
     // order is kept despite errors.
-    inline void setOrderRelevant(bool on) { this->setStatus(Status::Ordered,on); };
+    inline void setOrderRelevant(bool on) { this->setStatus(Status::Ordered,on); }
     inline bool isOrderRelevant() const { return this->testStatus(Status::Ordered);}
 
 };
@@ -485,6 +507,13 @@ public:
     const ListT &getValue(void) const{return getValues();}
 
     const_reference operator[] (int idx) const {return _lValueList[idx];} 
+
+    virtual bool isSame(const Property &other) const override {
+        if (&other == this)
+            return true;
+        return this->getTypeId() == other.getTypeId()
+            && this->getValue() == static_cast<decltype(this)>(&other)->getValue();
+    }
 
     virtual void setPyObject(PyObject *value) override {
         try {

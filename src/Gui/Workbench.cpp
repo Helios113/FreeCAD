@@ -56,7 +56,7 @@ using namespace Gui;
 
     FreeCAD provides the possibility to have one or more workbenches for a module.
     A workbench changes the appearance of the main window in that way that it defines toolbars, items in the toolbox, menus or the context menu and dockable windows that are shown to the user.
-    The idea behind this concept is that the user should see only the functions that are required for the task that he is doing at this moment and not to show dozens of unneeded functions which the user never uses.
+    The idea behind this concept is that the user should see only the functions that are required for the task that they are doing at this moment and not to show dozens of unneeded functions which the user never uses.
 
     \section stepbystep Step by step
     Here follows a short description of how your own workbench can be added to a module.
@@ -176,13 +176,13 @@ using namespace Gui;
  * \section moredetails More details and limitations
  * One of the key concepts of the workbench framework is to load a module at runtime when the user needs some function that it
  * provides. So, if the user doesn't need a module it never gets loaded into RAM. This speeds up the startup procedure of
-
  * FreeCAD and saves memory.
+ * 
  * At startup FreeCAD scans all module directories and invokes InitGui.py. So an item for a workbench gets created. If the user
  * clicks on such an item the matching module gets loaded, the C++ workbench gets registered and activated.
  *
- * The user is able to modify a workbench (Edit|Customize). E.g. he can add new toolbars or items for the toolbox and add his preferred
- * functions to them. But he has only full control over "his" toolbars, the default workbench items cannot be modified or even removed.
+ * The user is able to modify a workbench (Edit|Customize). E.g. they can add new toolbars or items for the toolbox and add their preferred
+ * functions to them. But the user only has full control over "their" own toolbars, the default workbench items cannot be modified or even removed.
  *
  * FreeCAD provides also the possibility to define pure Python workbenches. Such workbenches are temporarily only and are lost after exiting
  * the FreeCAD session. But if you want to keep your Python workbench you can write a macro and attach it with a user defined button or just
@@ -192,7 +192,7 @@ using namespace Gui;
  * w=Workbench()                                              # creates a standard workbench (the same as StdWorkbench in C++)
  * w.MenuText = "My Workbench"                                # the text that will appear in the combo box
  * dir(w)                                                     # lists all available function of the object
- * FreeCADGui.addWorkbench(w)                                 # Creates an item for our workbenmch now
+ * FreeCADGui.addWorkbench(w)                                 # Creates an item for our workbench now
  *                                                            # Note: We must first add the workbench to run some initialization code
  *                                                            # Then we are ready to customize the workbench
  * list = ["Std_Test1", "Std_Test2", "Std_Test3"]             # creates a list of new functions
@@ -514,6 +514,8 @@ std::list<std::string> Workbench::listCommandbars() const
     qApp->translate("Workbench", "Macro");
     qApp->translate("Workbench", "View");
     qApp->translate("Workbench", "Special Ops");
+    // needed for Structure toolbar
+    qApp->translate("Workbench", "Link actions");
 #endif
 
 #if 0 // needed for the application menu on OSX
@@ -562,7 +564,7 @@ void StdWorkbench::setupContextMenu(const char* recipient, MenuItem* item) const
             *item << "Separator" << "Std_SetAppearance" << "Std_ToggleVisibility"
                   << "Std_ToggleSelectability" << "Std_TreeSelection"
                   << "Std_RandomColor" << "Separator" << "Std_Delete"
-                  << "Std_SendToPythonConsole";
+                  << "Std_SendToPythonConsole" << "Std_TransformManip";
         }
     }
     else if (strcmp(recipient,"Tree") == 0)

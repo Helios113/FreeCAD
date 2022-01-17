@@ -74,7 +74,8 @@ public:
         PartialDoc = 7,
         AllowPartialRecompute = 8, // allow recomputing editing object if SkipRecompute is set
         TempDoc = 9, // Mark as temporary document without prompt for save
-        RestoreError = 10
+        RestoreError = 10,
+        LinkStampChanged = 11, // Indicates during restore time if any linked document's time stamp has changed
     };
 
     /** @name Properties */
@@ -195,8 +196,8 @@ public:
     bool saveCopy(const char* file) const;
     /// Restore the document from the file in Property Path
     void restore (const char *filename=0,
-            bool delaySignal=false, const std::set<std::string> &objNames={});
-    void afterRestore(bool checkPartial=false);
+            bool delaySignal=false, const std::vector<std::string> &objNames={});
+    bool afterRestore(bool checkPartial=false);
     bool afterRestore(const std::vector<App::DocumentObject *> &, bool checkPartial=false);
     enum ExportStatus {
         NotExporting,
@@ -366,7 +367,7 @@ public:
      * When undo, Gui component can query getAvailableUndo(id) to see if it is
      * possible to undo with a given ID. If there more than one undo
      * transactions, meaning that there are other transactions before the given
-     * ID. The Gui component shall ask user if he wants to undo multiple steps.
+     * ID. The Gui component shall ask user if they want to undo multiple steps.
      * And if the user agrees, call undo(id) to unroll all transaction before
      * and including the the one with the give ID. Same applies for redo.
      *

@@ -61,7 +61,6 @@ class Arc(gui_base_original.Creator):
 
     def GetResources(self):
         """Set icon, menu and tooltip."""
-
         return {'Pixmap': 'Draft_Arc',
                 'Accel': "A, R",
                 'MenuText': QT_TRANSLATE_NOOP("Draft_Arc", "Arc"),
@@ -483,15 +482,10 @@ class Arc_3Points(gui_base.GuiCommandSimplest):
 
     def GetResources(self):
         """Set icon, menu and tooltip."""
-        _menu = "Arc by 3 points"
-        _tip = ("Creates a circular arc by picking 3 points.\n"
-                "CTRL to snap, SHIFT to constrain.")
-
-        d = {'Pixmap': "Draft_Arc_3Points",
-             'MenuText': QT_TRANSLATE_NOOP("Draft_Arc_3Points", _menu),
-             'ToolTip': QT_TRANSLATE_NOOP("Draft_Arc_3Points", _tip),
-             'Accel': 'A,T'}
-        return d
+        return {'Pixmap': "Draft_Arc_3Points",
+                'Accel': "A,T",
+                'MenuText': QT_TRANSLATE_NOOP("Draft_Arc_3Points", "Arc by 3 points"),
+                'ToolTip': QT_TRANSLATE_NOOP("Draft_Arc_3Points", "Creates a circular arc by picking 3 points.\nCTRL to snap, SHIFT to constrain.")}
 
     def Activated(self):
         """Execute when the command is called."""
@@ -510,8 +504,10 @@ class Arc_3Points(gui_base.GuiCommandSimplest):
             App.DraftWorkingPlane.setup()
 
         Gui.Snapper.getPoint(callback=self.getPoint,
-                             movecallback=self.drawArc,
-                             title=translate("draft","Arc by 3 points"))
+                             movecallback=self.drawArc)
+        Gui.Snapper.ui.setTitle(title=translate("draft", "Arc by 3 points"),
+                                icon="Draft_Arc_3Points")
+        Gui.Snapper.ui.continueCmd.show()
 
     def getPoint(self, point, info):
         """Get the point by clicking on the 3D view.
@@ -551,6 +547,10 @@ class Arc_3Points(gui_base.GuiCommandSimplest):
             Gui.Snapper.getPoint(last=self.points[-1],
                                  callback=self.getPoint,
                                  movecallback=self.drawArc)
+            Gui.Snapper.ui.setTitle(title=translate("draft", "Arc by 3 points"),
+                                    icon="Draft_Arc_3Points")
+            Gui.Snapper.ui.continueCmd.show()
+
         else:
             # If three points were already picked in the 3D view
             # proceed with creating the final object.
@@ -565,6 +565,8 @@ class Arc_3Points(gui_base.GuiCommandSimplest):
                                         self.points[2]], primitive=False)
             self.tracker.off()
             self.doc.recompute()
+            if Gui.Snapper.ui.continueMode:
+                self.Activated()
 
     def drawArc(self, point, info):
         """Draw preview arc when we move the pointer in the 3D view.
@@ -596,7 +598,6 @@ class ArcGroup:
 
     def GetResources(self):
         """Set icon, menu and tooltip."""
-
         return {'MenuText': QT_TRANSLATE_NOOP("Draft_ArcTools", "Arc tools"),
                 'ToolTip': QT_TRANSLATE_NOOP("Draft_ArcTools", "Create various types of circular arcs.")}
 

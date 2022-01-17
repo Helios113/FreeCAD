@@ -302,7 +302,7 @@ void Model::slotDeleteObject(const ViewProviderDocumentObject &VPDObjectIn)
 void Model::slotChangeObject(const ViewProviderDocumentObject &VPDObjectIn, const App::Property& propertyIn)
 {
   std::string name("Empty Name");
-  if (propertyIn.getName()) //getName can return 0.
+  if (propertyIn.hasName())
     name = propertyIn.getName();
   assert(!name.empty());
   
@@ -383,7 +383,7 @@ void Model::selectionChanged(const SelectionChanges& msg)
     }
   };
   
-  //lamda for clearing selections.
+  //lambda for clearing selections.
   auto clearSelection = [this, highlightConnectorOff]()
   {
     BGL_FORALL_VERTICES(currentVertex, *theGraph, Graph)
@@ -395,7 +395,7 @@ void Model::selectionChanged(const SelectionChanges& msg)
     }
   };
   
-  //lamda for getting rectangle.
+  //lambda for getting rectangle.
   auto getRectangle = [this](const char *in)
   {
     assert(in);

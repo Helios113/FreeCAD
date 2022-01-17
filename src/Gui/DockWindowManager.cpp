@@ -240,6 +240,30 @@ void DockWindowManager::removeDockWindow(QWidget* widget)
 }
 
 /**
+ * If the corresponding dock widget isn't visible then activate it.
+ */
+void DockWindowManager::activate(QWidget* widget)
+{
+    QDockWidget* dw = nullptr;
+    QWidget* par = widget->parentWidget();
+    while (par) {
+        dw = qobject_cast<QDockWidget*>(par);
+        if (dw) {
+            break;
+        }
+        par = par->parentWidget();
+    }
+
+    if (!dw) return;
+
+    if (!dw->toggleViewAction()->isChecked()) {
+        dw->toggleViewAction()->activate(QAction::Trigger);
+    }
+
+    dw->raise();
+}
+
+/**
  * Sets the window title for the dockable windows.
  */
 void DockWindowManager::retranslate()
@@ -377,6 +401,21 @@ void DockWindowManager::saveState()
         if (dw) {
             QByteArray dockName = dw->toggleViewAction()->data().toByteArray();
             hPref->SetBool(dockName.constData(), dw->isVisible());
+        }
+    }
+}
+
+void DockWindowManager::loadState()
+{
+    ParameterGrp::handle hPref = App::GetApplication().GetUserParameter().GetGroup("BaseApp")
+        ->GetGroup("MainWindow")->GetGroup("DockWindows");
+    const QList<DockWindowItem>& dockItems = d->_dockWindowItems.dockWidgets();
+    for (QList<DockWindowItem>::ConstIterator it = dockItems.begin(); it != dockItems.end(); ++it) {
+        QDockWidget* dw = findDockWidget(d->_dockedWindows, it->name);
+        if (dw) {
+            QByteArray dockName = it->name.toLatin1();
+            bool visible = hPref->GetBool(dockName.constData(), it->visibility);
+            dw->setVisible(visible);
         }
     }
 }

@@ -30,13 +30,16 @@
 #include <gp_Dir.hxx>
 #include <gp_XYZ.hxx>
 #include <Geom_Surface.hxx>
+#include <Poly_Polygon3D.hxx>
 #include <Poly_Triangle.hxx>
 #include <Poly_Triangulation.hxx>
 #include <TColStd_ListOfTransient.hxx>
 #include <TColgp_Array1OfDir.hxx>
+#include <TopLoc_Location.hxx>
 #include <TopoDS_Edge.hxx>
 #include <TopoDS_Face.hxx>
 #include <vector>
+#include <Mod/Part/PartGlobal.h>
 
 class gp_Lin;
 class gp_Pln;
@@ -153,7 +156,45 @@ public:
      * \param vertexnormals
      */
     static void getPointNormals(const std::vector<gp_Pnt>& points, const TopoDS_Face& face, std::vector<gp_Vec>& vertexnormals);
+    /*!
+     * \brief getPointNormals
+     * Computes the exact surface normals for the points by using the UV coordinates of the mesh vertexes.
+     * \param face
+     * \param aPoly
+     * \param vertexnormals
+     */
     static void getPointNormals(const TopoDS_Face& face, Handle(Poly_Triangulation) aPoly, TColgp_Array1OfDir& normals);
+    /*!
+     * \brief getPointNormals
+     * Computes the exact surface normals for the points by using the UV coordinates of the mesh vertexes.
+     * \param face
+     * \param aPoly
+     * \param vertexnormals
+     */
+    static void getPointNormals(const TopoDS_Face& face, Handle(Poly_Triangulation) aPoly, std::vector<gp_Vec>& normals);
+    /*!
+     * \brief applyTransformationOnNormals
+     * Apply the transformation to the vectors
+     * \param loc
+     * \param normals
+     */
+    static void applyTransformationOnNormals(const TopLoc_Location& loc, std::vector<gp_Vec>& normals);
+    /*!
+     * \brief triangulationOfInfinite
+     * Returns the triangulation of the face of the tessellated shape. In case the face has infinite lengths
+     * the triangulation of a limited parameter range is computed.
+     * \param edge
+     * \param loc
+     */
+    static Handle (Poly_Triangulation) triangulationOfFace(const TopoDS_Face& face);
+    /*!
+     * \brief polygonOfEdge
+     * Returns the polygon of the edge of the tessellated shape. In case the edge has infinite length
+     * the polygon of a limited parameter range is computed.
+     * \param edge
+     * \param loc
+     */
+    static Handle(Poly_Polygon3D) polygonOfEdge(const TopoDS_Edge& edge, TopLoc_Location& loc);
 };
 
 } //namespace Part

@@ -37,8 +37,7 @@ endif()
 
 set(PartDesignGui_UIC_SRCS
     TaskFeaturePick.ui
-    TaskPadParameters.ui
-    TaskPocketParameters.ui
+    TaskPadPocketParameters.ui
     TaskChamferParameters.ui
     TaskFilletParameters.ui
     TaskDraftParameters.ui
@@ -147,10 +146,11 @@ SET(PartDesignGuiTaskDlgs_SRCS
     TaskFeatureParameters.h
     TaskSketchBasedParameters.cpp
     TaskSketchBasedParameters.h
-    TaskPadParameters.ui
+    TaskExtrudeParameters.cpp
+    TaskExtrudeParameters.h
+    TaskPadPocketParameters.ui
     TaskPadParameters.cpp
     TaskPadParameters.h
-    TaskPocketParameters.ui
     TaskPocketParameters.cpp
     TaskPocketParameters.h
     TaskChamferParameters.ui
@@ -224,7 +224,10 @@ SET(PartDesignGuiModule_SRCS
     Command.cpp
     CommandPrimitive.cpp
     CommandBody.cpp
+    EnumFlags.h
     Resources/PartDesign.qrc
+    ReferenceHighlighter.cpp
+    ReferenceHighlighter.h
     PreCompiled.cpp
     PreCompiled.h
     Utils.cpp

@@ -180,22 +180,22 @@ MeshFacetArray& MeshFacetArray::operator = (const MeshFacetArray &rclFAry)
 
 bool MeshGeomEdge::ContainedByOrIntersectBoundingBox ( const Base::BoundBox3f &rclBB ) const
 {
-  // Test, ob alle Eckpunkte der Edge sich auf einer der 6 Seiten der BB befinden
+  // Test whether all corner points of the Edge are on one of the 6 sides of the BB
   if ((GetBoundBox() && rclBB) == false)
     return false;
 
-  // Test, ob Edge-BB komplett in BB liegt
+  // Test whether Edge-BB is completely in BB
   if (rclBB.IsInBox(GetBoundBox()))
     return true;
 
-  // Test, ob einer der Eckpunkte in BB liegt
+  // Test whether one of the corner points is in BB
   for (int i=0;i<2;i++)
   {
     if (rclBB.IsInBox(_aclPoints[i]))
       return true;
   }
 
-  // "echter" Test auf Schnitt
+  // "real" test for cut
   if (IntersectBoundingBox(rclBB))
     return true;
 
@@ -278,6 +278,79 @@ bool MeshGeomEdge::IntersectWithLine (const Base::Vector3f &rclPt,
     float dist3 = Base::Distance(_aclPoints[1], rclRes);
 
     return dist2 + dist3 <= dist1 + eps;
+}
+
+bool MeshGeomEdge::IsParallel(const MeshGeomEdge &edge) const
+{
+    Base::Vector3f r(_aclPoints[1] - _aclPoints[0]);
+    Base::Vector3f s(edge._aclPoints[1] - edge._aclPoints[0]);
+    Base::Vector3f n = r.Cross(s);
+    return n.IsNull();
+}
+
+bool MeshGeomEdge::IsCollinear(const MeshGeomEdge &edge) const
+{
+    if (IsParallel(edge)) {
+        Base::Vector3f r(_aclPoints[1] - _aclPoints[0]);
+        Base::Vector3f d = edge._aclPoints[0] - _aclPoints[0];
+        return d.Cross(r).IsNull();
+    }
+
+    return false;
+}
+
+bool MeshGeomEdge::IntersectWithEdge (const MeshGeomEdge &edge, Base::Vector3f &res) const
+{
+    const float eps = 1e-06f;
+    Base::Vector3f p(_aclPoints[0]);
+    Base::Vector3f r(_aclPoints[1] - _aclPoints[0]);
+    Base::Vector3f q(edge._aclPoints[0]);
+    Base::Vector3f s(edge._aclPoints[1] - edge._aclPoints[0]);
+    Base::Vector3f n = r.Cross(s);
+    Base::Vector3f d = q - p;
+
+    // lines are collinear or parallel
+    if (n.IsNull()) {
+        if (d.Cross(r).IsNull()) {
+            // Collinear
+            if (IsProjectionPointOf(edge._aclPoints[0])) {
+                res = edge._aclPoints[0];
+                return true;
+            }
+            if (IsProjectionPointOf(edge._aclPoints[1])) {
+                res = edge._aclPoints[1];
+                return true;
+            }
+
+            return false;
+        }
+        else {
+            // Parallel
+            return false;
+        }
+    }
+    else {
+        // Get the distance of q to the plane defined by p and n
+        float distance = q.DistanceToPlane(p, n);
+
+        // lines are warped
+        if (fabs(distance) > eps)
+            return false;
+
+        float t = d.Cross(s).Dot(n) / n.Sqr();
+        float u = d.Cross(r).Dot(n) / n.Sqr();
+
+        auto is_in_range = [](float v) {
+            return v >= 0.0f && v <= 1.0f;
+        };
+
+        if (is_in_range(t) && is_in_range(u)) {
+            res = p + t * r; // equal to q + u * s
+            return true;
+        }
+
+        return false;
+    }
 }
 
 bool MeshGeomEdge::IntersectWithPlane (const Base::Vector3f &rclPt,
@@ -370,6 +443,14 @@ bool MeshGeomEdge::IsPointOf (const Base::Vector3f &rclPoint, float fDistance) c
     return Base::Distance(ptEdge, rclPoint) <= fDistance;
 }
 
+bool MeshGeomEdge::IsProjectionPointOf(const Base::Vector3f& point) const
+{
+    Base::Vector3f fromStartToPoint = point - _aclPoints[0];
+    Base::Vector3f fromPointToEnd = _aclPoints[1] - point;
+    float dot = fromStartToPoint * fromPointToEnd;
+    return dot >= 0.0f;
+}
+
 // -----------------------------------------------------------------
 
 MeshGeomFacet::MeshGeomFacet () 
@@ -406,7 +487,7 @@ bool MeshGeomFacet::IsPointOf (const Base::Vector3f &rclPoint, float fDistance) 
   clProjPt.ProjectToPlane(_aclPoints[0], clNorm);
 
     
-  // Kante P0 --> P1
+  // Edge P0 --> P1
   clEdge = clP1 - clP0;
   fLP = clProjPt.DistanceToLine(clP0, clEdge); 
   if (fLP > 0.0f)
@@ -419,9 +500,9 @@ bool MeshGeomFacet::IsPointOf (const Base::Vector3f &rclPoint, float fDistance) 
     }
     else
       return false;
-  }      
+  }
 
-  // Kante P0 --> P2
+  // Edge P0 --> P2
   clEdge = clP2 - clP0;
   fLP = clProjPt.DistanceToLine(clP0, clEdge); 
   if (fLP > 0.0f)
@@ -434,9 +515,9 @@ bool MeshGeomFacet::IsPointOf (const Base::Vector3f &rclPoint, float fDistance) 
     }
     else
       return false;
-  }      
+  }
 
-  // Kante P1 --> P2
+  // Edge P1 --> P2
   clEdge = clP2 - clP1;
   fLP = clProjPt.DistanceToLine(clP1, clEdge); 
   if (fLP > 0.0f)
@@ -456,7 +537,7 @@ bool MeshGeomFacet::IsPointOf (const Base::Vector3f &rclPoint, float fDistance) 
 
 bool MeshGeomFacet::IsPointOfFace (const Base::Vector3f& rclP, float fDistance) const
 {
-  // effektivere Implementierung als in MeshGeomFacet::IsPointOf
+  // more effective implementation than in MeshGeomFacet::IsPointOf
   //
   Base::Vector3f a(_aclPoints[0].x, _aclPoints[0].y, _aclPoints[0].z);
   Base::Vector3f b(_aclPoints[1].x, _aclPoints[1].y, _aclPoints[1].z);
@@ -826,7 +907,7 @@ bool MeshGeomFacet::Foraminate (const Base::Vector3f &P, const Base::Vector3f &d
 
 bool MeshGeomFacet::IntersectPlaneWithLine (const Base::Vector3f &rclPt, const Base::Vector3f &rclDir, Base::Vector3f &rclRes) const
 {
-  // berechne den Schnittpunkt Gerade <-> Ebene
+  // calculate the intersection of the straight line <-> plane
   if ( fabs(rclDir * GetNormal()) < 1e-3f )
     return false; // line and plane are parallel
 
@@ -898,7 +979,7 @@ void MeshGeomFacet::SubSample (float fStep, std::vector<Base::Vector3f> &rclPoin
   Base::Vector3f clVecAC(C - A);
   Base::Vector3f clVecBC(C - B);
 
-  // laengste Achse entspricht AB
+  // longest axis corresponds to AB
   float fLenAB = clVecAB.Length();
   float fLenAC = clVecAC.Length();
   float fLenBC = clVecBC.Length();
@@ -955,6 +1036,15 @@ void MeshGeomFacet::SubSample (float fStep, std::vector<Base::Vector3f> &rclPoin
   rclPoints.insert(rclPoints.end(), clPoints.begin(), clPoints.end());
 }
 
+bool MeshGeomFacet::IsCoplanar(const MeshGeomFacet &facet) const
+{
+    const float eps = 1e-06f;
+    const float unit = 0.9995f;
+    float mult = fabs(this->GetNormal() * facet.GetNormal());
+    float dist = fabs(DistancePlaneToPoint(facet._aclPoints[0]));
+    return (mult >= unit) && (dist <= eps);
+}
+
 /**
  * Fast Triangle-Triangle Intersection Test by Tomas Moeller
  * http://www.acm.org/jgt/papers/Moller97/tritri.html
@@ -987,6 +1077,39 @@ int MeshGeomFacet::IntersectWithFacet (const MeshGeomFacet& rclFacet,
                                        Base::Vector3f& rclPt0, 
                                        Base::Vector3f& rclPt1) const
 {
+    // Note: tri_tri_intersect_with_isection() does not return line of
+    // intersection when triangles are coplanar. See tritritest.h:18 and 658.
+    if (IsCoplanar(rclFacet)) {
+        // Since tri_tri_intersect_with_isection may return garbage values try to get
+        // sensible values with edge/edge intersections
+        std::vector<Base::Vector3f> intersections;
+        for (short i=0; i<3; i++) {
+            MeshGeomEdge edge1 = GetEdge(i);
+            for (short j=0; j<3; j++) {
+                MeshGeomEdge edge2 = rclFacet.GetEdge(j);
+                Base::Vector3f point;
+                if (edge1.IntersectWithEdge(edge2, point)) {
+                    intersections.push_back(point);
+                }
+            }
+        }
+
+        // If triangles overlap there can be more than two intersection points
+        // In that case use any two of them.
+        if (intersections.size() >= 2) {
+            rclPt0 = intersections[0];
+            rclPt1 = intersections[1];
+            return 2;
+        }
+        else if (intersections.size() == 1) {
+            rclPt0 = intersections[0];
+            rclPt1 = intersections[0];
+            return 1;
+        }
+
+        return 0;
+    }
+
     float V[3][3], U[3][3];
     int coplanar = 0;
     float isectpt1[3], isectpt2[3];
@@ -1008,21 +1131,17 @@ int MeshGeomFacet::IntersectWithFacet (const MeshGeomFacet& rclFacet,
     rclPt0.x = isectpt1[0]; rclPt0.y = isectpt1[1]; rclPt0.z = isectpt1[2];
     rclPt1.x = isectpt2[0]; rclPt1.y = isectpt2[1]; rclPt1.z = isectpt2[2];
 
-    // Note: tri_tri_intersect_with_isection() does not return line of
-    // intersection when triangles are coplanar. See tritritest.h:18 and 658.
-    // So rclPt* may be garbage values and we cannot continue.
-    if (coplanar)
-        return 2; // equivalent to rclPt0 != rclPt1
-
     // With extremely acute-angled triangles it may happen that the algorithm
     // claims an intersection but the intersection points are far outside the
     // model. So, a plausibility check is to verify that the intersection points
     // are inside the bounding boxes of both triangles.
     Base::BoundBox3f box1 = this->GetBoundBox();
+    box1.Enlarge(0.001f);
     if (!box1.IsInBox(rclPt0) || !box1.IsInBox(rclPt1))
         return 0;
 
     Base::BoundBox3f box2 = rclFacet.GetBoundBox();
+    box2.Enlarge(0.001f);
     if (!box2.IsInBox(rclPt0) || !box2.IsInBox(rclPt1))
         return 0;
 
@@ -1279,6 +1398,14 @@ void MeshGeomFacet::NearestEdgeToPoint(const Base::Vector3f& rclPt, float& fDist
       fDistance = fD3;
     }
   }
+}
+
+MeshGeomEdge MeshGeomFacet::GetEdge(short side) const
+{
+    MeshGeomEdge edge;
+    edge._aclPoints[0] = this->_aclPoints[side    %3];
+    edge._aclPoints[1] = this->_aclPoints[(side+1)%3];
+    return edge;
 }
 
 float MeshGeomFacet::VolumeOfPrism (const MeshGeomFacet& rclF1) const

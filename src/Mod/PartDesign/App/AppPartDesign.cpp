@@ -103,6 +103,7 @@ PyMOD_INIT_FUNC(_PartDesign)
     PartDesign::MultiTransform              ::init();
     PartDesign::Hole                        ::init();
     PartDesign::Body                        ::init();
+    PartDesign::FeatureExtrude              ::init();
     PartDesign::Pad                         ::init();
     PartDesign::Pocket                      ::init();
     PartDesign::Fillet                      ::init();
@@ -122,6 +123,7 @@ PyMOD_INIT_FUNC(_PartDesign)
     PartDesign::SubtractiveHelix            ::init();
     PartDesign::ShapeBinder                 ::init();
     PartDesign::SubShapeBinder              ::init();
+    PartDesign::SubShapeBinderPython        ::init();
     PartDesign::Plane                       ::init();
     PartDesign::Line                        ::init();
     PartDesign::Point                       ::init();

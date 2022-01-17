@@ -132,7 +132,7 @@ void initComboBox(QComboBox* combo, const std::vector<std::string>& textItems, c
 
 /* TRANSLATOR FemGui::TaskFemConstraintFluidBoundary */
 TaskFemConstraintFluidBoundary::TaskFemConstraintFluidBoundary(ViewProviderFemConstraintFluidBoundary *ConstraintView,QWidget *parent)
-    : TaskFemConstraint(ConstraintView, parent, "FEM_ConstraintFluidBoundary")
+    : TaskFemConstraintOnBoundary(ConstraintView, parent, "FEM_ConstraintFluidBoundary")
     , dimension(-1)
 {
     // we need a separate container widget to add all controls to
@@ -175,8 +175,10 @@ TaskFemConstraintFluidBoundary::TaskFemConstraintFluidBoundary(ViewProviderFemCo
     ui->checkReverse->blockSignals(true);
 
     //Selection buttons
-    connect(ui->btnAdd, SIGNAL(clicked()), this, SLOT(addToSelection()));
-    connect(ui->btnRemove, SIGNAL(clicked()), this, SLOT(removeFromSelection()));
+    connect(ui->btnAdd, SIGNAL(toggled(bool)),
+            this, SLOT(_addToSelection(bool)));
+    connect(ui->btnRemove, SIGNAL(toggled(bool)),
+            this, SLOT(_removeFromSelection(bool)));
 
     // Get the feature data
     Fem::ConstraintFluidBoundary* pcConstraint = static_cast<Fem::ConstraintFluidBoundary*>(ConstraintView->getObject());
@@ -235,13 +237,13 @@ TaskFemConstraintFluidBoundary::TaskFemConstraintFluidBoundary(ViewProviderFemCo
         }
     }
 
-    pHeatTransfering = NULL;
+    pHeatTransferring = NULL;
     pTurbulenceModel = NULL;
     if (pcSolver != NULL) {
         //if only it is CFD solver, otherwise exit by SIGSEGV error, detect getPropertyByName() !=  NULL
-        if (pcSolver->getPropertyByName("HeatTransfering")) {
-            pHeatTransfering = static_cast<App::PropertyBool*>(pcSolver->getPropertyByName("HeatTransfering"));
-            if (pHeatTransfering->getValue()) {
+        if (pcSolver->getPropertyByName("HeatTransferring")) {
+            pHeatTransferring = static_cast<App::PropertyBool*>(pcSolver->getPropertyByName("HeatTransferring"));
+            if (pHeatTransferring->getValue()) {
                 ui->tabThermalBoundary->setEnabled(true);
                 initComboBox(ui->comboThermalBoundaryType, pcConstraint->ThermalBoundaryType.getEnumVector(),
                                 pcConstraint->ThermalBoundaryType.getValueAsString());
@@ -252,7 +254,7 @@ TaskFemConstraintFluidBoundary::TaskFemConstraintFluidBoundary(ViewProviderFemCo
             }
             else {
                 ui->tabThermalBoundary->setEnabled(false);  // could be hidden
-                //Base::Console().Message("retrieve solver property HeatTransfering as false\n");
+                //Base::Console().Message("retrieve solver property HeatTransferring as false\n");
             }
         }
         else {
@@ -557,6 +559,9 @@ void TaskFemConstraintFluidBoundary::onButtonDirection(const bool pressed)
     // sets the normal vector of the currently selecteed planar face as direction
 
     Q_UNUSED(pressed)
+
+    clearButtons(none);
+
     //get vector of selected objects of active document
     std::vector<Gui::SelectionObject> selection = Gui::Selection().getSelectionEx();
     if (selection.size() == 0) {
@@ -661,10 +666,10 @@ double TaskFemConstraintFluidBoundary::getTurbulentLengthValue(void) const
     return ui->spinTurbulentLengthValue->value();
 }
 
-bool TaskFemConstraintFluidBoundary::getHeatTransfering(void) const
+bool TaskFemConstraintFluidBoundary::getHeatTransferring(void) const
 {
-    if(pHeatTransfering){
-        return pHeatTransfering->getValue();
+    if(pHeatTransferring){
+        return pHeatTransferring->getValue();
     }
     else{
         return false;
@@ -863,6 +868,12 @@ void TaskFemConstraintFluidBoundary::changeEvent(QEvent *e)
     }
 }
 
+void TaskFemConstraintFluidBoundary::clearButtons(const SelectionChangeModes notThis)
+{
+    if (notThis != refAdd) ui->btnAdd->setChecked(false);
+    if (notThis != refRemove) ui->btnRemove->setChecked(false);
+}
+
 //**************************************************************************
 //**************************************************************************
 // TaskDialog
@@ -924,12 +935,12 @@ bool TaskDlgFemConstraintFluidBoundary::accept()
         const Fem::FemSolverObject* pcSolver = boundary->getFemSolver();
 
         if (pcSolver) {
-            App::PropertyBool* pHeatTransfering = NULL;
+            App::PropertyBool* pHeatTransferring = NULL;
             App::PropertyEnumeration* pTurbulenceModel = NULL;
-            pHeatTransfering = static_cast<App::PropertyBool*>(pcSolver->getPropertyByName("HeatTransfering"));
+            pHeatTransferring = static_cast<App::PropertyBool*>(pcSolver->getPropertyByName("HeatTransferring"));
             pTurbulenceModel = static_cast<App::PropertyEnumeration*>(pcSolver->getPropertyByName("TurbulenceModel"));
 
-            if (pHeatTransfering && pHeatTransfering->getValue()) {
+            if (pHeatTransferring && pHeatTransferring->getValue()) {
                 Gui::Command::doCommand(Gui::Command::Doc,"App.ActiveDocument.%s.ThermalBoundaryType = '%s'",name.c_str(), boundary->getThermalBoundaryType().c_str());
                 Gui::Command::doCommand(Gui::Command::Doc,"App.ActiveDocument.%s.TemperatureValue = %f",name.c_str(), boundary->getTemperatureValue());
                 Gui::Command::doCommand(Gui::Command::Doc,"App.ActiveDocument.%s.HeatFluxValue = %f",name.c_str(), boundary->getHeatFluxValue());

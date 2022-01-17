@@ -222,6 +222,7 @@ PyObject*  MeshPy::write(PyObject *args, PyObject *kwds)
     ext["APLY" ] = MeshCore::MeshIO::APLY;
     ext["PY"   ] = MeshCore::MeshIO::PY;
     ext["ASY"  ] = MeshCore::MeshIO::ASY;
+    ext["3MF"  ] = MeshCore::MeshIO::ThreeMF;
 
     static char* keywords_path[] = {"Filename","Format","Name","Material",NULL};
     if (PyArg_ParseTupleAndKeywords(args, kwds, "et|ssO", keywords_path, "utf-8",
@@ -1740,6 +1741,22 @@ PyObject*  MeshPy::trim(PyObject *args)
     for (std::vector<Base::Vector3f>::const_iterator it = polygon.begin(); it != polygon.end(); ++it)
         polygon2d.Add(Base::Vector2d(it->x, it->y));
     getMeshObjectPtr()->trim(polygon2d, proj, MeshObject::CutType(mode));
+
+    Py_Return;
+}
+
+PyObject*  MeshPy::trimByPlane(PyObject *args)
+{
+    PyObject *base, *norm;
+    if (!PyArg_ParseTuple(args, "O!O!", &Base::VectorPy::Type, &base,
+                                        &Base::VectorPy::Type, &norm))
+        return nullptr;
+
+    Base::Vector3d pnt = Py::Vector(base, false).toVector();
+    Base::Vector3d dir = Py::Vector(norm, false).toVector();
+
+    getMeshObjectPtr()->trimByPlane(Base::convertTo<Base::Vector3f>(pnt),
+                                    Base::convertTo<Base::Vector3f>(dir));
 
     Py_Return;
 }

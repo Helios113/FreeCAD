@@ -144,6 +144,8 @@ SET(FemGui_DLG_SRCS
     TaskFemConstraint.ui
     TaskFemConstraint.cpp
     TaskFemConstraint.h
+    TaskFemConstraintOnBoundary.cpp
+    TaskFemConstraintOnBoundary.h
     TaskFemConstraintBearing.ui
     TaskFemConstraintBearing.cpp
     TaskFemConstraintBearing.h

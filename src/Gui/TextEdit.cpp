@@ -45,9 +45,24 @@ TextEdit::TextEdit(QWidget* parent)
     //Note: Set the correct context to this shortcut as we may use several instances of this
     //class at a time
     QShortcut* shortcut = new QShortcut(this);
-    shortcut->setKey(Qt::CTRL+Qt::Key_Space);
+    shortcut->setKey(QKeySequence(QString::fromLatin1("CTRL+Space")));
     shortcut->setContext(Qt::WidgetShortcut);
     connect(shortcut, SIGNAL(activated()), this, SLOT(complete()));
+
+    QShortcut* shortcutFind = new QShortcut(this);
+    shortcutFind->setKey(QKeySequence::Find);
+    shortcutFind->setContext(Qt::WidgetShortcut);
+    connect(shortcutFind, SIGNAL(activated()), this, SIGNAL(showSearchBar()));
+
+    QShortcut* shortcutNext = new QShortcut(this);
+    shortcutNext->setKey(QKeySequence::FindNext);
+    shortcutNext->setContext(Qt::WidgetShortcut);
+    connect(shortcutNext, SIGNAL(activated()), this, SIGNAL(findNext()));
+
+    QShortcut* shortcutPrev = new QShortcut(this);
+    shortcutPrev->setKey(QKeySequence::FindPrevious);
+    shortcutPrev->setContext(Qt::WidgetShortcut);
+    connect(shortcutPrev, SIGNAL(activated()), this, SIGNAL(findPrevious()));
 }
 
 /** Destroys the object and frees any allocated resources */
@@ -163,7 +178,8 @@ void TextEdit::complete()
 void TextEdit::createListBox()
 {
     listBox = new CompletionList(this);
-    listBox->setFrameStyle(QFrame::Box|QFrame::Raised);
+    listBox->setFrameStyle(QFrame::Box);
+    listBox->setFrameShadow(QFrame::Raised);
     listBox->setLineWidth(2);
     installEventFilter(listBox);
     viewport()->installEventFilter(listBox);

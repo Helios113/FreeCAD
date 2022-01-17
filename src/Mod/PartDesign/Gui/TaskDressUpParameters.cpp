@@ -46,6 +46,7 @@
 #include <Gui/Selection.h>
 #include <Gui/Command.h>
 #include <Gui/MainWindow.h>
+#include <Gui/Tools.h>
 #include <Mod/PartDesign/App/Body.h>
 #include <Mod/PartDesign/App/FeatureDressUp.h>
 #include <Mod/PartDesign/Gui/ReferenceSelection.h>
@@ -65,6 +66,7 @@ TaskDressUpParameters::TaskDressUpParameters(ViewProviderDressUp *DressUpView, b
     , proxy(0)
     , DressUpView(DressUpView)
     , deleteAction(nullptr)
+    , addAllEdgesAction(nullptr)
     , allowFaces(selectFaces)
     , allowEdges(selectEdges)
 {
@@ -139,16 +141,58 @@ bool TaskDressUpParameters::referenceSelected(const Gui::SelectionChanges& msg)
     return false;
 }
 
+void TaskDressUpParameters::addAllEdges(QListWidget* widget)
+{
+    PartDesign::DressUp* pcDressUp = static_cast<PartDesign::DressUp*>(DressUpView->getObject());
+    if (pcDressUp) {
+        App::DocumentObject* base = pcDressUp->Base.getValue();
+        if (base) {
+            Gui::WaitCursor wait;
+            int count = pcDressUp->getBaseTopoShape().countSubElements("Edge");
+            std::vector<std::string> edgeNames;
+            for (int ii = 0; ii < count; ii++){
+                std::ostringstream edgeName;
+                edgeName << "Edge" << ii+1;
+                edgeNames.push_back(edgeName.str());
+            }
+
+            for (std::vector<std::string>::const_iterator it = edgeNames.begin(); it != edgeNames.end(); ++it){
+                if (widget->findItems(QLatin1String(it->c_str()), Qt::MatchExactly).isEmpty()){
+                    widget->addItem(QLatin1String(it->c_str()));
+                }
+            }
+
+            pcDressUp->Base.setValue(base, edgeNames);
+            pcDressUp->getDocument()->recomputeFeature(pcDressUp);
+            hideObject();
+            DressUpView->highlightReferences(true);
+            onButtonRefAdd(true);
+
+            if (deleteAction) {
+                deleteAction->setEnabled(widget->count() > 1);
+            }
+        }
+    }
+}
+
 void TaskDressUpParameters::onButtonRefAdd(bool checked)
 {
     if (checked) {
         clearButtons(refAdd);
         hideObject();
         selectionMode = refAdd;
+        if (addAllEdgesAction)
+            addAllEdgesAction->setEnabled(true);
+        AllowSelectionFlags allow;
+        allow.setFlag(AllowSelection::EDGE, allowEdges);
+        allow.setFlag(AllowSelection::FACE, allowFaces);
         Gui::Selection().clearSelection();
-        Gui::Selection().addSelectionGate(new ReferenceSelection(this->getBase(), allowEdges, allowFaces, false));
+        Gui::Selection().addSelectionGate(new ReferenceSelection(this->getBase(), allow));
         DressUpView->highlightReferences(true);
-    } else {
+    }
+    else {
+        if (addAllEdgesAction)
+            addAllEdgesAction->setEnabled(false);
         exitSelectionMode();
         DressUpView->highlightReferences(false);
     }
@@ -160,8 +204,11 @@ void TaskDressUpParameters::onButtonRefRemove(const bool checked)
         clearButtons(refRemove);
         hideObject();
         selectionMode = refRemove;
-        Gui::Selection().clearSelection();        
-        Gui::Selection().addSelectionGate(new ReferenceSelection(this->getBase(), allowEdges, allowFaces, false));
+        AllowSelectionFlags allow;
+        allow.setFlag(AllowSelection::EDGE, allowEdges);
+        allow.setFlag(AllowSelection::FACE, allowFaces);
+        Gui::Selection().clearSelection();
+        Gui::Selection().addSelectionGate(new ReferenceSelection(this->getBase(), allow));
         DressUpView->highlightReferences(true);
     }
     else {
@@ -226,9 +273,26 @@ void TaskDressUpParameters::itemClickedTimeout() {
     wasDoubleClicked = false;
 }
 
+void TaskDressUpParameters::createAddAllEdgesAction(QListWidget* parentList)
+{
+    // creates a context menu, a shortcut for it and connects it to a slot function
+
+    addAllEdgesAction = new QAction(tr("Add all edges"), this);
+    addAllEdgesAction->setShortcut(QKeySequence(QString::fromLatin1("Ctrl+Shift+A")));
+#if QT_VERSION >= QT_VERSION_CHECK(5, 10, 0)
+    // display shortcut behind the context menu entry
+    addAllEdgesAction->setShortcutVisibleInContextMenu(true);
+#endif
+    parentList->addAction(addAllEdgesAction);
+    addAllEdgesAction->setEnabled(false);
+    addAllEdgesAction->setStatusTip(tr("Adds all edges to the list box (active only when in add selection mode)."));
+    parentList->setContextMenuPolicy(Qt::ActionsContextMenu);
+}
+
+
 void TaskDressUpParameters::createDeleteAction(QListWidget* parentList, QWidget* parentButton)
 {
-    // creates a context menu, a shortcutt for it and connects it to e slot function
+    // creates a context menu, a shortcut for it and connects it to a slot function
 
     deleteAction = new QAction(tr("Remove"), this);
     deleteAction->setShortcut(QKeySequence::Delete);
@@ -252,19 +316,26 @@ bool TaskDressUpParameters::KeyEvent(QEvent *e)
     // in case another instance takes key events, accept the overridden key event
     if (e && e->type() == QEvent::ShortcutOverride) {
         QKeyEvent * kevent = static_cast<QKeyEvent*>(e);
-        if (kevent->modifiers() == Qt::NoModifier) {
-            if (deleteAction && kevent->key() == Qt::Key_Delete) {
-                kevent->accept();
-                return true;
-            }
+        if (deleteAction && Gui::QtTools::matches(kevent, deleteAction->shortcut())) {
+            kevent->accept();
+            return true;
+        }
+        if (addAllEdgesAction && Gui::QtTools::matches(kevent, addAllEdgesAction->shortcut())) {
+            kevent->accept();
+            return true;
         }
     }
     // if we have a Del key, trigger the deleteAction
     else if (e && e->type() == QEvent::KeyPress) {
         QKeyEvent * kevent = static_cast<QKeyEvent*>(e);
-        if (kevent->key() == Qt::Key_Delete) {
-            if (deleteAction && deleteAction->isEnabled())
-                deleteAction->trigger();
+        if (deleteAction && deleteAction->isEnabled() &&
+            Gui::QtTools::matches(kevent, deleteAction->shortcut())) {
+            deleteAction->trigger();
+            return true;
+        }
+        if (addAllEdgesAction && addAllEdgesAction->isEnabled() &&
+            Gui::QtTools::matches(kevent, addAllEdgesAction->shortcut())) {
+            addAllEdgesAction->trigger();
             return true;
         }
     }

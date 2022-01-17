@@ -125,18 +125,18 @@ public:
     std::vector<TechDraw::DrawViewDimension*> getDimensions() const;
     std::vector<TechDraw::DrawViewBalloon*> getBalloons() const;
 
-    const std::vector<TechDraw::Vertex*> getVertexGeometry() const;
-    const std::vector<TechDraw::BaseGeom*> getEdgeGeometry() const;
-    const std::vector<TechDraw::BaseGeom*> getVisibleFaceEdges() const;
-    const std::vector<TechDraw::Face*> getFaceGeometry() const;
+    const std::vector<TechDraw::VertexPtr> getVertexGeometry() const;
+    const BaseGeomPtrVector getEdgeGeometry() const;
+    const BaseGeomPtrVector getVisibleFaceEdges() const;
+    const std::vector<TechDraw::FacePtr> getFaceGeometry() const;
 
     bool hasGeometry(void) const;
     TechDraw::GeometryObject* getGeometryObject(void) const { return geometryObject; }
 
-    TechDraw::BaseGeom* getGeomByIndex(int idx) const;               //get existing geom for edge idx in projection
-    TechDraw::Vertex* getProjVertexByIndex(int idx) const;           //get existing geom for vertex idx in projection
-    TechDraw::Vertex* getProjVertexByCosTag(std::string cosTag);
-    std::vector<TechDraw::BaseGeom*> getFaceEdgesByIndex(int idx) const;  //get edges for face idx in projection
+    TechDraw::BaseGeomPtr getGeomByIndex(int idx) const;               //get existing geom for edge idx in projection
+    TechDraw::VertexPtr getProjVertexByIndex(int idx) const;           //get existing geom for vertex idx in projection
+    TechDraw::VertexPtr getProjVertexByCosTag(std::string cosTag);
+    std::vector<TechDraw::BaseGeomPtr> getFaceEdgesByIndex(int idx) const;  //get edges for face idx in projection
 
     virtual Base::BoundBox3d getBoundingBox() const;
     double getBoxX(void) const;
@@ -148,7 +148,7 @@ public:
 
     virtual Base::Vector3d projectPoint(const Base::Vector3d& pt,
                                         bool invert = true) const;
-    virtual BaseGeom* projectEdge(const TopoDS_Edge& e) const;
+    virtual BaseGeomPtr projectEdge(const TopoDS_Edge& e) const;
 
     virtual gp_Ax2 getViewAxis(const Base::Vector3d& pt,
                                const Base::Vector3d& direction,
@@ -242,7 +242,7 @@ protected:
     bool prefIsoHid(void);
     int  prefIsoCount(void);
 
-    std::vector<TechDraw::Vertex*> m_referenceVerts;
+    std::vector<TechDraw::VertexPtr> m_referenceVerts;
 
 private:
     bool nowUnsetting;

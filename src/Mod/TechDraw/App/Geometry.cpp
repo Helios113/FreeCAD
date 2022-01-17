@@ -28,13 +28,13 @@
 #include <BRepAdaptor_Curve.hxx>
 #include <BRep_Tool.hxx>
 #include <BRepTools.hxx>
-#include <BRepAdaptor_HCurve.hxx>
 #include <BRepLib.hxx>
 #include <BRepBuilderAPI_MakeVertex.hxx>
 #include <BRepBuilderAPI_MakeEdge.hxx>
 #include <BRepBuilderAPI_MakeWire.hxx>
 #include <BRepBuilderAPI_MakeFace.hxx>
 #include <BRepExtrema_DistShapeShape.hxx>
+#include <BRepLProp_CLProps.hxx>
 #include <Precision.hxx>
 #include <GCPnts_AbscissaPoint.hxx>
 #include <gce_MakeCirc.hxx>
@@ -58,14 +58,16 @@
 #include <GeomLProp_CLProps.hxx>
 #include <GeomAPI_ProjectPointOnCurve.hxx>
 #include <Poly_Polygon3D.hxx>
+#include <Standard_Version.hxx>
 #include <TopoDS.hxx>
 #include <TopoDS_Edge.hxx>
 #include <TopExp.hxx>
 #include <TopExp_Explorer.hxx>
 #include <TColgp_Array1OfPnt2d.hxx>
 #include <TColgp_Array1OfPnt.hxx>
-#include <BRepLProp_CLProps.hxx>
-
+#if OCC_VERSION_HEX < 0x070600
+#include <BRepAdaptor_HCurve.hxx>
+#endif
 #include <cmath>
 #endif  // #ifndef _PreComp_
 
@@ -86,6 +88,10 @@
 using namespace TechDraw;
 using namespace std;
 
+#if OCC_VERSION_HEX >= 0x070600
+using BRepAdaptor_HCurve = BRepAdaptor_Curve;
+#endif
+
 #define GEOMETRYEDGE 0
 #define COSMETICEDGE 1
 #define CENTERLINE   2
@@ -100,7 +106,7 @@ Wire::Wire(const TopoDS_Wire &w)
     TopExp_Explorer edges(w, TopAbs_EDGE);
     for (; edges.More(); edges.Next()) {
         const auto edge( TopoDS::Edge(edges.Current()) );
-        BaseGeom* bg = BaseGeom::baseFactory(edge);
+        BaseGeomPtr bg = BaseGeom::baseFactory(edge);
         if (bg != nullptr) {
             geoms.push_back(bg);
         } else {
@@ -111,9 +117,7 @@ Wire::Wire(const TopoDS_Wire &w)
 
 Wire::~Wire()
 {
-    for(auto it : geoms) {
-        delete it;
-    }
+    //shared_ptr to geoms should free memory when ref count goes to zero
     geoms.clear();
 }
 
@@ -180,9 +184,9 @@ BaseGeom::BaseGeom() :
     cosmeticTag = std::string();
 }
 
-BaseGeom* BaseGeom::copy()
+BaseGeomPtr BaseGeom::copy()
 {
-    BaseGeom* result = nullptr;
+    BaseGeomPtr result;
     if (!occEdge.IsNull()) {
         result = baseFactory(occEdge);
         if (result != nullptr) {
@@ -197,7 +201,7 @@ BaseGeom* BaseGeom::copy()
             result->cosmeticTag = cosmeticTag;
         }
     } else {
-        result = new BaseGeom();
+        result = std::make_shared<BaseGeom>();
         result->extractType = extractType;
         result->classOfEdge = classOfEdge;
         result->hlrVisible = hlrVisible;
@@ -382,7 +386,7 @@ double BaseGeom::minDist(Base::Vector3d p)
 }
 
 //!find point on me nearest to p
-Base::Vector3d BaseGeom::nearPoint(const BaseGeom* p)
+Base::Vector3d BaseGeom::nearPoint(const BaseGeomPtr p)
 {
     Base::Vector3d result(0.0, 0.0, 0.0);
     TopoDS_Edge pEdge = p->occEdge;
@@ -443,9 +447,8 @@ bool BaseGeom::closed(void)
 
 
 //! Convert 1 OCC edge into 1 BaseGeom (static factory method)
-BaseGeom* BaseGeom::baseFactory(TopoDS_Edge edge)
+BaseGeomPtr BaseGeom::baseFactory(TopoDS_Edge edge)
 {
-    std::unique_ptr<BaseGeom> result;
     if (edge.IsNull()) {
         Base::Console().Message("BG::baseFactory - input edge is NULL \n");
     }
@@ -454,7 +457,7 @@ BaseGeom* BaseGeom::baseFactory(TopoDS_Edge edge)
         return nullptr;
     }
 
-    result = std::make_unique<Generic>(edge);
+    BaseGeomPtr result = std::make_shared<Generic> (edge);
 
     BRepAdaptor_Curve adapt(edge);
     switch(adapt.GetType()) {
@@ -468,9 +471,9 @@ BaseGeom* BaseGeom::baseFactory(TopoDS_Edge edge)
         //if first to last is > 1 radian? are circles parameterize by rotation angle?
         //if start and end points are close?
         if (fabs(l-f) > 1.0 && s.SquareDistance(e) < 0.001) {
-              result = std::make_unique<Circle>(edge);
+              result = std::make_shared<Circle>(edge);
         } else {
-              result = std::make_unique<AOC>(edge);
+              result = std::make_shared<AOC>(edge);
         }
       } break;
       case GeomAbs_Ellipse: {
@@ -479,15 +482,15 @@ BaseGeom* BaseGeom::baseFactory(TopoDS_Edge edge)
         gp_Pnt s = adapt.Value(f);
         gp_Pnt e = adapt.Value(l);
         if (fabs(l-f) > 1.0 && s.SquareDistance(e) < 0.001) {
-              result = std::make_unique<Ellipse>(edge);
+              result = std::make_shared<Ellipse>(edge);
         } else {
-              result = std::make_unique<AOE>(edge);
+              result = std::make_shared<AOE>(edge);
         }
       } break;
       case GeomAbs_BezierCurve: {
           Handle(Geom_BezierCurve) bez = adapt.Bezier();
           //if (bez->Degree() < 4) {
-          result = std::make_unique<BezierSegment>(edge);
+          result = std::make_shared<BezierSegment>(edge);
           if (edge.Orientation() == TopAbs_REVERSED) {
               result->reversed = true;
           }
@@ -495,25 +498,24 @@ BaseGeom* BaseGeom::baseFactory(TopoDS_Edge edge)
           //    OCC is quite happy with Degree > 3 but QtGui handles only 2,3
       } break;
       case GeomAbs_BSplineCurve: {
-        std::unique_ptr<BSpline> bspline;
         TopoDS_Edge circEdge;
 
         bool isArc = false;
         try {
-            bspline = std::make_unique<BSpline>(edge);
+            BSplinePtr bspline = std::make_shared<BSpline>(edge);
             if (bspline->isLine()) {
-                result = std::make_unique<Generic>(edge);
+                result = std::make_shared<Generic>(edge);
             } else {
                 circEdge = bspline->asCircle(isArc);
                 if (!circEdge.IsNull()) {
                     if (isArc) {
-                        result = std::make_unique<AOC>(circEdge);
+                        result = std::make_shared<AOC>(circEdge);
                     } else {
-                        result = std::make_unique<Circle>(circEdge);
+                        result = std::make_shared<Circle>(circEdge);
                     }
                 } else {
 //                    Base::Console().Message("Geom::baseFactory - circEdge is Null\n");
-                    result = std::move(bspline);
+                    result = bspline;
                 }
             }
             break;
@@ -532,8 +534,8 @@ BaseGeom* BaseGeom::baseFactory(TopoDS_Edge edge)
         result = std::make_unique<Generic>(edge);
       }  break;
     }
-    
-    return result.release();
+
+    return result;
 }
 
 bool BaseGeom::validateEdge(TopoDS_Edge edge)
@@ -1005,7 +1007,7 @@ double Generic::slope(void)
     return slope;
 }
 
-Base::Vector3d Generic::apparentInter(Generic* g)
+Base::Vector3d Generic::apparentInter(GenericPtr g)
 {
     Base::Vector3d dir0 = asVector();
     Base::Vector3d dir1 = g->asVector();
@@ -1441,10 +1443,10 @@ Vertex::Vertex(Base::Vector3d v) : Vertex(v.x,v.y)
 }
 
 
-bool Vertex::isEqual(Vertex* v, double tol)
+bool Vertex::isEqual(const Vertex& v, double tol)
 {
     bool result = false;
-    double dist = (pnt - (v->pnt)).Length();
+    double dist = (pnt - (v.pnt)).Length();
     if (dist <= tol) {
         result = true;
     }
@@ -1569,7 +1571,7 @@ BaseGeomPtrVector GeometryUtils::chainGeoms(BaseGeomPtrVector geoms)
         for (unsigned int i = 1; i < geoms.size(); i++) { //do size-1 more edges
             auto next( nextGeom(atPoint, geoms, used, Precision::Confusion()) );
             if (next.index) { //found an unused edge with vertex == atPoint
-                BaseGeom* nextEdge = geoms.at(next.index);
+                BaseGeomPtr nextEdge = geoms.at(next.index);
                 used[next.index] = true;
                 nextEdge->reversed = next.reversed;
                 result.push_back(nextEdge);
@@ -1615,7 +1617,7 @@ BaseGeomPtrVector GeometryUtils::chainGeoms(BaseGeomPtrVector geoms)
     return result;
 }
 
-TopoDS_Edge GeometryUtils::edgeFromGeneric(TechDraw::Generic* g)
+TopoDS_Edge GeometryUtils::edgeFromGeneric(TechDraw::GenericPtr g)
 {
 //    Base::Console().Message("GU::edgeFromGeneric()\n");
     //TODO: note that this isn't quite right as g can be a polyline!
@@ -1629,7 +1631,7 @@ TopoDS_Edge GeometryUtils::edgeFromGeneric(TechDraw::Generic* g)
     return e;
 }
 
-TopoDS_Edge GeometryUtils::edgeFromCircle(TechDraw::Circle* c)
+TopoDS_Edge GeometryUtils::edgeFromCircle(TechDraw::CirclePtr c)
 {
     gp_Pnt loc(c->center.x, c->center.y, c->center.z);
     gp_Dir dir(0,0,1);
@@ -1643,7 +1645,7 @@ TopoDS_Edge GeometryUtils::edgeFromCircle(TechDraw::Circle* c)
     return e;
 }
 
-TopoDS_Edge GeometryUtils::edgeFromCircleArc(TechDraw::AOC* c)
+TopoDS_Edge GeometryUtils::edgeFromCircleArc(TechDraw::AOCPtr c)
 {
     gp_Pnt loc(c->center.x, c->center.y, c->center.z);
     gp_Dir dir(0,0,1);

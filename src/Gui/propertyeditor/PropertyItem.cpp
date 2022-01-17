@@ -347,49 +347,64 @@ QVariant PropertyItem::toString(const QVariant& prop) const
     if (prop != QVariant() || propertyItems.size()!=1)
         return prop;
 
-    Base::PyGILStateLocker lock;
-    Py::Object pyobj(propertyItems[0]->getPyObject(), true);
     std::ostringstream ss;
-    if (pyobj.isNone()) {
-        ss << "<None>";
-    }
-    else if(pyobj.isSequence()) {
-        ss << '[';
-        Py::Sequence seq(pyobj);
-        bool first = true;
-        Py_ssize_t i=0;
-        for (i=0; i<2 && i < seq.size(); ++i) {
-            if (first)
-                first = false;
-            else
-                ss << ", ";
-            ss << Py::Object(seq[i]).as_string();
+    Base::PyGILStateLocker lock;
+    try {
+        Py::Object pyobj(propertyItems[0]->getPyObject(),true);
+        if(pyobj.isNone()) {
+            ss << "<None>";
         }
+        else if(pyobj.isSequence()) {
+            ss << '[';
+            Py::Sequence seq(pyobj);
+            bool first = true;
+            Py_ssize_t i=0;
+            for (i=0; i<2 && i < seq.size(); ++i) {
+                if (first)
+                    first = false;
+                else
+                    ss << ", ";
+                ss << Py::Object(seq[i]).as_string();
+            }
 
-        if (i < seq.size())
-            ss << "...";
-        ss << ']';
-    }
-    else if (pyobj.isMapping()) {
-        ss << '{';
-        Py::Mapping map(pyobj);
-        bool first = true;
-        auto it = map.begin();
-        for(int i=0; i<2 && it != map.end(); ++it, ++i) {
-            if (first)
-                first = false;
-            else
-                ss << ", ";
-            const auto &v = *it;
-            ss << Py::Object(v.first).as_string() << ':' << Py::Object(v.second).as_string();
+            if (i < seq.size())
+                ss << "...";
+            ss << ']';
         }
+        else if (pyobj.isMapping()) {
+            ss << '{';
+            Py::Mapping map(pyobj);
+            bool first = true;
+            auto it = map.begin();
+            for(int i=0; i<2 && it != map.end(); ++it, ++i) {
+                if (first)
+                    first = false;
+                else
+                    ss << ", ";
+                const auto &v = *it;
+                ss << Py::Object(v.first).as_string() << ':' << Py::Object(v.second).as_string();
+            }
 
-        if (it != map.end())
-            ss << "...";
-        ss << '}';
-    }
-    else {
-        ss << pyobj.as_string();
+            if (it != map.end())
+                ss << "...";
+            ss << '}';
+        }
+        else
+            ss << pyobj.as_string();
+
+    } catch (Py::Exception &) {
+        Base::PyException e;
+        ss.str("");
+        ss << "ERR: " << e.what();
+    } catch (Base::Exception &e) {
+        ss.str("");
+        ss << "ERR: " << e.what();
+    } catch (std::exception &e) {
+        ss.str("");
+        ss << "ERR: " << e.what();
+    } catch (...) {
+        ss.str("");
+        ss << "ERR!";
     }
 
     return QVariant(QString::fromUtf8(ss.str().c_str()));
@@ -537,7 +552,10 @@ QVariant PropertyItem::data(int column, int role) const
 {
     // property name
     if (column == 0) {
-        if (role == Qt::BackgroundRole || role == Qt::ForegroundRole) {
+        if (role == Qt::TextColorRole && linked)
+            return QVariant::fromValue(QColor(0x20,0xaa,0x20));
+
+        if (role == Qt::BackgroundRole || role == Qt::TextColorRole) {
             if(PropertyView::showAll()
                 && propertyItems.size() == 1
                 && propertyItems.front()->testStatus(App::Property::PropDynamic)
@@ -754,7 +772,7 @@ QVariant PropertyFontItem::value(const App::Property* prop) const
 
 void PropertyFontItem::setValue(const QVariant& value)
 {
-    if (!value.canConvert(QVariant::String))
+    if (hasExpression() || !value.canConvert(QVariant::String))
         return;
     QString val = value.toString();
     QString data = QString::fromLatin1("\"%1\"").arg(val);
@@ -1254,7 +1272,7 @@ QVariant PropertyBoolItem::value(const App::Property* prop) const
 
 void PropertyBoolItem::setValue(const QVariant& value)
 {
-    if (!value.canConvert(QVariant::Bool))
+    if (hasExpression() || !value.canConvert(QVariant::Bool))
         return;
     bool val = value.toBool();
     QString data = (val ? QLatin1String("True") : QLatin1String("False"));
@@ -1361,7 +1379,7 @@ QVariant PropertyVectorItem::value(const App::Property* prop) const
 
 void PropertyVectorItem::setValue(const QVariant& value)
 {
-    if (!value.canConvert<Base::Vector3d>())
+    if (hasExpression() || !value.canConvert<Base::Vector3d>())
         return;
     const Base::Vector3d& val = value.value<Base::Vector3d>();
     QString data = QString::fromLatin1("(%1, %2, %3)")
@@ -1636,7 +1654,7 @@ QVariant PropertyVectorDistanceItem::value(const App::Property* prop) const
 
 void PropertyVectorDistanceItem::setValue(const QVariant& variant)
 {
-    if (!variant.canConvert<Base::Vector3d>())
+    if (hasExpression() || !variant.canConvert<Base::Vector3d>())
         return;
     const Base::Vector3d& value = variant.value<Base::Vector3d>();
 
@@ -1853,7 +1871,7 @@ QVariant PropertyMatrixItem::toolTip(const App::Property* prop) const
 
 void PropertyMatrixItem::setValue(const QVariant& value)
 {
-    if (!value.canConvert<Base::Matrix4D>())
+    if (hasExpression() || !value.canConvert<Base::Matrix4D>())
         return;
     const Base::Matrix4D& val = value.value<Base::Matrix4D>();
     const int decimals=16;
@@ -2076,6 +2094,302 @@ void PropertyMatrixItem::setA44(double A44)
     setData(QVariant::fromValue(Base::Matrix4D(getA11(),getA12(),getA13(),getA14(),getA21(),getA22(),getA23(),getA24(),getA31(),getA32(),getA33(),getA34(),getA41(),getA42(),getA43(),A44 )));
 }
 
+// ---------------------------------------------------------------
+
+RotationHelper::RotationHelper()
+    : init_axis(false)
+    , changed_value(false)
+    , rot_angle(0)
+    , rot_axis(0,0,1)
+{
+}
+
+void RotationHelper::setChanged(bool value)
+{
+    changed_value = value;
+}
+
+bool RotationHelper::hasChangedAndReset()
+{
+    if (!changed_value)
+        return false;
+
+    changed_value = false;
+    return true;
+}
+
+bool RotationHelper::isAxisInitialized() const
+{
+    return init_axis;
+}
+
+void RotationHelper::setValue(const Base::Vector3d& axis, double angle)
+{
+    rot_axis = axis;
+    rot_angle = angle;
+    init_axis = true;
+}
+
+void RotationHelper::getValue(Base::Vector3d& axis, double& angle) const
+{
+    axis = rot_axis;
+    angle = rot_angle;
+}
+
+double RotationHelper::getAngle(const Base::Rotation& val) const
+{
+    double angle;
+    Base::Vector3d dir;
+    val.getRawValue(dir, angle);
+    if (dir * this->rot_axis < 0.0)
+        angle = -angle;
+    return angle;
+}
+
+Base::Rotation RotationHelper::setAngle(double angle)
+{
+    Base::Rotation rot;
+    rot.setValue(this->rot_axis, Base::toRadians<double>(angle));
+    changed_value = true;
+    rot_angle = angle;
+    return rot;
+}
+
+Base::Vector3d RotationHelper::getAxis() const
+{
+    // We must store the rotation axis in a member because
+    // if we read the value from the property we would always
+    // get a normalized vector which makes it quite unhandy
+    // to work with
+    return this->rot_axis;
+}
+
+Base::Rotation RotationHelper::setAxis(const Base::Rotation& value, const Base::Vector3d& axis)
+{
+    this->rot_axis = axis;
+    Base::Rotation rot = value;
+    Base::Vector3d dummy; double angle;
+    rot.getValue(dummy, angle);
+    if (dummy * axis < 0.0)
+        angle = -angle;
+    rot.setValue(axis, angle);
+    changed_value = true;
+    return rot;
+}
+
+void RotationHelper::assignProperty(const Base::Rotation& value, double eps)
+{
+    double angle;
+    Base::Vector3d dir;
+    value.getRawValue(dir, angle);
+    Base::Vector3d cross = this->rot_axis.Cross(dir);
+    double len2 = cross.Sqr();
+    if (angle != 0) {
+        // vectors are not parallel
+        if (len2 > eps)
+            this->rot_axis = dir;
+        // vectors point into opposite directions
+        else if (this->rot_axis.Dot(dir) < 0)
+            this->rot_axis = -this->rot_axis;
+    }
+    this->rot_angle = Base::toDegrees(angle);
+}
+
+// ---------------------------------------------------------------
+
+PROPERTYITEM_SOURCE(Gui::PropertyEditor::PropertyRotationItem)
+
+PropertyRotationItem::PropertyRotationItem()
+{
+    m_a = static_cast<PropertyUnitItem*>(PropertyUnitItem::create());
+    m_a->setParent(this);
+    m_a->setPropertyName(QLatin1String(QT_TRANSLATE_NOOP("App::Property", "Angle")));
+    this->appendChild(m_a);
+    m_d = static_cast<PropertyVectorItem*>(PropertyVectorItem::create());
+    m_d->setParent(this);
+    m_d->setPropertyName(QLatin1String(QT_TRANSLATE_NOOP("App::Property", "Axis")));
+    m_d->setReadOnly(true);
+    this->appendChild(m_d);
+}
+
+PropertyRotationItem::~PropertyRotationItem()
+{
+}
+
+Base::Quantity PropertyRotationItem::getAngle() const
+{
+    QVariant value = data(1, Qt::EditRole);
+    if (!value.canConvert<Base::Rotation>())
+        return Base::Quantity(0.0);
+
+    const Base::Rotation& val = value.value<Base::Rotation>();
+    double angle = h.getAngle(val);
+    return Base::Quantity(Base::toDegrees<double>(angle), Base::Unit::Angle);
+}
+
+void PropertyRotationItem::setAngle(Base::Quantity angle)
+{
+    QVariant value = data(1, Qt::EditRole);
+    if (!value.canConvert<Base::Rotation>())
+        return;
+
+    Base::Rotation rot = h.setAngle(angle.getValue());
+    setValue(QVariant::fromValue(rot));
+}
+
+Base::Vector3d PropertyRotationItem::getAxis() const
+{
+    return h.getAxis();
+}
+
+void PropertyRotationItem::setAxis(const Base::Vector3d& axis)
+{
+    QVariant value = data(1, Qt::EditRole);
+    if (!value.canConvert<Base::Rotation>())
+        return;
+
+    Base::Rotation rot = value.value<Base::Rotation>();
+    rot = h.setAxis(rot, axis);
+    setValue(QVariant::fromValue(rot));
+}
+
+void PropertyRotationItem::assignProperty(const App::Property* prop)
+{
+    // Choose an adaptive epsilon to avoid changing the axis when they are considered to
+    // be equal. See https://forum.freecadweb.org/viewtopic.php?f=10&t=24662&start=10
+    double eps = std::pow(10.0, -2*(decimals()+1));
+    if (prop->getTypeId().isDerivedFrom(App::PropertyRotation::getClassTypeId())) {
+        const Base::Rotation& value = static_cast<const App::PropertyRotation*>(prop)->getValue();
+        h.assignProperty(value, eps);
+    }
+}
+
+QVariant PropertyRotationItem::value(const App::Property* prop) const
+{
+    assert(prop && prop->getTypeId().isDerivedFrom(App::PropertyRotation::getClassTypeId()));
+
+    const Base::Rotation& value = static_cast<const App::PropertyRotation*>(prop)->getValue();
+    double angle;
+    Base::Vector3d dir;
+    value.getRawValue(dir, angle);
+    if (!h.isAxisInitialized()) {
+        if (m_a->hasExpression()) {
+            QString str = m_a->expressionAsString();
+            angle = str.toDouble();
+        }
+        else {
+            angle = Base::toDegrees(angle);
+        }
+
+        PropertyItem* x = m_d->child(0);
+        PropertyItem* y = m_d->child(1);
+        PropertyItem* z = m_d->child(2);
+        if (x->hasExpression()) {
+            QString str = x->expressionAsString();
+            dir.x = str.toDouble();
+        }
+        if (y->hasExpression()) {
+            QString str = y->expressionAsString();
+            dir.y = str.toDouble();
+        }
+        if (z->hasExpression()) {
+            QString str = z->expressionAsString();
+            dir.z = str.toDouble();
+        }
+        h.setValue(dir, angle);
+    }
+    return QVariant::fromValue<Base::Rotation>(value);
+}
+
+QVariant PropertyRotationItem::toolTip(const App::Property* prop) const
+{
+    assert(prop && prop->getTypeId().isDerivedFrom(App::PropertyRotation::getClassTypeId()));
+
+    const Base::Rotation& p = static_cast<const App::PropertyRotation*>(prop)->getValue();
+    double angle;
+    Base::Vector3d dir;
+    p.getRawValue(dir, angle);
+    angle = Base::toDegrees<double>(angle);
+
+    QLocale loc;
+    QString data = QString::fromUtf8("Axis: (%1 %2 %3)\n"
+                                     "Angle: %4")
+            .arg(loc.toString(dir.x,'f',decimals()),
+                 loc.toString(dir.y,'f',decimals()),
+                 loc.toString(dir.z,'f',decimals()),
+                 Base::Quantity(angle, Base::Unit::Angle).getUserString());
+    return QVariant(data);
+}
+
+QVariant PropertyRotationItem::toString(const QVariant& prop) const
+{
+    const Base::Rotation& p = prop.value<Base::Rotation>();
+    double angle;
+    Base::Vector3d dir;
+    p.getRawValue(dir, angle);
+    angle = Base::toDegrees<double>(angle);
+
+    QLocale loc;
+    QString data = QString::fromUtf8("[(%1 %2 %3); %4]")
+            .arg(loc.toString(dir.x,'f',2),
+                 loc.toString(dir.y,'f',2),
+                 loc.toString(dir.z,'f',2),
+                 Base::Quantity(angle, Base::Unit::Angle).getUserString());
+    return QVariant(data);
+}
+
+void PropertyRotationItem::setValue(const QVariant& value)
+{
+    if (!value.canConvert<Base::Rotation>())
+        return;
+    // Accept this only if the user changed the axis, angle or position but
+    // not if >this< item loses focus
+    if (!h.hasChangedAndReset())
+        return;
+
+    Base::Vector3d axis;
+    double angle;
+    h.getValue(axis, angle);
+    Base::QuantityFormat format(Base::QuantityFormat::Fixed, decimals());
+    QString data = QString::fromLatin1("App.Rotation(App.Vector(%1,%2,%3),%4)")
+                    .arg(Base::UnitsApi::toNumber(axis.x, format))
+                    .arg(Base::UnitsApi::toNumber(axis.y, format))
+                    .arg(Base::UnitsApi::toNumber(axis.z, format))
+                    .arg(Base::UnitsApi::toNumber(angle, format));
+    setPropertyValue(data);
+}
+
+QWidget* PropertyRotationItem::createEditor(QWidget* parent, const QObject* receiver, const char* method) const
+{
+    Q_UNUSED(parent)
+    Q_UNUSED(receiver)
+    Q_UNUSED(method)
+    return nullptr;
+}
+
+void PropertyRotationItem::setEditorData(QWidget *editor, const QVariant& data) const
+{
+    Q_UNUSED(editor)
+    Q_UNUSED(data)
+}
+
+QVariant PropertyRotationItem::editorData(QWidget *editor) const
+{
+    Q_UNUSED(editor)
+    return QVariant();
+}
+
+void PropertyRotationItem::propertyBound()
+{
+    if (isBound()) {
+        m_a->bind(App::ObjectIdentifier(getPath())<<App::ObjectIdentifier::String("Rotation")
+                                                  <<App::ObjectIdentifier::String("Angle"));
+
+        m_d->bind(App::ObjectIdentifier(getPath())<<App::ObjectIdentifier::String("Rotation")
+                                                  <<App::ObjectIdentifier::String("Axis"));
+    }
+}
+
 // --------------------------------------------------------------------
 
 PlacementEditor::PlacementEditor(const QString& name, QWidget * parent)
@@ -2152,7 +2466,7 @@ void PlacementEditor::updateValue(const QVariant& v, bool incr, bool data)
 
 PROPERTYITEM_SOURCE(Gui::PropertyEditor::PropertyPlacementItem)
 
-PropertyPlacementItem::PropertyPlacementItem() : init_axis(false), changed_value(false), rot_angle(0), rot_axis(0,0,1)
+PropertyPlacementItem::PropertyPlacementItem()
 {
     m_a = static_cast<PropertyUnitItem*>(PropertyUnitItem::create());
     m_a->setParent(this);
@@ -2179,12 +2493,9 @@ Base::Quantity PropertyPlacementItem::getAngle() const
     QVariant value = data(1, Qt::EditRole);
     if (!value.canConvert<Base::Placement>())
         return Base::Quantity(0.0);
+
     const Base::Placement& val = value.value<Base::Placement>();
-    double angle;
-    Base::Vector3d dir;
-    val.getRotation().getRawValue(dir, angle);
-    if (dir * this->rot_axis < 0.0)
-        angle = -angle;
+    double angle = h.getAngle(val.getRotation());
     return Base::Quantity(Base::toDegrees<double>(angle), Base::Unit::Angle);
 }
 
@@ -2195,21 +2506,14 @@ void PropertyPlacementItem::setAngle(Base::Quantity angle)
         return;
 
     Base::Placement val = value.value<Base::Placement>();
-    Base::Rotation rot;
-    rot.setValue(this->rot_axis, Base::toRadians<double>(angle.getValue()));
+    Base::Rotation rot = h.setAngle(angle.getValue());
     val.setRotation(rot);
-    changed_value = true;
-    rot_angle = angle.getValue();
     setValue(QVariant::fromValue(val));
 }
 
 Base::Vector3d PropertyPlacementItem::getAxis() const
 {
-    // We must store the rotation axis in a member because
-    // if we read the value from the property we would always
-    // get a normalized vector which makes it quite unhandy
-    // to work with
-    return this->rot_axis;
+    return h.getAxis();
 }
 
 void PropertyPlacementItem::setAxis(const Base::Vector3d& axis)
@@ -2217,16 +2521,11 @@ void PropertyPlacementItem::setAxis(const Base::Vector3d& axis)
     QVariant value = data(1, Qt::EditRole);
     if (!value.canConvert<Base::Placement>())
         return;
-    this->rot_axis = axis;
+
     Base::Placement val = value.value<Base::Placement>();
     Base::Rotation rot = val.getRotation();
-    Base::Vector3d dummy; double angle;
-    rot.getValue(dummy, angle);
-    if (dummy * axis < 0.0)
-        angle = -angle;
-    rot.setValue(axis, angle);
+    rot = h.setAxis(rot, axis);
     val.setRotation(rot);
-    changed_value = true;
     setValue(QVariant::fromValue(val));
 }
 
@@ -2244,9 +2543,10 @@ void PropertyPlacementItem::setPosition(const Base::Vector3d& pos)
     QVariant value = data(1, Qt::EditRole);
     if (!value.canConvert<Base::Placement>())
         return;
+
     Base::Placement val = value.value<Base::Placement>();
     val.setPosition(pos);
-    changed_value = true;
+    h.setChanged(true);
     setValue(QVariant::fromValue(val));
 }
 
@@ -2257,20 +2557,7 @@ void PropertyPlacementItem::assignProperty(const App::Property* prop)
     double eps = std::pow(10.0, -2*(decimals()+1));
     if (prop->getTypeId().isDerivedFrom(App::PropertyPlacement::getClassTypeId())) {
         const Base::Placement& value = static_cast<const App::PropertyPlacement*>(prop)->getValue();
-        double angle;
-        Base::Vector3d dir;
-        value.getRotation().getRawValue(dir, angle);
-        Base::Vector3d cross = this->rot_axis.Cross(dir);
-        double len2 = cross.Sqr();
-        if (angle != 0) {
-            // vectors are not parallel
-            if (len2 > eps)
-                this->rot_axis = dir;
-            // vectors point into opposite directions
-            else if (this->rot_axis.Dot(dir) < 0)
-                this->rot_axis = -this->rot_axis;
-        }
-        this->rot_angle = Base::toDegrees(angle);
+        h.assignProperty(value.getRotation(), eps);
     }
 }
 
@@ -2282,13 +2569,13 @@ QVariant PropertyPlacementItem::value(const App::Property* prop) const
     double angle;
     Base::Vector3d dir;
     value.getRotation().getRawValue(dir, angle);
-    if (!init_axis) {
+    if (!h.isAxisInitialized()) {
         if (m_a->hasExpression()) {
             QString str = m_a->expressionAsString();
-            const_cast<PropertyPlacementItem*>(this)->rot_angle = str.toDouble();
+            angle = str.toDouble();
         }
         else {
-            const_cast<PropertyPlacementItem*>(this)->rot_angle = Base::toDegrees(angle);
+            angle = Base::toDegrees(angle);
         }
 
         PropertyItem* x = m_d->child(0);
@@ -2306,8 +2593,7 @@ QVariant PropertyPlacementItem::value(const App::Property* prop) const
             QString str = z->expressionAsString();
             dir.z = str.toDouble();
         }
-        const_cast<PropertyPlacementItem*>(this)->rot_axis = dir;
-        const_cast<PropertyPlacementItem*>(this)->init_axis = true;
+        h.setValue(dir, angle);
     }
     return QVariant::fromValue<Base::Placement>(value);
 }
@@ -2360,15 +2646,19 @@ QVariant PropertyPlacementItem::toString(const QVariant& prop) const
 
 void PropertyPlacementItem::setValue(const QVariant& value)
 {
-    if (!value.canConvert<Base::Placement>())
+    if (hasExpression() || !value.canConvert<Base::Placement>())
         return;
     // Accept this only if the user changed the axis, angle or position but
     // not if >this< item loses focus
-    if (!changed_value)
+    if (!h.hasChangedAndReset())
         return;
-    changed_value = false;
+
     const Base::Placement& val = value.value<Base::Placement>();
     Base::Vector3d pos = val.getPosition();
+
+    Base::Vector3d axis;
+    double angle;
+    h.getValue(axis, angle);
 
     Base::QuantityFormat format(Base::QuantityFormat::Fixed, decimals());
     QString data = QString::fromLatin1("App.Placement("
@@ -2377,10 +2667,10 @@ void PropertyPlacementItem::setValue(const QVariant& value)
                     .arg(Base::UnitsApi::toNumber(pos.x, format))
                     .arg(Base::UnitsApi::toNumber(pos.y, format))
                     .arg(Base::UnitsApi::toNumber(pos.z, format))
-                    .arg(Base::UnitsApi::toNumber(rot_axis.x, format))
-                    .arg(Base::UnitsApi::toNumber(rot_axis.y, format))
-                    .arg(Base::UnitsApi::toNumber(rot_axis.z, format))
-                    .arg(Base::UnitsApi::toNumber(rot_angle, format));
+                    .arg(Base::UnitsApi::toNumber(axis.x, format))
+                    .arg(Base::UnitsApi::toNumber(axis.y, format))
+                    .arg(Base::UnitsApi::toNumber(axis.z, format))
+                    .arg(Base::UnitsApi::toNumber(angle, format));
     setPropertyValue(data);
 }
 
@@ -2423,7 +2713,37 @@ void PropertyPlacementItem::propertyBound()
 PROPERTYITEM_SOURCE(Gui::PropertyEditor::PropertyEnumItem)
 
 PropertyEnumItem::PropertyEnumItem()
+    :m_enum(0)
 {
+    if(PropertyView::showAll()) {
+        m_enum = static_cast<PropertyStringListItem*>(PropertyStringListItem::create());
+        m_enum->setParent(this);
+        m_enum->setPropertyName(QLatin1String(QT_TRANSLATE_NOOP("App::Property", "Enum")));
+        this->appendChild(m_enum);
+    }
+}
+
+void PropertyEnumItem::propertyBound()
+{
+    if (m_enum && isBound()) 
+        m_enum->bind(App::ObjectIdentifier(getPath())<<App::ObjectIdentifier::String("Enum"));
+}
+
+void PropertyEnumItem::setEnum(QStringList values)
+{
+    setData(values);
+}
+
+QStringList PropertyEnumItem::getEnum() const
+{
+    QStringList res;
+    auto prop = getFirstProperty();
+    if (prop && prop->getTypeId().isDerivedFrom(App::PropertyEnumeration::getClassTypeId())) {
+        const App::PropertyEnumeration* prop_enum = static_cast<const App::PropertyEnumeration*>(prop);
+        for(int i=0; i<prop_enum->getEnum().maxValue(); ++i)
+            res.push_back(QString::fromUtf8(prop_enum->getEnums()[i]));
+    }
+    return res;
 }
 
 QVariant PropertyEnumItem::value(const App::Property* prop) const
@@ -2431,25 +2751,40 @@ QVariant PropertyEnumItem::value(const App::Property* prop) const
     assert(prop && prop->getTypeId().isDerivedFrom(App::PropertyEnumeration::getClassTypeId()));
 
     const App::PropertyEnumeration* prop_enum = static_cast<const App::PropertyEnumeration*>(prop);
-    const std::vector<std::string>& value = prop_enum->getEnumVector();
-    long currentItem = prop_enum->getValue();
-
-    if (currentItem < 0 || currentItem >= static_cast<long>(value.size()))
+    if(!prop_enum->isValid())
         return QVariant(QString());
-    return QVariant(QString::fromUtf8(value[currentItem].c_str()));
+    return QVariant(QString::fromUtf8(prop_enum->getValueAsString()));
 }
 
 void PropertyEnumItem::setValue(const QVariant& value)
 {
-    if (!value.canConvert(QVariant::StringList))
+    if (hasExpression())
         return;
-    QStringList items = value.toStringList();
-    if (!items.isEmpty()) {
-        QByteArray val = items.front().toUtf8();
-        std::string str = Base::Tools::escapedUnicodeFromUtf8(val);
-        QString data = QString::fromLatin1("u\"%1\"").arg(QString::fromStdString(str));
-        setPropertyValue(data);
+
+    QString data;
+
+    if (value.type() == QVariant::StringList) {
+        QStringList values = value.toStringList();
+        QTextStream str(&data);
+        str << "[";
+        for (QStringList::Iterator it = values.begin(); it != values.end(); ++it) {
+            QString text(*it);
+            text.replace(QString::fromUtf8("'"),QString::fromUtf8("\\'"));
+
+            std::string pystr = Base::Tools::escapedUnicodeFromUtf8(text.toUtf8());
+            pystr = Base::Interpreter().strToPython(pystr.c_str());
+            str << "u\"" << pystr.c_str() << "\", ";
+        }
+        str << "]";
     }
+    else if (value.canConvert(QVariant::String)) {
+        QByteArray val = value.toString().toUtf8();
+        std::string str = Base::Tools::escapedUnicodeFromUtf8(val);
+        data = QString::fromLatin1("u\"%1\"").arg(QString::fromStdString(str));
+    }
+    else
+        return;
+    setPropertyValue(data);
 }
 
 QWidget* PropertyEnumItem::createEditor(QWidget* parent, const QObject* receiver, const char* method) const
@@ -2545,7 +2880,6 @@ QVariant PropertyStringListItem::toString(const QVariant& prop) const
     }
 
     QString text = QString::fromUtf8("[%1]").arg(list.join(QLatin1String(",")));
-    text.replace(QString::fromUtf8("'"),QString::fromUtf8("\\'"));
 
     return QVariant(text);
 }
@@ -2553,11 +2887,10 @@ QVariant PropertyStringListItem::toString(const QVariant& prop) const
 QVariant PropertyStringListItem::value(const App::Property* prop) const
 {
     assert(prop && prop->getTypeId().isDerivedFrom(App::PropertyStringList::getClassTypeId()));
-
     QStringList list;
-    const std::vector<std::string>& value = ((App::PropertyStringList*)prop)->getValues();
+    const std::vector<std::string>& value = (static_cast<const App::PropertyStringList*>(prop))->getValues();
     for ( std::vector<std::string>::const_iterator jt = value.begin(); jt != value.end(); ++jt ) {
-        list << QString::fromUtf8(Base::Tools::escapedUnicodeToUtf8(*jt).c_str());
+        list << QString::fromUtf8((*jt).c_str());
     }
 
     return QVariant(list);
@@ -2565,21 +2898,21 @@ QVariant PropertyStringListItem::value(const App::Property* prop) const
 
 void PropertyStringListItem::setValue(const QVariant& value)
 {
-    if (!value.canConvert(QVariant::StringList))
+    if (hasExpression() || !value.canConvert(QVariant::StringList))
         return;
     QStringList values = value.toStringList();
     QString data;
     QTextStream str(&data);
+    str.setCodec("UTF-8");
+
     str << "[";
     for (QStringList::Iterator it = values.begin(); it != values.end(); ++it) {
         QString text(*it);
-        text.replace(QString::fromUtf8("'"),QString::fromUtf8("\\'"));
-
-        std::string pystr = Base::Tools::escapedUnicodeFromUtf8(text.toUtf8());
-        pystr = Base::Interpreter().strToPython(pystr.c_str());
-        str << "u\"" << pystr.c_str() << "\", ";
+        std::string pystr = Base::Interpreter().strToPython(text.toUtf8().constData());
+        str << "\"" << QString::fromUtf8(pystr.c_str()) << "\", ";
     }
     str << "]";
+
     setPropertyValue(data);
 }
 
@@ -2642,7 +2975,7 @@ QVariant PropertyFloatListItem::value(const App::Property* prop) const
 
 void PropertyFloatListItem::setValue(const QVariant& value)
 {
-    if (!value.canConvert(QVariant::StringList))
+    if (hasExpression() || !value.canConvert(QVariant::StringList))
         return;
     QStringList values = value.toStringList();
     QString data;
@@ -2717,7 +3050,7 @@ QVariant PropertyIntegerListItem::value(const App::Property* prop) const
 
 void PropertyIntegerListItem::setValue(const QVariant& value)
 {
-    if (!value.canConvert(QVariant::StringList))
+    if (hasExpression() || !value.canConvert(QVariant::StringList))
         return;
     QStringList values = value.toStringList();
     QString data;
@@ -2769,7 +3102,7 @@ QVariant PropertyColorItem::value(const App::Property* prop) const
 
 void PropertyColorItem::setValue(const QVariant& value)
 {
-    if (!value.canConvert<QColor>())
+    if (hasExpression() || !value.canConvert<QColor>())
         return;
     QColor col = value.value<QColor>();
     App::Color val; val.setValue<QColor>(col);
@@ -3061,7 +3394,7 @@ QVariant PropertyMaterialItem::value(const App::Property* prop) const
 
 void PropertyMaterialItem::setValue(const QVariant& value)
 {
-    if (!value.canConvert<Material>())
+    if (hasExpression() || !value.canConvert<Material>())
         return;
 
     Material mat = value.value<Material>();
@@ -3493,7 +3826,7 @@ QVariant PropertyMaterialListItem::value(const App::Property* prop) const
 
 void PropertyMaterialListItem::setValue(const QVariant& value)
 {
-    if (!value.canConvert<QVariantList>())
+    if (hasExpression() || !value.canConvert<QVariantList>())
         return;
 
     QVariantList list = value.toList();
@@ -3614,7 +3947,7 @@ QVariant PropertyFileItem::value(const App::Property* prop) const
 
 void PropertyFileItem::setValue(const QVariant& value)
 {
-    if (!value.canConvert(QVariant::String))
+    if (hasExpression() || !value.canConvert(QVariant::String))
         return;
     QString val = value.toString();
     QString data = QString::fromLatin1("\"%1\"").arg(val);
@@ -3671,7 +4004,7 @@ QVariant PropertyPathItem::value(const App::Property* prop) const
 
 void PropertyPathItem::setValue(const QVariant& value)
 {
-    if (!value.canConvert(QVariant::String))
+    if (hasExpression() || !value.canConvert(QVariant::String))
         return;
     QString val = value.toString();
     QString data = QString::fromLatin1("\"%1\"").arg(val);
@@ -3723,7 +4056,7 @@ QVariant PropertyTransientFileItem::value(const App::Property* prop) const
 
 void PropertyTransientFileItem::setValue(const QVariant& value)
 {
-    if (!value.canConvert(QVariant::String))
+    if (hasExpression() || !value.canConvert(QVariant::String))
         return;
     QString val = value.toString();
     QString data = QString::fromLatin1("\"%1\"").arg(val);
@@ -3981,7 +4314,6 @@ PropertyLinkListItem::PropertyLinkListItem()
 {
 }
 
-// --------------------------------------------------------------------
 
 PropertyItemEditorFactory::PropertyItemEditorFactory()
 {

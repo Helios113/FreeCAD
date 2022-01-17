@@ -8,11 +8,11 @@ include_directories(
     ${XercesC_INCLUDE_DIRS}
 )
 
-generate_from_xml(SpreadsheetViewPy)
+generate_from_xml(ViewProviderSpreadsheetPy)
 
 # The XML files
 set(SpreadsheetGui_XML_SRCS
-    SpreadsheetViewPy.xml
+    ViewProviderSpreadsheetPy.xml
 )
 
 set(SpreadsheetGui_LIBS
@@ -51,6 +51,8 @@ endif()
 set(SpreadsheetGui_UIC_SRCS
    Sheet.ui
    PropertiesDialog.ui
+   DlgBindSheet.ui
+   DlgSheetConf.ui
 )
 
 if(BUILD_QT5)
@@ -71,10 +73,10 @@ SET(SpreadsheetGui_SRCS
     LineEdit.cpp
     ViewProviderSpreadsheet.cpp
     ViewProviderSpreadsheet.h
+    ViewProviderSpreadsheetPyImp.cpp
     Resources/Spreadsheet.qrc
     SpreadsheetView.cpp
     SpreadsheetView.h
-    SpreadsheetViewPyImp.cpp
     SpreadsheetDelegate.h
     SpreadsheetDelegate.cpp
     SheetTableView.cpp
@@ -89,6 +91,10 @@ SET(SpreadsheetGui_SRCS
     qtcolorpicker.cpp
     PropertiesDialog.h
     PropertiesDialog.cpp
+    DlgBindSheet.h
+    DlgBindSheet.cpp
+    DlgSheetConf.h
+    DlgSheetConf.cpp
     ${SpreadsheetGui_UIC_HDRS}
 )
 

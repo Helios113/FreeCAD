@@ -34,6 +34,7 @@
 #include <Gui/ViewProviderGeometryObject.h>
 #include <map>
 #include <Mod/Part/App/PartFeature.h>
+#include <Mod/Part/PartGlobal.h>
 
 class TopoDS_Shape;
 class TopoDS_Edge;
@@ -158,8 +159,6 @@ protected:
     virtual void onChanged(const App::Property* prop) override;
     bool loadParameter();
     void updateVisual();
-    void getNormals(const TopoDS_Face&  theFace, const Handle(Poly_Triangulation)& aPolyTri,
-                    TColgp_Array1OfDir& theNormals);
 
     // nodes for the data representation
     SoMaterialBinding * pcFaceBind;

@@ -1,7 +1,6 @@
-/***************************************************************************
-*   Copyright (c) 2007                                                    *
-*   Joachim Zettler <Joachim.Zettler@gmx.de>                              *
-*   Human Rezai <human@mytum.de>                                          *
+/**************************************************************************
+*   Copyright (c) 2007 Joachim Zettler <Joachim.Zettler@gmx.de>           *
+*   Copyright (c) 2007 Human Rezai <human@mytum.de>                       *
 *                                                                         *
 *   This file is part of the FreeCAD CAx development system.              *
 *                                                                         *
@@ -42,7 +41,7 @@ public:
 	void WriteOutput(const QString &dateiname);
 	bool Compute();
 	
-	TopoDS_Shape         m_Cad;              // CAD-Geometrie
+	TopoDS_Shape         m_Cad;              // CAD-Geometry
 	MeshCore::MeshKernel m_MeshCad;
 	MeshCore::MeshKernel m_Mesh;
 

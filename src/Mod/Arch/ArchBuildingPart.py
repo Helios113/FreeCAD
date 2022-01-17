@@ -32,6 +32,7 @@ if FreeCAD.GuiUp:
     import FreeCADGui
     from DraftTools import translate
     from PySide.QtCore import QT_TRANSLATE_NOOP
+    import draftutils.units as units
 else:
     # \cond
     def translate(ctxt,txt):
@@ -411,12 +412,13 @@ class BuildingPart(ArchIFC.IfcProduct):
                                 print("angle after rotation:",shape.Placement.Rotation.Angle)
                                 child.Placement = shape.Placement
                             if deltap:
-                                print("moving child")
+                                print("moving child",child.Label)
                                 child.Placement.move(deltap)
 
     def execute(self,obj):
 
         # gather all the child shapes into a compound
+        pl = obj.Placement
         shapes,materialstable = self.getShapes(obj)
         if shapes:
             import Part
@@ -430,8 +432,12 @@ class BuildingPart(ArchIFC.IfcProduct):
                 #print("recomputing ",obj.Label)
             else:
                 obj.Shape = Part.makeCompound(shapes)
+            obj.Placement = pl
         obj.Area = self.getArea(obj)
         obj.MaterialsTable = materialstable
+        if obj.ViewObject:
+            # update the autogroup box if needed
+            obj.ViewObject.Proxy.onChanged(obj.ViewObject,"AutoGroupBox")
 
     def getArea(self,obj):
 
@@ -497,6 +503,28 @@ class BuildingPart(ArchIFC.IfcProduct):
             g = obj.Group
             g.append(child)
             obj.Group = g
+
+    def autogroup(self,obj,child):
+
+        "Adds an object to the group of this BuildingPart automatically"
+
+        if obj.ViewObject:
+            if hasattr(obj.ViewObject.Proxy,"autobbox") and obj.ViewObject.Proxy.autobbox:
+                if hasattr(child,"Shape") and child.Shape:
+                    abb = obj.ViewObject.Proxy.autobbox
+                    cbb = child.Shape.BoundBox
+                    if abb.isValid():
+                        if not cbb.isValid():
+                            FreeCAD.ActiveDocument.recompute()
+                        if not cbb.isValid():
+                            cbb = FreeCAD.BoundBox()
+                            for v in child.Shape.Vertexes:
+                                print(v.Point)
+                                cbb.add(v.Point)
+                        if cbb.isValid() and abb.isInside(cbb):
+                            self.addObject(obj,child)
+                            return True
+        return False
 
 
 class ViewProviderBuildingPart:
@@ -573,7 +601,7 @@ class ViewProviderBuildingPart:
             vobj.addProperty("App::PropertyColor","ChildrenLineColor","Children",QT_TRANSLATE_NOOP("App::Property","The line color of child objects"))
             c = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/View").GetUnsigned("DefaultShapeLineColor",255)
             vobj.ChildrenLineColor = (float((c>>24)&0xFF)/255.0,float((c>>16)&0xFF)/255.0,float((c>>8)&0xFF)/255.0,0.0)
-        if not "ChildrenShapeolor" in pl:
+        if not "ChildrenShapeColor" in pl:
             vobj.addProperty("App::PropertyColor","ChildrenShapeColor","Children",QT_TRANSLATE_NOOP("App::Property","The shape color of child objects"))
             c = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/View").GetUnsigned("DefaultShapeColor",4294967295)
             vobj.ChildrenLineColor = (float((c>>24)&0xFF)/255.0,float((c>>16)&0xFF)/255.0,float((c>>8)&0xFF)/255.0,0.0)
@@ -588,6 +616,16 @@ class ViewProviderBuildingPart:
             vobj.CutMargin = 1600
         if not "AutoCutView" in pl:
             vobj.addProperty("App::PropertyBool","AutoCutView","Clip",QT_TRANSLATE_NOOP("App::Property","Turn cutting on when activating this level"))
+
+        # autogroup properties
+        if not "AutogroupSize" in pl:
+            vobj.addProperty("App::PropertyIntegerList","AutogroupSize","AutoGroup",QT_TRANSLATE_NOOP("App::Property","The capture box for newly created objects expressed as [XMin,YMin,ZMin,XMax,YMax,ZMax]"))
+        if not "AutogroupBox" in pl:
+            vobj.addProperty("App::PropertyBool","AutogroupBox","AutoGroup",QT_TRANSLATE_NOOP("App::Property","Turns auto group box on/off"))
+        if not "AutogroupAutosize" in pl:
+            vobj.addProperty("App::PropertyBool","AutogroupAutosize","AutoGroup",QT_TRANSLATE_NOOP("App::Property","Automatically set size from contents"))
+        if not "AutogroupMargin" in pl:
+            vobj.addProperty("App::PropertyLength","AutogroupMargin","AutoGroup",QT_TRANSLATE_NOOP("App::Property","A margin to use when autosize is turned on"))
 
     def onDocumentRestored(self,vobj):
 
@@ -618,6 +656,21 @@ class ViewProviderBuildingPart:
         lin = coin.SoType.fromName("SoBrepEdgeSet").createInstance()
         lin.coordIndex.setValues([0,1,-1,2,3,-1,4,5,-1])
         self.sep.addChild(lin)
+        self.bbox = coin.SoSwitch()
+        self.bbox.whichChild = -1
+        bboxsep = coin.SoSeparator()
+        self.bbox.addChild(bboxsep)
+        drawstyle = coin.SoDrawStyle()
+        drawstyle.style = coin.SoDrawStyle.LINES
+        drawstyle.lineWidth = 3
+        drawstyle.linePattern = 0x0f0f  # 0xaa
+        bboxsep.addChild(drawstyle)
+        self.bbco = coin.SoCoordinate3()
+        bboxsep.addChild(self.bbco)
+        lin = coin.SoIndexedLineSet()
+        lin.coordIndex.setValues([0,1,2,3,0,-1,4,5,6,7,4,-1,0,4,-1,1,5,-1,2,6,-1,3,7,-1])
+        bboxsep.addChild(lin)
+        self.sep.addChild(self.bbox)
         self.tra = coin.SoTransform()
         self.tra.rotation.setValue(FreeCAD.Rotation(0,0,90).Q)
         self.sep.addChild(self.tra)
@@ -632,6 +685,8 @@ class ViewProviderBuildingPart:
         self.onChanged(vobj,"FontName")
         self.onChanged(vobj,"ShowLevel")
         self.onChanged(vobj,"FontSize")
+        self.onChanged(vobj,"AutogroupBox")
+        self.setProperties(vobj)
         return
 
     def getDisplayModes(self,vobj):
@@ -729,14 +784,14 @@ class ViewProviderBuildingPart:
                     else:
                         u = q.getUserPreferred()[2]
                     try:
-                        q = q.getValueAs(u)
+                        txt += units.display_external(float(q),None,'Length',vobj.ShowUnit,u)
                     except Exception:
                         q = q.getValueAs(q.getUserPreferred()[2])
-                    d = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Units").GetInt("Decimals",0)
-                    fmt = "{0:."+ str(d) + "f}"
-                    if not vobj.ShowUnit:
-                        u = ""
-                    txt += fmt.format(float(q)) + str(u)
+                        d = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Units").GetInt("Decimals",0)
+                        fmt = "{0:."+ str(d) + "f}"
+                        if not vobj.ShowUnit:
+                            u = ""
+                        txt += fmt.format(float(q)) + str(u)
                 if not txt:
                     txt = " " # empty texts make coin crash...
                 if isinstance(txt,unicode):
@@ -793,6 +848,23 @@ class ViewProviderBuildingPart:
                 vobj.CutView = False
         elif prop == "SaveInventor":
             self.writeInventor(vobj.Object)
+        elif prop in ["AutogroupBox","AutogroupSize"]:
+            if hasattr(vobj,"AutogroupBox") and hasattr(vobj,"AutogroupSize"):
+                if vobj.AutogroupBox:
+                    if len(vobj.AutogroupSize) >= 6:
+                        self.autobbox = FreeCAD.BoundBox(*vobj.AutogroupSize[0:6])
+                        self.autobbox.move(vobj.Object.Placement.Base)
+                        pts = [list(self.autobbox.getPoint(i)) for i in range(8)]
+                        self.bbco.point.setValues(pts)
+                        self.bbox.whichChild = 0
+                else:
+                    self.autobbox = None
+                    self.bbox.whichChild = -1
+        elif prop in ["AutogroupAutosize","AutogroupMargin"]:
+            if hasattr(vobj,"AutogroupAutosize") and vobj.AutogroupAutosize:
+                bbox = vobj.Object.Shape.BoundBox
+                bbox.enlarge(vobj.AutogroupMargin.Value)
+                vobj.AutogroupSize = [int(i) for i in [bbox.XMin,bbox.YMin,bbox.ZMin,bbox.XMax,bbox.YMax,bbox.ZMax]]
 
     def onDelete(self,vobj,subelements):
 

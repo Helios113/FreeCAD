@@ -1,5 +1,5 @@
 /***************************************************************************
- *  Copyright (C) 2015 Alexander Golubev (Fat-Zer) <fatzer2@gmail.com>     *
+ *   Copyright (C) 2015 Alexander Golubev (Fat-Zer) <fatzer2@gmail.com>    *
  *                                                                         *
  *   This file is part of the FreeCAD CAx development system.              *
  *                                                                         *
@@ -941,7 +941,7 @@ void CmdPartDesignMoveFeatureInTree::activated(int iMsg)
     }
 
     // If the selected objects have been moved after the current tip then ask the
-    // user if he wants the last object to be the new tip.
+    // user if they want the last object to be the new tip.
     // Only do this for features that can hold a tip (not for e.g. datums)
     if ( lastObject && body->Tip.getValue() == target
         && lastObject->isDerivedFrom(PartDesign::Feature::getClassTypeId()) ) {

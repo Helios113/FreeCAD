@@ -53,7 +53,7 @@
 using Base::Console;
 using App::Application;
 
-const char sBanner[] = "(c) Juergen Riegel, Werner Mayer, Yorik van Havre and others 2001-2021\n"\
+const char sBanner[] = "(c) Juergen Riegel, Werner Mayer, Yorik van Havre and others 2001-2022\n"\
                        "FreeCAD is free and open-source software licensed under the terms of LGPL2+ license.\n"\
                        "FreeCAD wouldn't be possible without FreeCAD community.\n"\
                        "  #####                 ####  ###   ####  \n" \
@@ -108,7 +108,7 @@ int main( int argc, char ** argv )
         std::string appName = App::Application::Config()["ExeName"];
         std::stringstream msg;
         msg << "While initializing " << appName << " the following exception occurred: '" << e.what() << "'\n\n";
-        msg << "Python is searching for its runtime files in the following directories:\n" << Py_GetPath() << "\n\n";
+        msg << "Python is searching for its runtime files in the following directories:\n" << Py_EncodeLocale(Py_GetPath(),nullptr) << "\n\n";
         msg << "Python version information:\n" << Py_GetVersion() << "\n";
         const char* pythonhome = getenv("PYTHONHOME");
         if ( pythonhome ) {

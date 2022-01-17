@@ -27,6 +27,7 @@
 #include <QComboBox>
 
 #include <Mod/Part/App/Part2DObject.h>
+#include <Mod/PartDesign/Gui/EnumFlags.h>
 
 #include <Gui/TaskView/TaskView.h>
 #include <Gui/Selection.h>
@@ -142,6 +143,14 @@ public:
 
     virtual void apply() = 0;
 
+    /*!
+     * \brief setEnabledTransaction
+     * The transaction handling of this panel can be disabled if there is another
+     * instance that does it already, e.g. TaskDlgMultiTransformParameters.
+     * By default, transactions are enabled.
+     */
+    void setEnabledTransaction(bool);
+    bool isEnabledTransaction() const;
     void setupTransaction();
 
     int getTransactionID() const {
@@ -188,7 +197,7 @@ protected:
     void hideBase();
     void showBase();
 
-    void addReferenceSelectionGate(bool edge, bool face, bool planar=true, bool whole=false, bool circle=false);
+    void addReferenceSelectionGate(AllowSelectionFlags);
 
     bool isViewUpdated() const;
     int getUpdateViewTimeout() const;
@@ -212,6 +221,7 @@ protected:
     QWidget* proxy;
     ViewProviderTransformed *TransformedView;
     int transactionID = 0;
+    bool enableTransaction = true;
 
     enum selectionModes { none, addFeature, removeFeature, reference };
     selectionModes selectionMode;

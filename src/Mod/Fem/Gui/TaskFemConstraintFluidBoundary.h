@@ -31,6 +31,7 @@
 #include <Mod/Fem/App/FemSolverObject.h>
 
 #include "TaskFemConstraint.h"
+#include "TaskFemConstraintOnBoundary.h"
 #include "ViewProviderFemConstraintFluidBoundary.h"
 
 #include <QKeyEvent>
@@ -47,7 +48,7 @@ class ViewProvider;
 
 namespace FemGui {
 
-class TaskFemConstraintFluidBoundary : public TaskFemConstraint
+class TaskFemConstraintFluidBoundary : public TaskFemConstraintOnBoundary
 {
     Q_OBJECT
 
@@ -66,7 +67,7 @@ public:
     double getTurbulentIntensityValue(void) const;
     double getTurbulentLengthValue(void) const;
 
-    bool getHeatTransfering(void) const;
+    bool getHeatTransferring(void) const;
     std::string getThermalBoundaryType(void) const;
     double getTemperatureValue(void) const;
     double getHeatFluxValue(void) const;
@@ -92,6 +93,7 @@ private Q_SLOTS:
 protected:
     bool event(QEvent *e);
     virtual void changeEvent(QEvent *e);
+    void clearButtons(const SelectionChangeModes notThis) override;
 
 private:
     void updateBoundaryTypeUI();
@@ -104,7 +106,7 @@ private:
     Ui_TaskFemConstraintFluidBoundary* ui;
     int dimension;  // -1: unknown, 2 for 2D and 3 for 3D
     Fem::FemSolverObject* pcSolver;
-    App::PropertyBool* pHeatTransfering;
+    App::PropertyBool* pHeatTransferring;
     App::PropertyEnumeration* pTurbulenceModel;
 };
 

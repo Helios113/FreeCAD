@@ -1,5 +1,7 @@
 #add_subdirectory(Icons)
 add_subdirectory(Stylesheets)
+add_subdirectory(PreferencePacks)
+add_subdirectory(PreferencePackTemplates)
 
 if(WIN32)
 add_definitions(-DFCGui -DQIIS_MAKEDLL -DQSINT_MAKEDLL -DOVR_OS_WIN32 -DQUARTER_INTERNAL -DQUARTER_MAKE_DLL -DCOIN_DLL)
@@ -306,6 +308,7 @@ SET(Gui_UIC_SRCS
     DlgAuthorization.ui
     DlgChooseIcon.ui
     DlgCommands.ui
+    DlgCreateNewPreferencePack.ui
     DlgCustomizeSpNavSettings.ui
     DlgDisplayProperties.ui
     DlgEditor.ui
@@ -325,6 +328,7 @@ SET(Gui_UIC_SRCS
     DlgPropertyLink.ui
     DlgReportView.ui
     DlgSettings3DView.ui
+    DlgSettingsCacheDirectory.ui
     DlgSettingsNavigation.ui
     DlgSettingsSelection.ui
     DlgSettingsUnits.ui
@@ -403,6 +407,7 @@ SET(Dialog_CPP_SRCS
     Clipping.cpp
     DemoMode.cpp
     DlgActivateWindowImp.cpp
+    DlgCreateNewPreferencePackImp.cpp
     DlgUnitsCalculatorImp.cpp
     DlgDisplayPropertiesImp.cpp
     DlgInputDialogImp.cpp
@@ -440,6 +445,7 @@ SET(Dialog_HPP_SRCS
     Clipping.h
     DemoMode.h
     DlgActivateWindowImp.h
+    DlgCreateNewPreferencePackImp.h
     DlgUnitsCalculatorImp.h
     DlgDisplayPropertiesImp.h
     DlgInputDialogImp.h
@@ -499,6 +505,7 @@ SET(Dialog_SRCS
     DlgCheckableMessageBox.ui
     DlgTreeWidget.ui
     DlgExpressionInput.ui
+    DlgCreateNewPreferencePack.ui
     DownloadManager.ui
     DownloadItem.ui
     DocumentRecovery.ui
@@ -557,6 +564,7 @@ SET(Dialog_Settings_CPP_SRCS
     DlgPreferencesImp.cpp
     DlgReportViewImp.cpp
     DlgSettings3DViewImp.cpp
+    DlgSettingsCacheDirectory.cpp
     DlgSettingsNavigation.cpp
     DlgSettingsSelection.cpp
     DlgSettingsUnitsImp.cpp
@@ -574,6 +582,7 @@ SET(Dialog_Settings_HPP_SRCS
     DlgPreferencesImp.h
     DlgReportViewImp.h
     DlgSettings3DViewImp.h
+    DlgSettingsCacheDirectory.h
     DlgSettingsNavigation.h
     DlgSettingsSelection.h
     DlgSettingsUnitsImp.h
@@ -593,6 +602,7 @@ SET(Dialog_Settings_SRCS
     DlgPreferences.ui
     DlgReportView.ui
     DlgSettings3DView.ui
+    DlgSettingsCacheDirectory.ui
     DlgSettingsNavigation.ui
     DlgSettingsSelection.ui
     DlgSettingsUnits.ui
@@ -832,6 +842,8 @@ SET(View3D_CPP_SRCS
     BlenderNavigationStyle.cpp
     MayaGestureNavigationStyle.cpp
     OpenCascadeNavigationStyle.cpp
+    OpenSCADNavigationStyle.cpp
+    TinkerCADNavigationStyle.cpp
     TouchpadNavigationStyle.cpp
     GestureNavigationStyle.cpp
     SplitView3DInventor.cpp
@@ -1025,6 +1037,7 @@ SOURCE_GROUP("View3D\\Inventor" FILES ${Inventor_SRCS})
 SET(Widget_CPP_SRCS
     FileDialog.cpp
     MainWindow.cpp
+    MainWindowPy.cpp
     PrefWidgets.cpp
     InputField.cpp
     ProgressBar.cpp
@@ -1042,6 +1055,7 @@ SET(Widget_CPP_SRCS
 SET(Widget_HPP_SRCS
     FileDialog.h
     MainWindow.h
+    MainWindowPy.h
     PrefWidgets.h
     InputField.h
     ProgressBar.h
@@ -1143,6 +1157,7 @@ SET(FreeCADGui_CPP_SRCS
     resource.cpp
     Control.cpp
     SpaceballEvent.cpp
+    PreferencePackManager.cpp
     Thumbnail.cpp
     Utilities.cpp
     WaitCursor.cpp
@@ -1175,7 +1190,9 @@ SET(FreeCADGui_SRCS
     Qt4All.h
     Control.h
     SpaceballEvent.h
+    PreferencePackManager.h
     Thumbnail.h
+    Tools.h
     Utilities.h
     WaitCursor.h
     ManualAlignment.h

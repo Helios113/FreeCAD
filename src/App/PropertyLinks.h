@@ -93,8 +93,8 @@ public:
      * Retrieve what kind of links are allowed. Only in the Local GeoFeatureGroup, in this and
      * all Childs or to all objects within the Glocal scope.
      */
-    LinkScope getScope() {return _pcScope;};
-
+    LinkScope getScope() const {return _pcScope;};
+    
 protected:
     LinkScope _pcScope = LinkScope::Local;
 };
@@ -287,6 +287,8 @@ public:
         return ret;
     }
     //@}
+
+    virtual bool isSame(const Property &other) const override;
 
     /** Enable/disable temporary holding external object without throwing exception
      *
@@ -935,6 +937,8 @@ public:
      */
     void setValue(App::DocumentObject *lValue, const std::vector<std::string> &SubList=std::vector<std::string>());
 
+    void addValue(App::DocumentObject *obj, const std::vector<std::string> &SubList={}, bool reset = false);
+
     const std::vector<DocumentObject*> &getValues(void) const {
         return _lValueList;
     }
@@ -973,6 +977,7 @@ public:
 
     virtual void Save (Base::Writer &writer) const override;
     virtual void Restore(Base::XMLReader &reader) override;
+    bool upgrade(Base::XMLReader &reader, const char *typeName);
 
     virtual Property *Copy(void) const override;
     virtual void Paste(const Property &from) override;
@@ -1002,6 +1007,9 @@ public:
     virtual void breakLink(App::DocumentObject *obj, bool clear) override;
 
     virtual bool adjustLink(const std::set<App::DocumentObject *> &inList) override;
+
+private:
+    void verifyObject(App::DocumentObject *, App::DocumentObject *);
 
 private:
     //FIXME: Do not make two independent lists because this will lead to some inconsistencies!
@@ -1338,11 +1346,11 @@ protected:
     virtual void onBreakLink(App::DocumentObject *obj);
     virtual void onAddDep(App::DocumentObject *) {}
     virtual void onRemoveDep(App::DocumentObject *) {}
-    void updateDeps(std::set<DocumentObject*> &&newDeps);
+    void updateDeps(std::map<DocumentObject*,bool> &&newDeps);
     void clearDeps();
 
 protected:
-    std::set<App::DocumentObject*> _Deps;
+    std::map<App::DocumentObject*,bool> _Deps;
     std::map<std::string, std::unique_ptr<PropertyXLink> > _XLinks;
     std::map<std::string, std::string> _DocMap;
     bool _LinkRestored;
@@ -1352,6 +1360,7 @@ private:
         std::unique_ptr<PropertyXLink> xlink;
         std::string docName;
         std::string docLabel;
+        bool hidden=false;
     };
     std::unique_ptr<std::vector<RestoreInfo> > _XLinkRestores;
 };

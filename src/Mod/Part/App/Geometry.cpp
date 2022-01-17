@@ -51,7 +51,6 @@
 # include <Geom_RectangularTrimmedSurface.hxx>
 # include <Geom_SurfaceOfRevolution.hxx>
 # include <Geom_SurfaceOfLinearExtrusion.hxx>
-# include <GeomAdaptor_HCurve.hxx>
 # include <GeomAPI_Interpolate.hxx>
 # include <GeomConvert.hxx>
 # include <GeomConvert_CompCurveToBSplineCurve.hxx>
@@ -101,6 +100,9 @@
 # include <GeomAPI_ExtremaCurveCurve.hxx>
 # include <ShapeConstruct_Curve.hxx>
 # include <LProp_NotDefined.hxx>
+# if OCC_VERSION_HEX < 0x070600
+# include <GeomAdaptor_HCurve.hxx>
+# endif
 
 # include <ctime>
 # include <cmath>
@@ -144,6 +146,9 @@
 
 #include "Geometry.h"
 
+#if OCC_VERSION_HEX >= 0x070600
+using GeomAdaptor_HCurve = GeomAdaptor_Curve;
+#endif
 
 using namespace Part;
 
@@ -293,7 +298,7 @@ bool Geometry::hasExtension(Base::Type type) const
     return false;
 }
 
-bool Geometry::hasExtension(std::string name) const
+bool Geometry::hasExtension(const std::string & name) const
 {
     for( auto ext : extensions) {
         if(ext->getName() == name)
@@ -313,7 +318,7 @@ std::weak_ptr<GeometryExtension> Geometry::getExtension(Base::Type type)
     throw Base::ValueError("No geometry extension of the requested type.");
 }
 
-std::weak_ptr<GeometryExtension> Geometry::getExtension(std::string name)
+std::weak_ptr<GeometryExtension> Geometry::getExtension(const std::string & name)
 {
     for( auto ext : extensions) {
         if(ext->getName() == name)
@@ -328,7 +333,7 @@ std::weak_ptr<const GeometryExtension> Geometry::getExtension(Base::Type type) c
     return const_cast<Geometry*>(this)->getExtension(type).lock();
 }
 
-std::weak_ptr<const GeometryExtension> Geometry::getExtension(std::string name) const
+std::weak_ptr<const GeometryExtension> Geometry::getExtension(const std::string & name) const
 {
     return const_cast<Geometry*>(this)->getExtension(name).lock();
 }
@@ -366,7 +371,7 @@ void Geometry::deleteExtension(Base::Type type)
         extensions.end());
 }
 
-void Geometry::deleteExtension(std::string name)
+void Geometry::deleteExtension(const std::string & name)
 {
     extensions.erase(
         std::remove_if( extensions.begin(),
@@ -629,6 +634,15 @@ bool GeomCurve::tangent(double u, Base::Vector3d& dir) const
     return false;
 }
 
+Base::Vector3d GeomCurve::value(double u) const
+{
+    Handle(Geom_Curve) c = Handle(Geom_Curve)::DownCast(handle());
+
+    const gp_Pnt &point = c->Value(u);
+
+    return Base::Vector3d(point.X(),point.Y(),point.Z());
+}
+
 Base::Vector3d GeomCurve::pointAtParameter(double u) const
 {
     Handle(Geom_Curve) c = Handle(Geom_Curve)::DownCast(handle());
@@ -682,6 +696,14 @@ bool GeomCurve::normalAt(double u, Base::Vector3d& dir) const
     }
 
     return false;
+}
+
+bool GeomCurve::normalAt(const Base::Vector3d & curvepoint, Base::Vector3d & dir) const
+{
+    double u;
+    closestParameter(curvepoint, u);
+
+    return normalAt(u, dir);
 }
 
 bool GeomCurve::intersect(  const GeomCurve *c,
@@ -1506,6 +1528,18 @@ void GeomBSplineCurve::increaseMultiplicity(int index, int multiplicity)
     try {
         Handle(Geom_BSplineCurve) curve = Handle(Geom_BSplineCurve)::DownCast(this->handle());
         curve->IncreaseMultiplicity(index, multiplicity);
+        return;
+    }
+    catch (Standard_Failure& e) {
+        THROWM(Base::CADKernelError,e.GetMessageString())
+            }
+}
+
+void GeomBSplineCurve::insertKnot(double param, int multiplicity)
+{
+    try {
+        Handle(Geom_BSplineCurve) curve = Handle(Geom_BSplineCurve)::DownCast(this->handle());
+        curve->InsertKnot(param, multiplicity);
         return;
     }
     catch (Standard_Failure& e) {

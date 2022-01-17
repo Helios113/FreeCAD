@@ -25,6 +25,11 @@
 # include <cassert>
 # include <gp_Pln.hxx>
 # include <gp_Lin.hxx>
+# include <BRepAdaptor_Curve.hxx>
+# include <BRepAdaptor_Surface.hxx>
+# include <BRepBuilderAPI_MakeEdge.hxx>
+# include <BRepBuilderAPI_MakeFace.hxx>
+# include <BRepMesh_IncrementalMesh.hxx>
 # include <BRep_Tool.hxx>
 # include <Geom_BSplineSurface.hxx>
 # include <Geom_Plane.hxx>
@@ -420,6 +425,7 @@ void Part::Tools::getPointNormals(const std::vector<gp_Pnt>& points, const TopoD
 
 void Part::Tools::getPointNormals(const TopoDS_Face& theFace, Handle(Poly_Triangulation) aPolyTri, TColgp_Array1OfDir& theNormals)
 {
+#if OCC_VERSION_HEX < 0x070600
     const TColgp_Array1OfPnt& aNodes = aPolyTri->Nodes();
 
     if(aPolyTri->HasNormals())
@@ -500,4 +506,153 @@ void Part::Tools::getPointNormals(const TopoDS_Face& theFace, Handle(Poly_Triang
             }
         }
     }
+#else
+    Standard_Integer numNodes = aPolyTri->NbNodes();
+
+    if(aPolyTri->HasNormals())
+    {
+        for(Standard_Integer aNodeIter = 1; aNodeIter <= numNodes; ++aNodeIter)
+        {
+            theNormals(aNodeIter) = aPolyTri->Normal(aNodeIter);
+        }
+
+        if(theFace.Orientation() == TopAbs_REVERSED)
+        {
+            for(Standard_Integer aNodeIter = 1; aNodeIter <= numNodes; ++aNodeIter)
+            {
+                theNormals.ChangeValue(aNodeIter).Reverse();
+            }
+        }
+    }
+    else {
+        // take in face the surface location
+        Poly_Connect thePolyConnect(aPolyTri);
+        const TopoDS_Face      aZeroFace = TopoDS::Face(theFace.Located(TopLoc_Location()));
+        Handle(Geom_Surface)   aSurf     = BRep_Tool::Surface(aZeroFace);
+        const Standard_Real    aTol      = Precision::Confusion();
+        Standard_Boolean hasNodesUV      = aPolyTri->HasUVNodes() && !aSurf.IsNull();
+        Standard_Integer aTri[3];
+
+        aPolyTri->AddNormals();
+        for(Standard_Integer aNodeIter = 1; aNodeIter <= numNodes; ++aNodeIter)
+        {
+            // try to retrieve normal from real surface first, when UV coordinates are available
+            if (!hasNodesUV || GeomLib::NormEstim(aSurf, aPolyTri->UVNode(aNodeIter), aTol, theNormals(aNodeIter)) > 1)
+            {
+                // compute flat normals
+                gp_XYZ eqPlan(0.0, 0.0, 0.0);
+
+                for(thePolyConnect.Initialize(aNodeIter); thePolyConnect.More(); thePolyConnect.Next())
+                {
+                    aPolyTri->Triangle(thePolyConnect.Value()).Get(aTri[0], aTri[1], aTri[2]);
+                    const gp_XYZ v1(aPolyTri->Node(aTri[1]).Coord() - aPolyTri->Node(aTri[0]).Coord());
+                    const gp_XYZ v2(aPolyTri->Node(aTri[2]).Coord() - aPolyTri->Node(aTri[1]).Coord());
+                    const gp_XYZ vv = v1 ^ v2;
+                    const Standard_Real aMod = vv.Modulus();
+
+                    if(aMod >= aTol)
+                    {
+                        eqPlan += vv / aMod;
+                    }
+                }
+
+                const Standard_Real aModMax = eqPlan.Modulus();
+                theNormals(aNodeIter) = (aModMax > aTol) ? gp_Dir(eqPlan) : gp::DZ();
+            }
+
+            aPolyTri->SetNormal(aNodeIter, theNormals(aNodeIter));
+        }
+
+        if(theFace.Orientation() == TopAbs_REVERSED)
+        {
+            for(Standard_Integer aNodeIter = 1; aNodeIter <= numNodes; ++aNodeIter)
+            {
+                theNormals.ChangeValue(aNodeIter).Reverse();
+            }
+        }
+    }
+#endif
+}
+
+void Part::Tools::getPointNormals(const TopoDS_Face& face, Handle(Poly_Triangulation) aPoly, std::vector<gp_Vec>& normals)
+{
+    TColgp_Array1OfDir dirs (1, aPoly->NbNodes());
+    getPointNormals(face, aPoly, dirs);
+    normals.reserve(aPoly->NbNodes());
+
+    for (int i = dirs.Lower(); i <= dirs.Upper(); ++i) {
+        normals.emplace_back(dirs(i).XYZ());
+    }
+}
+
+void Part::Tools::applyTransformationOnNormals(const TopLoc_Location& loc, std::vector<gp_Vec>& normals)
+{
+    if (!loc.IsIdentity()) {
+        gp_Trsf myTransf = loc.Transformation();
+
+        for (auto& it : normals) {
+            it.Transform(myTransf);
+        }
+    }
+}
+
+Handle (Poly_Triangulation) Part::Tools::triangulationOfFace(const TopoDS_Face& face)
+{
+    TopLoc_Location loc;
+    Handle (Poly_Triangulation) mesh = BRep_Tool::Triangulation(face, loc);
+    if (!mesh.IsNull())
+        return mesh;
+
+    // If no triangulation exists then the shape is probably infinite
+    BRepAdaptor_Surface adapt(face);
+    double u1 = adapt.FirstUParameter();
+    double u2 = adapt.LastUParameter();
+    double v1 = adapt.FirstVParameter();
+    double v2 = adapt.LastVParameter();
+
+    // recreate a face with a clear boundary
+    u1 = std::max(-50.0, u1);
+    u2 = std::min( 50.0, u2);
+    v1 = std::max(-50.0, v1);
+    v2 = std::min( 50.0, v2);
+
+    Handle(Geom_Surface) surface = BRep_Tool::Surface(face);
+    BRepBuilderAPI_MakeFace mkBuilder(surface, u1, u2, v1, v2
+#if OCC_VERSION_HEX >= 0x060502
+      , Precision::Confusion()
+#endif
+    );
+
+    TopoDS_Shape shape = mkBuilder.Shape();
+    shape.Location(loc);
+
+    BRepMesh_IncrementalMesh(shape, 0.1);
+    return BRep_Tool::Triangulation(TopoDS::Face(shape), loc);
+}
+
+Handle(Poly_Polygon3D) Part::Tools::polygonOfEdge(const TopoDS_Edge& edge, TopLoc_Location& loc)
+{
+    BRepAdaptor_Curve adapt(edge);
+    double u = adapt.FirstParameter();
+    double v = adapt.LastParameter();
+    Handle(Poly_Polygon3D) aPoly = BRep_Tool::Polygon3D(edge, loc);
+    if (!aPoly.IsNull() && !Precision::IsInfinite(u) && !Precision::IsInfinite(v))
+        return aPoly;
+
+    // recreate an edge with a clear range
+    u = std::max(-50.0, u);
+    v = std::min( 50.0, v);
+
+    double uv;
+    Handle(Geom_Curve) curve = BRep_Tool::Curve(edge, uv, uv);
+
+    BRepBuilderAPI_MakeEdge mkBuilder(curve, u, v);
+    TopoDS_Shape shape = mkBuilder.Shape();
+    // why do we have to set the inverted location here?
+    TopLoc_Location inv = loc.Inverted();
+    shape.Location(inv);
+
+    BRepMesh_IncrementalMesh(shape, 0.1);
+    TopLoc_Location tmp;
+    return BRep_Tool::Polygon3D(TopoDS::Edge(shape), tmp);
 }

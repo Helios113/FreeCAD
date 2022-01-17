@@ -633,24 +633,27 @@ bool MainWindow::closeAllDocuments (bool close)
     auto docs = App::GetApplication().getDocuments();
     try {
         docs = App::Document::getDependentDocuments(docs, true);
-    }catch(Base::Exception &e) {
+    }
+    catch(Base::Exception &e) {
         e.ReportException();
     }
+
     bool checkModify = true;
     bool saveAll = false;
     int failedSaves = 0;
-    for(auto doc : docs) {
+
+    for (auto doc : docs) {
         auto gdoc = Application::Instance->getDocument(doc);
-        if(!gdoc)
+        if (!gdoc)
             continue;
-        if(!gdoc->canClose(false))
+        if (!gdoc->canClose(false))
             return false;
-        if(!gdoc->isModified()
+        if (!gdoc->isModified()
                 || doc->testStatus(App::Document::PartialDoc)
                 || doc->testStatus(App::Document::TempDoc))
             continue;
         bool save = saveAll;
-        if(!save && checkModify) {
+        if (!save && checkModify) {
             int res = confirmSave(doc->Label.getStrValue().c_str(), this, docs.size()>1);
             switch (res)
             {
@@ -658,6 +661,7 @@ bool MainWindow::closeAllDocuments (bool close)
                 return false;
             case ConfirmSaveResult::SaveAll:
                 saveAll = true;
+                /* FALLTHRU */
             case ConfirmSaveResult::Save:
                 save = true;
                 break;
@@ -666,7 +670,7 @@ bool MainWindow::closeAllDocuments (bool close)
             }
         }
 
-        if(save && !gdoc->save())
+        if (save && !gdoc->save())
             failedSaves++;
     }
 
@@ -681,9 +685,9 @@ bool MainWindow::closeAllDocuments (bool close)
             return false;
     }
 
-    if(close)
+    if (close)
         App::GetApplication().closeAllDocuments();
-    // d->mdiArea->closeAllSubWindows();
+
     return true;
 }
 
@@ -1275,6 +1279,8 @@ void MainWindow::delayedStartup()
     if (hGrp->GetBool("CreateNewDoc", false)) {
         if (App::GetApplication().getDocuments().size()==0){
             App::GetApplication().newDocument();
+            Gui::Command::doCommand(Gui::Command::Gui,
+                "Gui.activeDocument().activeView().viewDefaultOrientation()");
         }
     }
 
@@ -1486,7 +1492,7 @@ QPixmap MainWindow::aboutImage() const
     if (!about_path.empty() && about_image.isNull()) {
         QString path = QString::fromUtf8(about_path.c_str());
         if (QDir(path).isRelative()) {
-            QString home = QString::fromUtf8(App::GetApplication().getHomePath());
+            QString home = QString::fromStdString(App::Application::getHomePath());
             path = QFileInfo(QDir(home), path).absoluteFilePath();
         }
         about_image.load(path);
@@ -1513,7 +1519,7 @@ QPixmap MainWindow::splashImage() const
     if (splash_image.isNull()) {
         QString path = QString::fromUtf8(splash_path.c_str());
         if (QDir(path).isRelative()) {
-            QString home = QString::fromUtf8(App::GetApplication().getHomePath());
+            QString home = QString::fromStdString(App::Application::getHomePath());
             path = QFileInfo(QDir(home), path).absoluteFilePath();
         }
 

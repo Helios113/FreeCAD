@@ -74,7 +74,7 @@ namespace dcm {
  * A property of kind @ref vertex_property will added to vertices, a property of kind @ref object_property to all
  * objects and so on.
  *
- * If the property type is a standart c++ type like int or bool, the defualt value can't be set by using its
+ * If the property type is a standard c++ type like int or bool, the default value can't be set by using its
  * constructor. Therefore a interface for setting default values is added to the property. If you want
  * to assign a default value you just need to add a struct default_value which returns the wanted default
  * value with the operator(). If you don't want a default value, just don't add the struct. The implementation
@@ -302,7 +302,7 @@ struct pts { //property type sequence
 /**
  * @brief Type traits to detect if the property has a default value
  *
- * If the user want to provide a default value for a property than he adds a default_value static function.
+ * If the user wants to provide a default value for a property than they add a default_value static function.
  * To check if the this function is available we add a type traits which searches for this special function.
  */
 BOOST_MPL_HAS_XXX_TRAIT_DEF(default_value)
@@ -312,7 +312,7 @@ BOOST_MPL_HAS_XXX_TRAIT_DEF(default_value)
 /**
  * @brief Functor to assign default values to property
  *
- * This functor holds a pointer to the PropertyOwner in question. The operator() get the properties which
+ * This functor holds a pointer to the PropertyOwner in question. The operator() gets the properties which
  * hold a default value and assigns this value to the property the owner holds.
  */
 template<typename PropertyOwner>

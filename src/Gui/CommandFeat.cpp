@@ -22,12 +22,15 @@
 
 
 #include "PreCompiled.h"
+#ifndef _PreComp_
+#endif
 
 #include <App/DocumentObject.h>
-
 #include "Application.h"
 #include "CommandT.h"
+#include "DockWindowManager.h"
 #include "Document.h"
+#include "PythonConsole.h"
 #include "Selection.h"
 #include "ViewProvider.h"
 #include "ViewProviderDocumentObject.h"
@@ -160,6 +163,13 @@ void StdCmdSendToPythonConsole::activated(int iMsg)
                     .arg(docname,objname,subname);
                 Gui::Command::runCommand(Gui::Command::Gui,cmd.toLatin1());
             }
+        }
+        //show the python console if it's not already visible, and set the keyboard focus to it
+        QWidget* pc = DockWindowManager::instance()->getDockWindow("Python console");
+        PythonConsole *pcPython = qobject_cast<PythonConsole*>(pc);
+        if (pcPython) {
+            DockWindowManager::instance()->activate(pcPython);
+            pcPython->setFocus();
         }
     }
     catch (const Base::Exception& e) {

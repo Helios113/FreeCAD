@@ -25,6 +25,7 @@
 
 #ifndef _PreComp_
 # include "InventorAll.h"
+# include <unordered_map>
 # include <boost_signals2.hpp>
 # include <sstream>
 # include <stdexcept>
@@ -44,6 +45,7 @@
 #endif
 
 #include <boost/interprocess/sync/file_lock.hpp>
+#include <boost/filesystem.hpp>
 #include <QtOpenGL.h>
 #if defined(HAVE_QT5_OPENGL)
 #include <QWindow>
@@ -73,6 +75,7 @@
 #include "WidgetFactory.h"
 #include "Command.h"
 #include "Macro.h"
+#include "PreferencePackManager.h"
 #include "ProgressBar.h"
 #include "Workbench.h"
 #include "WorkbenchManager.h"
@@ -85,17 +88,20 @@
 #include "SoFCDB.h"
 #include "PythonConsolePy.h"
 #include "PythonDebugger.h"
+#include "MainWindowPy.h"
 #include "MDIViewPy.h"
 #include "View3DPy.h"
 #include "DlgOnlineHelpImp.h"
 #include "SpaceballEvent.h"
 #include "Control.h"
 #include "DocumentRecovery.h"
+#include "DlgSettingsCacheDirectory.h"
 #include "TransactionObject.h"
 #include "FileDialog.h"
 #include "ExpressionBindingPy.h"
 #include "ViewProviderLinkPy.h"
 
+#include "EditorView.h"
 #include "TextDocumentEditorView.h"
 #include "SplitView3DInventor.h"
 #include "View3DInventor.h"
@@ -134,6 +140,7 @@
 #include <Gui/Quarter/Quarter.h>
 #include "View3DViewerPy.h"
 #include <Gui/GuiInitScript.h>
+#include <LibraryVersions.h>
 
 
 using namespace Gui;
@@ -145,6 +152,35 @@ namespace sp = std::placeholders;
 Application* Application::Instance = 0L;
 
 namespace Gui {
+
+class ViewProviderMap {
+    std::unordered_map<const App::DocumentObject *, ViewProvider *> map;
+
+public:
+    void newObject(const ViewProvider& vp)
+    {
+        auto vpd = Base::freecad_dynamic_cast<ViewProviderDocumentObject>(const_cast<ViewProvider*>(&vp));
+        if (vpd && vpd->getObject())
+            map[vpd->getObject()] = vpd;
+    }
+    void deleteObject(const ViewProvider& vp)
+    {
+        auto vpd = Base::freecad_dynamic_cast<ViewProviderDocumentObject>(const_cast<ViewProvider*>(&vp));
+        if (vpd && vpd->getObject())
+            map.erase(vpd->getObject());
+    }
+    void deleteDocument(const App::Document& doc) {
+        for (auto obj : doc.getObjects())
+            map.erase(obj);
+    }
+    Gui::ViewProvider* getViewProvider(const App::DocumentObject* obj) const
+    {
+        auto it = map.find(obj);
+        if (it == map.end())
+            return nullptr;
+        return it->second;
+    }
+};
 
 // Pimpl class
 struct ApplicationP
@@ -160,11 +196,15 @@ struct ApplicationP
             macroMngr = new MacroManager();
         else
             macroMngr = nullptr;
+
+        // Create the Theme Manager
+        prefPackManager = new PreferencePackManager();
     }
 
     ~ApplicationP()
     {
         delete macroMngr;
+        delete prefPackManager;
     }
 
     /// list of all handled documents
@@ -173,12 +213,14 @@ struct ApplicationP
     Gui::Document*   activeDocument;
     Gui::Document*  editDocument;
     MacroManager*  macroMngr;
+    PreferencePackManager* prefPackManager;
     /// List of all registered views
     std::list<Gui::BaseView*> passive;
     bool isClosing;
     bool startingUp;
     /// Handles all commands
     CommandManager commandManager;
+    ViewProviderMap viewproviderMap;
 };
 
 static PyObject *
@@ -442,6 +484,8 @@ Application::Application(bool GUIenabled)
         Py_DECREF(descr);
     }
 
+    App::Application::Config()["COIN_VERSION"] = COIN_VERSION;
+
     // Python console binding
     PythonDebugModule           ::init_module();
     PythonStdout                ::init_type();
@@ -449,6 +493,7 @@ Application::Application(bool GUIenabled)
     OutputStdout                ::init_type();
     OutputStderr                ::init_type();
     PythonStdin                 ::init_type();
+    MainWindowPy                ::init_type();
     MDIViewPy                   ::init_type();
     View3DInventorPy            ::init_type();
     View3DInventorViewerPy      ::init_type();
@@ -804,6 +849,8 @@ void Application::slotDeleteDocument(const App::Document& Doc)
     if (d->activeDocument == doc->second)
         setActiveDocument(0);
 
+    d->viewproviderMap.deleteDocument(Doc);
+
     // For exception-safety use a smart pointer
     unique_ptr<Document> delDoc (doc->second);
     d->documents.erase(doc);
@@ -872,12 +919,14 @@ void Application::slotActiveDocument(const App::Document& Doc)
 
 void Application::slotNewObject(const ViewProvider& vp)
 {
+    d->viewproviderMap.newObject(vp);
     this->signalNewObject(vp);
 }
 
 void Application::slotDeletedObject(const ViewProvider& vp)
 {
     this->signalDeletedObject(vp);
+    d->viewproviderMap.deleteObject(vp);
 }
 
 void Application::slotChangedObject(const ViewProvider& vp, const App::Property& prop)
@@ -1153,16 +1202,7 @@ void Application::hideViewProvider(const App::DocumentObject* obj)
 
 Gui::ViewProvider* Application::getViewProvider(const App::DocumentObject* obj) const
 {
-    App::Document* doc = obj ? obj->getDocument() : 0;
-    if (doc) {
-        Gui::Document* gui = getDocument(doc);
-        if (gui) {
-            ViewProvider* vp = gui->getViewProvider(obj);
-            return vp;
-        }
-    }
-
-    return 0;
+    return d->viewproviderMap.getViewProvider(obj);
 }
 
 void Application::attachView(Gui::BaseView* pcView)
@@ -1661,6 +1701,12 @@ CommandManager &Application::commandManager(void)
     return d->commandManager;
 }
 
+Gui::PreferencePackManager* Application::prefPackManager(void)
+{
+    return d->prefPackManager;
+}
+
+
 //**************************************************************************
 // Init, Destruct and singleton
 
@@ -1768,6 +1814,8 @@ void Application::initTypes(void)
     Gui::AbstractSplitView                      ::init();
     Gui::SplitView3DInventor                    ::init();
     Gui::TextDocumentEditorView                 ::init();
+    Gui::EditorView                             ::init();
+    Gui::PythonEditorView                       ::init();
     // View Provider
     Gui::ViewProvider                           ::init();
     Gui::ViewProviderExtension                  ::init();
@@ -1942,13 +1990,13 @@ void Application::runApplication(void)
         mainApp.setApplicationName(QString::fromUtf8(it->second.c_str()));
     }
     else {
-        mainApp.setApplicationName(QString::fromUtf8(App::GetApplication().getExecutableName()));
+        mainApp.setApplicationName(QString::fromStdString(App::Application::getExecutableName()));
     }
 #ifndef Q_OS_MACX
     mainApp.setWindowIcon(Gui::BitmapFactory().pixmap(App::Application::Config()["AppIcon"].c_str()));
 #endif
     QString plugin;
-    plugin = QString::fromUtf8(App::GetApplication().getHomePath());
+    plugin = QString::fromStdString(App::Application::getHomePath());
     plugin += QLatin1String("/plugins");
     QCoreApplication::addLibraryPath(plugin);
 
@@ -2114,7 +2162,7 @@ void Application::runApplication(void)
     // init the Inventor subsystem
     initOpenInventor();
 
-    QString home = QString::fromUtf8(App::GetApplication().getHomePath());
+    QString home = QString::fromStdString(App::Application::getHomePath());
 
     it = cfg.find("WindowTitle");
     if (it != cfg.end()) {
@@ -2233,9 +2281,10 @@ void Application::runApplication(void)
     std::vector<std::string> backgroundAutoloadedModules;
     std::stringstream stream(autoloadCSV);
     std::string workbench;
-    while (std::getline(stream, workbench, ','))
+    while (std::getline(stream, workbench, ',')) {
         if (wb.contains(QString::fromLatin1(workbench.c_str())))
             app.activateWorkbench(workbench.c_str());
+    }
 
     // Reactivate the startup workbench
     app.activateWorkbench(start.c_str());
@@ -2254,23 +2303,40 @@ void Application::runApplication(void)
 
     try {
         std::stringstream s;
-        s << App::Application::getTempPath() << App::GetApplication().getExecutableName()
+        s << App::Application::getUserCachePath() << App::Application::getExecutableName()
           << "_" << QCoreApplication::applicationPid() << ".lock";
         // open a lock file with the PID
         Base::FileInfo fi(s.str());
         Base::ofstream lock(fi);
-        boost::interprocess::file_lock flock(s.str().c_str());
-        flock.lock();
 
+        // In case the file_lock cannot be created start FreeCAD without IPC support.
+#if !defined(FC_OS_WIN32) || (BOOST_VERSION < 107600)
+        std::string filename = s.str();
+#else
+        std::wstring filename = fi.toStdWString();
+#endif
+        std::unique_ptr<boost::interprocess::file_lock> flock;
+        try {
+            flock = std::make_unique<boost::interprocess::file_lock>(filename.c_str());
+            flock->lock();
+        }
+        catch (const boost::interprocess::interprocess_exception& e) {
+            QString msg = QString::fromLocal8Bit(e.what());
+            Base::Console().Warning("Failed to create a file lock for the IPC: %s\n", msg.toUtf8().constData());
+        }
+
+        Base::Console().Log("Init: Executing event loop...\n");
         mainApp.exec();
+
         // Qt can't handle exceptions thrown from event handlers, so we need
         // to manually rethrow SystemExitExceptions.
-        if(mainApp.caughtException.get())
+        if (mainApp.caughtException.get())
             throw Base::SystemExitException(*mainApp.caughtException.get());
 
         // close the lock file, in case of a crash we can see the existing lock file
         // on the next restart and try to repair the documents, if needed.
-        flock.unlock();
+        if (flock.get())
+            flock->unlock();
         lock.close();
         fi.deleteFile();
     }
@@ -2280,14 +2346,14 @@ void Application::runApplication(void)
     }
     catch (const std::exception& e) {
         // catching nasty stuff coming out of the event loop
-        App::Application::destructObserver();
         Base::Console().Error("Event loop left through unhandled exception: %s\n", e.what());
+        App::Application::destructObserver();
         throw;
     }
     catch (...) {
         // catching nasty stuff coming out of the event loop
+        Base::Console().Error("Event loop left through unknown unhandled exception\n");
         App::Application::destructObserver();
-        Base::Console().Error("Event loop left through unhandled exception\n");
         throw;
     }
 
@@ -2404,79 +2470,22 @@ void Application::setStyleSheet(const QString& qssFile, bool tiledBackground)
 
 void Application::checkForPreviousCrashes()
 {
-    QDir tmp = QString::fromUtf8(App::Application::getTempPath().c_str());
-    tmp.setNameFilters(QStringList() << QString::fromLatin1("*.lock"));
-    tmp.setFilter(QDir::Files);
+    try {
+        Gui::Dialog::DocumentRecoveryFinder finder;
+        if (!finder.checkForPreviousCrashes()) {
 
-    QList<QFileInfo> restoreDocFiles;
-    QString exeName = QString::fromLatin1(App::GetApplication().getExecutableName());
-    QList<QFileInfo> locks = tmp.entryInfoList();
-    for (QList<QFileInfo>::iterator it = locks.begin(); it != locks.end(); ++it) {
-        QString bn = it->baseName();
-        // ignore the lock file for this instance
-        QString pid = QString::number(QCoreApplication::applicationPid());
-        if (bn.startsWith(exeName) && bn.indexOf(pid) < 0) {
-            QString fn = it->absoluteFilePath();
-            boost::interprocess::file_lock flock((const char*)fn.toLocal8Bit());
-            if (flock.try_lock()) {
-                // OK, this file is a leftover from a previous crash
-                QString crashed_pid = bn.mid(exeName.length()+1);
-                // search for transient directories with this PID
-                QString filter;
-                QTextStream str(&filter);
-                str << exeName << "_Doc_*_" << crashed_pid;
-                tmp.setNameFilters(QStringList() << filter);
-                tmp.setFilter(QDir::Dirs);
-                QList<QFileInfo> dirs = tmp.entryInfoList();
-                if (dirs.isEmpty()) {
-                    // delete the lock file immediately if no transient directories are related
-                    tmp.remove(fn);
-                }
-                else {
-                    int countDeletedDocs = 0;
-                    QString recovery_files = QString::fromLatin1("fc_recovery_files");
-                    for (QList<QFileInfo>::iterator it = dirs.begin(); it != dirs.end(); ++it) {
-                        QDir doc_dir(it->absoluteFilePath());
-                        doc_dir.setFilter(QDir::NoDotAndDotDot|QDir::AllEntries);
-                        uint entries = doc_dir.entryList().count();
-                        if (entries == 0) {
-                            // in this case we can delete the transient directory because
-                            // we cannot do anything
-                            if (tmp.rmdir(it->filePath()))
-                                countDeletedDocs++;
-                        }
-                        // search for the existence of a recovery file
-                        else if (doc_dir.exists(QLatin1String("fc_recovery_file.xml"))) {
-                            // store the transient directory in case it's not empty
-                            restoreDocFiles << *it;
-                        }
-                        // search for the 'fc_recovery_files' sub-directory and check that it's the only entry
-                        else if (entries == 1 && doc_dir.exists(recovery_files)) {
-                            // if the sub-directory is empty delete the transient directory
-                            QDir rec_dir(doc_dir.absoluteFilePath(recovery_files));
-                            rec_dir.setFilter(QDir::NoDotAndDotDot|QDir::AllEntries);
-                            if (rec_dir.entryList().isEmpty()) {
-                                doc_dir.rmdir(recovery_files);
-                                if (tmp.rmdir(it->filePath()))
-                                    countDeletedDocs++;
-                            }
-                        }
-                    }
-
-                    // all directories corresponding to the lock file have been deleted
-                    // so delete the lock file, too
-                    if (countDeletedDocs == dirs.size()) {
-                        tmp.remove(fn);
-                    }
-                }
+            // If the recovery dialog wasn't shown check the cache size periodically
+            Gui::Dialog::ApplicationCache cache;
+            cache.applyUserSettings();
+            if (cache.periodicCheckOfSize()) {
+                qint64 total = cache.size();
+                cache.performAction(total);
             }
         }
     }
-
-    if (!restoreDocFiles.isEmpty()) {
-        Gui::Dialog::DocumentRecovery dlg(restoreDocFiles, Gui::getMainWindow());
-        if (dlg.foundDocuments())
-            dlg.exec();
+    catch (const boost::interprocess::interprocess_exception& e) {
+        QString msg = QString::fromLocal8Bit(e.what());
+        Base::Console().Warning("Failed check for previous crashes because of IPC error: %s\n", msg.toUtf8().constData());
     }
 }
 

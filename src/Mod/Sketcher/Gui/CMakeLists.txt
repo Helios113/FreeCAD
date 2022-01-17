@@ -32,7 +32,7 @@ else()
 endif()
 
 set(SketcherGui_UIC_SRCS
-    TaskSketcherConstrains.ui
+    TaskSketcherConstraints.ui
     TaskSketcherElements.ui
     TaskSketcherGeneral.ui
     TaskSketcherMessages.ui
@@ -47,6 +47,7 @@ set(SketcherGui_UIC_SRCS
     SketchRectangularArrayDialog.ui
     SketcherRegularPolygonDialog.ui
     ConstraintMultiFilterDialog.ui
+    ConstraintSettingsDialog.ui
 )
 
 if(BUILD_QT5)
@@ -61,6 +62,8 @@ SET(SketcherGui_SRCS
     AppSketcherGui.cpp
     GeometryCreationMode.h
     Command.cpp
+    Utils.h
+    Utils.cpp
     CommandCreateGeo.cpp
     CommandConstraints.h
     CommandConstraints.cpp
@@ -77,10 +80,10 @@ SET(SketcherGui_SRCS
     SoDatumLabel.h
     PropertyConstraintListItem.h
     PropertyConstraintListItem.cpp
-    TaskSketcherConstrains.ui
-    TaskSketcherConstrains.cpp
+    TaskSketcherConstraints.ui
+    TaskSketcherConstraints.cpp
     ConstraintFilters.h
-    TaskSketcherConstrains.h
+    TaskSketcherConstraints.h
     TaskSketcherElements.ui
     TaskSketcherElements.cpp
     TaskSketcherElements.h
@@ -100,6 +103,20 @@ SET(SketcherGui_SRCS
     TaskSketcherValidation.h
     ShortcutListener.cpp
     ShortcutListener.h
+    EditModeInformationOverlayCoinConverter.cpp
+    EditModeInformationOverlayCoinConverter.h
+    EditModeGeometryCoinConverter.cpp
+    EditModeGeometryCoinConverter.h
+    EditModeCoinManagerParameters.h
+    EditModeCoinManagerParameters.cpp
+    EditModeCoinManager.cpp
+    EditModeCoinManager.h
+    EditModeGeometryCoinManager.cpp
+    EditModeGeometryCoinManager.h
+    EditModeConstraintCoinManager.cpp
+    EditModeConstraintCoinManager.h
+    ViewProviderSketchCoinAttorney.cpp
+    ViewProviderSketchCoinAttorney.h
     ViewProviderSketch.cpp
     ViewProviderSketch.h
     DrawSketchHandler.cpp
@@ -120,6 +137,8 @@ SET(SketcherGui_SRCS
     SketcherRegularPolygonDialog.cpp
     ConstraintMultiFilterDialog.h
     ConstraintMultiFilterDialog.cpp
+    ConstraintSettingsDialog.h
+    ConstraintSettingsDialog.cpp
     TaskDlgEditSketch.cpp
     TaskDlgEditSketch.h
     ViewProviderPython.cpp

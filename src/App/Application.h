@@ -120,6 +120,33 @@ public:
     App::Document* getActiveDocument(void) const;
     /// Retrieve a named document
     App::Document* getDocument(const char *Name) const;
+
+    /// Path matching mode for getDocumentByPath()
+    enum class PathMatchMode {
+        /// Match by resolving to absolute file path
+        MatchAbsolute = 0,
+        /** Match by absolute path first. If not found then match by resolving
+         * to canonical file path where any intermediate '.' '..' and symlinks
+         * are resolved.
+         */
+        MatchCanonical = 1,
+        /** Same as MatchCanonical, but if a document is found by canonical
+         * path match, which means the document can be resolved using two
+         * different absolute path, a warning is printed and the found document
+         * is not returned. This is to allow the caller to intentionally load
+         * the same physical file as separate documents.
+         */
+        MatchCanonicalWarning = 2,
+    };
+    /** Retrieve a document based on file path
+     *
+     * @param path: file path
+     * @param checkCanonical: file path matching mode, @sa PathMatchMode.
+     * @return Return the document found by matching with the given path
+     */
+    App::Document* getDocumentByPath(const char *path,
+                                     PathMatchMode checkCanonical = PathMatchMode::MatchAbsolute) const;
+
     /// gets the (internal) name of the document
     const char * getDocumentName(const App::Document* ) const;
     /// get a list of all documents in the application
@@ -190,6 +217,8 @@ public:
     boost::signals2::signal<void (const Document&)> signalStartRestoreDocument;
     /// signal on restoring Document
     boost::signals2::signal<void (const Document&)> signalFinishRestoreDocument;
+    /// signal on pending reloading of a partial Document
+    boost::signals2::signal<void (const Document&)> signalPendingReloadDocument;
     /// signal on starting to save Document
     boost::signals2::signal<void (const Document&, const std::string&)> signalStartSaveDocument;
     /// signal on saved Document
@@ -301,13 +330,13 @@ public:
     //@}
 
     /** @name methods for the open handler
-     *  With this facility a Application module can register
-     *  a ending (filetype) which he can handle to open.
+     *  With this facility an Application module can register
+     *  an ending (filetype) which it can handle to open.
      *  The ending and the module name are stored and if the file
-     *  type is opened the module get loaded and need to register a
+     *  type is opened the module gets loaded and needs to register an
      *  OpenHandler class in the OpenHandlerFactorySingleton.
-     *  After the module is loaded a OpenHandler of this type is created
-     *  and the file get loaded.
+     *  After the module is loaded, an OpenHandler of this type is created
+     *  and the file gets loaded.
      *  @see OpenHandler
      *  @see OpenHandlerFactorySingleton
      */
@@ -366,14 +395,16 @@ public:
 
     /** @name Application directories */
     //@{
-    const char* getHomePath(void) const;
-    const char* getExecutableName(void) const;
+    static std::string getHomePath();
+    static std::string getExecutableName();
     /*!
      Returns the temporary directory. By default, this is set to the
      system's temporary directory but can be customized by the user.
      */
     static std::string getTempPath();
     static std::string getTempFileName(const char* FileName=0);
+    static std::string getUserCachePath();
+    static std::string getUserConfigPath();
     static std::string getUserAppDataDir();
     static std::string getUserMacroDir();
     static std::string getResourceDir();
@@ -415,7 +446,7 @@ protected:
     void renameDocument(const char *OldName, const char *NewName);
 
     /** @name I/O of the document
-     * This slot get connected to all App::Documents created
+     * This slot gets connected to all App::Documents created
      */
     //@{
     void slotBeforeChangeDocument(const App::Document&, const App::Property&);
@@ -441,7 +472,7 @@ protected:
 
     /// open single document only
     App::Document* openDocumentPrivate(const char * FileName, const char *propFileName,
-            const char *label, bool isMainDoc, bool createView, const std::set<std::string> &objNames);
+            const char *label, bool isMainDoc, bool createView, std::vector<std::string> &&objNames);
 
     /// Helper class for App::Document to signal on close/abort transaction
     class AppExport TransactionSignaller {
@@ -483,10 +514,13 @@ private:
     static PyObject* sAddExportType     (PyObject *self,PyObject *args);
     static PyObject* sChangeExportModule(PyObject *self,PyObject *args);
     static PyObject* sGetExportType     (PyObject *self,PyObject *args);
-    static PyObject* sGetResourceDir    (PyObject *self,PyObject *args);
-    static PyObject* sGetUserAppDataDir (PyObject *self,PyObject *args);
-    static PyObject* sGetUserMacroDir   (PyObject *self,PyObject *args);
-    static PyObject* sGetHelpDir        (PyObject *self,PyObject *args);
+    static PyObject* sGetResourcePath   (PyObject *self,PyObject *args);
+    static PyObject* sGetTempPath       (PyObject *self,PyObject *args);
+    static PyObject* sGetUserCachePath  (PyObject *self,PyObject *args);
+    static PyObject* sGetUserConfigPath (PyObject *self,PyObject *args);
+    static PyObject* sGetUserAppDataPath(PyObject *self,PyObject *args);
+    static PyObject* sGetUserMacroPath  (PyObject *self,PyObject *args);
+    static PyObject* sGetHelpPath       (PyObject *self,PyObject *args);
     static PyObject* sGetHomePath       (PyObject *self,PyObject *args);
 
     static PyObject* sLoadFile          (PyObject *self,PyObject *args);
@@ -526,8 +560,6 @@ private:
     static void logStatus(void);
     // the one and only pointer to the application object
     static Application *_pcSingleton;
-    /// argument helper function
-    static void ParseOptions(int argc, char ** argv);
     /// checks if the environment is alright
     //static void CheckEnv(void);
     /// Search for the FreeCAD home path based on argv[0]
@@ -559,13 +591,19 @@ private:
     std::vector<FileTypeItem> _mImportTypes;
     std::vector<FileTypeItem> _mExportTypes;
     std::map<std::string,Document*> DocMap;
+    mutable std::map<std::string,Document*> DocFileMap;
     std::map<std::string,ParameterManager *> mpcPramManager;
     std::map<std::string,std::string> &_mConfig;
     App::Document* _pActiveDoc;
 
-    std::deque<const char *> _pendingDocs;
-    std::deque<const char *> _pendingDocsReopen;
-    std::map<std::string,std::set<std::string> > _pendingDocMap;
+    std::deque<std::string> _pendingDocs;
+    std::deque<std::string> _pendingDocsReopen;
+    std::map<std::string,std::vector<std::string> > _pendingDocMap;
+
+    // To prevent infinite recursion of reloading a partial document due a truly
+    // missing object
+    std::map<std::string,std::set<std::string> > _docReloadAttempts;
+
     bool _isRestoring;
     bool _allowPartial;
     bool _isClosingAll;

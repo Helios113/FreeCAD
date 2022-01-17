@@ -121,6 +121,11 @@ Leave this property empty to be able to set &apos;Axis&apos; and &apos;Center&ap
     </message>
     <message>
         <location filename="array.py" line="291"/>
+        <source>A parameter that determines how many symmetry planes the circular array will have.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="array.py" line="291"/>
         <source>A parameter that determines how many symmetry planes  the circular array will have.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -213,6 +218,17 @@ This property is read-only, as the number depends on the parameters of the array
     <message>
         <location filename="dimension.py" line="150"/>
         <source>The object measured by this dimension object</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="dimension.py" line="167"/>
+        <source>The object, and specific subelements of it,
+that this dimension object is measuring.
+
+There are various possibilities:
+- An object, and one of its edges.
+- An object, and two of its vertices.
+- An arc object, and its edge.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -469,6 +485,11 @@ or from the subelement &apos;VertexN&apos;, &apos;EdgeN&apos;, or &apos;FaceN&ap
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="draftlink.py" line="99"/>
+        <source>Force sync pattern placements even when array elements are expanded</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="draftlink.py" line="104"/>
         <source>Show the individual array elements</source>
         <translation type="unfinished"></translation>
@@ -615,11 +636,6 @@ This property is read-only, as the number depends on the points contained within
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="hatch.py" line="49"/>
-        <source>The shape of this object</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <location filename="hatch.py" line="52"/>
         <source>The base object used by this object</source>
         <translation type="unfinished"></translation>
@@ -642,6 +658,11 @@ This property is read-only, as the number depends on the points contained within
     <message>
         <location filename="hatch.py" line="64"/>
         <source>The pattern rotation used by this object</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="hatch.py" line="49"/>
+        <source>The shape of this object</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1093,16 +1114,6 @@ beyond the dimension line</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="view_layer.py" line="402"/>
-        <source>Merge layer duplicates</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="view_layer.py" line="407"/>
-        <source>Add new layer</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <location filename="init_tools.py" line="145"/>
         <source>Draft creation tools</source>
         <translation type="unfinished"></translation>
@@ -1178,8 +1189,18 @@ beyond the dimension line</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="gui_utils.py" line="154"/>
-        <source>Unable to insert new object into a scaled part</source>
+        <location filename="init_tools.py" line="48"/>
+        <source>Arc tools</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="init_tools.py" line="56"/>
+        <source>Bezier tools</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="gui_arrays.py" line="65"/>
+        <source>Array tools</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1316,11 +1337,6 @@ The array can be turned into an orthogonal or a circular array by changing its t
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="gui_arrays.py" line="65"/>
-        <source>Array tools</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <location filename="gui_arrays.py" line="68"/>
         <source>Create various types of arrays, including rectangular, polar, circular, path, and point</source>
         <translation type="unfinished"></translation>
@@ -1363,6 +1379,21 @@ The array can be turned into a polar or a circular array by changing its type.</
         <source>Offset direction is not defined. Please move the mouse on either side of the object first to indicate a direction</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <location filename="gui_utils.py" line="154"/>
+        <source>Unable to insert new object into a scaled part</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="view_layer.py" line="402"/>
+        <source>Merge layer duplicates</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="view_layer.py" line="407"/>
+        <source>Add new layer</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>Draft_AddConstruction</name>
@@ -1376,6 +1407,19 @@ The array can be turned into a polar or a circular array by changing its type.</
         <source>Adds the selected objects to the construction group,
 and changes their appearance to the construction style.
 It creates a construction group if it doesn&apos;t exist.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>Draft_AddNamedGroup</name>
+    <message>
+        <location filename="gui_groups.py" line="361"/>
+        <source>Add a new named group</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="gui_groups.py" line="365"/>
+        <source>Add a new group with a given name.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -1557,19 +1601,6 @@ The resulting clone can be scaled in each of its three directions.</source>
     </message>
 </context>
 <context>
-    <name>Draft_CloseLine</name>
-    <message>
-        <location filename="gui_lineops.py" line="124"/>
-        <source>Close Line</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="gui_lineops.py" line="125"/>
-        <source>Closes the line being drawn, and finishes the operation.</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
     <name>Draft_CubicBezCurve</name>
     <message>
         <location filename="gui_beziers.py" line="242"/>
@@ -1708,19 +1739,6 @@ on supported nodes and on supported objects.</source>
     </message>
 </context>
 <context>
-    <name>Draft_FinishLine</name>
-    <message>
-        <location filename="gui_lineops.py" line="98"/>
-        <source>Finish line</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="gui_lineops.py" line="99"/>
-        <source>Finishes a line without closing it.</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
     <name>Draft_FlipDimension</name>
     <message>
         <location filename="gui_dimension_ops.py" line="62"/>
@@ -1744,6 +1762,11 @@ If other objects are selected they are ignored.</source>
     <message>
         <location filename="gui_hatch.py" line="41"/>
         <source>Create hatches on selected faces</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="gui_hatch.py" line="42"/>
+        <source>Creates hatches on the faces of a selected object</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -2054,6 +2077,11 @@ CTRL to snap, SHIFT to constrain, ALT to copy.</source>
 
 If the selection is a simple object inside a group, it will select the &quot;brother&quot; objects, that is,
 those that are at the same level as this object, including the upper group that contains them all.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="gui_groups.py" line="167"/>
+        <source>Selects the contents of selected groups. For selected non-group objects, the contents of the group they are in is selected.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -2482,19 +2510,6 @@ CTRL snaps, SHIFT constrains to current segment or to normal, ALT inverts.</sour
     </message>
 </context>
 <context>
-    <name>Draft_UndoLine</name>
-    <message>
-        <location filename="gui_lineops.py" line="151"/>
-        <source>Undo last segment</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="gui_lineops.py" line="152"/>
-        <source>Undoes the last drawn segment of the line being drawn.</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
     <name>Draft_Upgrade</name>
     <message>
         <location filename="gui_upgrade.py" line="58"/>
@@ -2564,19 +2579,6 @@ Then you can use it to save a different camera position and objects&apos; states
     <message>
         <location filename="importAirfoilDAT.py" line="186"/>
         <source>Did not find enough coordinates</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>ImportDWG</name>
-    <message>
-        <location filename="importDWG.py" line="277"/>
-        <source>Converting:</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="importDWG.py" line="233"/>
-        <source>Conversion successful</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -3177,15 +3179,49 @@ Not available if Draft preference option &apos;Use Part Primitives&apos; is enab
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="make_sketch.py" line="135"/>
-        <source>All Shapes must be coplanar
-</source>
+        <location filename="importDWG.py" line="286"/>
+        <source>LibreDWG error</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="importDWG.py" line="295"/>
+        <source>Converting:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="importDWG.py" line="228"/>
+        <source>Conversion successful</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="importDWG.py" line="231"/>
+        <source>Error during DWG conversion. Try moving the DWG file to a directory path without spaces and non-english characters, or try saving to a lower DWG version.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="importDWG.py" line="300"/>
+        <source>ODA File Converter not found</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="importDWG.py" line="310"/>
+        <source>QCAD error</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="make_sketch.py" line="139"/>
+        <source>All Shapes must be coplanar</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="WorkingPlane.py" line="696"/>
         <source>Selected Shapes must define a plane
 </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="WorkingPlane.py" line="704"/>
+        <source>Selected Shapes must define a plane</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3610,8 +3646,24 @@ Not available if Draft preference option &apos;Use Part Primitives&apos; is enab
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="make_sketch.py" line="104"/>
+        <source>No shape found</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="make_sketch.py" line="109"/>
         <source>All Shapes must be planar
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="make_sketch.py" line="111"/>
+        <source>All Shapes must be planar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="make_sketch.py" line="135"/>
+        <source>All Shapes must be coplanar
 </source>
         <translation type="unfinished"></translation>
     </message>
@@ -3658,6 +3710,16 @@ Not available if Draft preference option &apos;Use Part Primitives&apos; is enab
     <message>
         <location filename="make_label.py" line="264"/>
         <source>Wrong input: subelement not in object.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="make_label.py" line="272"/>
+        <source>Wrong input: label_type must be a string.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="make_label.py" line="277"/>
+        <source>Wrong input: label_type must be one of the following: </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3751,6 +3813,26 @@ Not available if Draft preference option &apos;Use Part Primitives&apos; is enab
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="view_layer.py" line="421"/>
+        <source>Merge layer duplicates</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="view_layer.py" line="469"/>
+        <source>Add new layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="view_layer.py" line="454"/>
+        <source>Relabeling layer:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="view_layer.py" line="458"/>
+        <source>Merging layer:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="InitGui.py" line="46"/>
         <source>Draft</source>
         <translation type="unfinished"></translation>
@@ -3768,6 +3850,131 @@ Not available if Draft preference option &apos;Use Part Primitives&apos; is enab
     <message>
         <location filename="init_draft_statusbar.py" line="159"/>
         <source>Set custom annotation scale in format x:x, x=x</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="utils.py" line="650"/>
+        <source>Solids:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="utils.py" line="651"/>
+        <source>Faces:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="utils.py" line="652"/>
+        <source>Wires:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="utils.py" line="653"/>
+        <source>Edges:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="utils.py" line="654"/>
+        <source>Vertices:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="utils.py" line="658"/>
+        <source>Face</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="utils.py" line="663"/>
+        <source>Wire</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="utils.py" line="699"/>
+        <source>different types</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="utils.py" line="709"/>
+        <source>Objects have different placements. Distance between the two base points: </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="utils.py" line="712"/>
+        <source>has a different value</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="utils.py" line="715"/>
+        <source>doesn&apos;t exist in one of the objects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="utils.py" line="827"/>
+        <source>%s shares a base with %d other objects. Please check if you want to modify this.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="utils.py" line="833"/>
+        <source>%s cannot be modified because its placement is readonly.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="utils.py" line="977"/>
+        <source>Wrong input: unknown document.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="utils.py" line="1055"/>
+        <source>This function will be deprecated in </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="utils.py" line="1059"/>
+        <source>Please use </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="utils.py" line="1059"/>
+        <source>This function will be deprecated. </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="gui_utils.py" line="81"/>
+        <source>No graphical interface</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="gui_utils.py" line="161"/>
+        <source>Unable to insert new object into a scaled part</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="gui_utils.py" line="267"/>
+        <source>Symbol not implemented. Using a default symbol.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="gui_utils.py" line="333"/>
+        <source>Visibility off; removed from list: </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="gui_utils.py" line="603"/>
+        <source>image is Null</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="gui_utils.py" line="609"/>
+        <source>filename does not exist on the system or in the resource file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="gui_utils.py" line="668"/>
+        <source>unable to load texture</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="gui_utils.py" line="738"/>
+        <source>Does not have &apos;ViewObject.RootNode&apos;.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4070,6 +4277,11 @@ To enabled FreeCAD to download these libraries, answer Yes.</source>
     <message>
         <location filename="gui_dimensions.py" line="309"/>
         <source>Create Dimension (radial)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="gui_dimensions.py" line="508"/>
+        <source>Edge too short!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4598,26 +4810,6 @@ To enabled FreeCAD to download these libraries, answer Yes.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="gui_lineops.py" line="73"/>
-        <source>No active command.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="gui_lineops.py" line="92"/>
-        <source>Finish line</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="gui_lineops.py" line="118"/>
-        <source>Close line</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="gui_lineops.py" line="144"/>
-        <source>Undo line</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <location filename="gui_split.py" line="64"/>
         <source>Click anywhere on a line to split it.</source>
         <translation type="unfinished"></translation>
@@ -4693,8 +4885,18 @@ To enabled FreeCAD to download these libraries, answer Yes.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="gui_groups.py" line="70"/>
+        <source>Add new group</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="gui_groups.py" line="183"/>
         <source>Select group</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="gui_groups.py" line="193"/>
+        <source>No new selection. You must select non-empty groups or objects inside groups.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4710,6 +4912,21 @@ To enabled FreeCAD to download these libraries, answer Yes.</source>
     <message>
         <location filename="gui_groups.py" line="359"/>
         <source>Add to construction group</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="gui_groups.py" line="355"/>
+        <source>Add a new group with a given name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="gui_groups.py" line="383"/>
+        <source>Add group</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="gui_groups.py" line="385"/>
+        <source>Group name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4833,6 +5050,26 @@ The final angle will be the base angle plus this amount.</source>
         <source>Pick rotation angle</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <location filename="gui_lineops.py" line="73"/>
+        <source>No active command.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="gui_lineops.py" line="92"/>
+        <source>Finish line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="gui_lineops.py" line="118"/>
+        <source>Close line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="gui_lineops.py" line="144"/>
+        <source>Undo line</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>importOCA</name>
@@ -4849,6 +5086,58 @@ The final angle will be the base angle plus this amount.</source>
     <message>
         <location filename="importOCA.py" line="492"/>
         <source>successfully exported</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>Draft_CloseLine</name>
+    <message>
+        <location filename="gui_lineops.py" line="124"/>
+        <source>Close Line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="gui_lineops.py" line="125"/>
+        <source>Closes the line being drawn, and finishes the operation.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>Draft_FinishLine</name>
+    <message>
+        <location filename="gui_lineops.py" line="98"/>
+        <source>Finish line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="gui_lineops.py" line="99"/>
+        <source>Finishes a line without closing it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>Draft_UndoLine</name>
+    <message>
+        <location filename="gui_lineops.py" line="151"/>
+        <source>Undo last segment</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="gui_lineops.py" line="152"/>
+        <source>Undoes the last drawn segment of the line being drawn.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>ImportDWG</name>
+    <message>
+        <location filename="importDWG.py" line="233"/>
+        <source>Conversion successful</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="importDWG.py" line="277"/>
+        <source>Converting:</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

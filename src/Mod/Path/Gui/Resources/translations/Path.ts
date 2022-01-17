@@ -4,8 +4,13 @@
 <context>
     <name>App::Property</name>
     <message>
-        <location filename="PathSlot.py" line="112"/>
-        <source>Show the temporary path construction objects when module is in DEBUG mode.</source>
+        <location filename="PathSurface.py" line="140"/>
+        <source>Stop index(angle) for rotational scan</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="PathSurface.py" line="134"/>
+        <source>Additional offset to the selected bounding box</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -19,18 +24,8 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="PathSurface.py" line="140"/>
-        <source>Stop index(angle) for rotational scan</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <location filename="PathSurface.py" line="132"/>
         <source>Dropcutter lines are created parallel to this axis.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="PathSurface.py" line="134"/>
-        <source>Additional offset to the selected bounding box</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -46,6 +41,21 @@
     <message>
         <location filename="PathSurface.py" line="143"/>
         <source>Planar: Flat, 3D surface scan.  Rotational: 4th-axis rotational scan.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="PathSurface.py" line="190"/>
+        <source>Convert co-planar arcs to G2/G3 gcode commands for `Circular` and `CircularZigZag` cut patterns.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="PathWaterline.py" line="124"/>
+        <source>Smaller values yield a finer, more accurate the mesh. Smaller values increase processing time a lot.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="PathWaterline.py" line="126"/>
+        <source>Smaller values yield a finer, more accurate the mesh. Smaller values do not increase processing time much.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -84,18 +94,23 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="PathWaterline.py" line="144"/>
+        <source>Select the algorithm to use: OCL Dropcutter*, or Experimental (Not OCL based).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="PathWaterline.py" line="146"/>
         <source>Select the overall boundary for the operation.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="PathWaterline.py" line="150"/>
-        <source>Set the direction for the cutting tool to engage the material: Climb (ClockWise) or Conventional (CounterClockWise)</source>
+        <location filename="PathWaterline.py" line="148"/>
+        <source>Set to clear last layer in a `Multi-pass` operation.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="PathSlot.py" line="119"/>
-        <source>Set the geometric clearing pattern to use for the operation.</source>
+        <location filename="PathWaterline.py" line="150"/>
+        <source>Set the direction for the cutting tool to engage the material: Climb (ClockWise) or Conventional (CounterClockWise)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -114,11 +129,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="PathSlot.py" line="125"/>
-        <source>Complete the operation in a single pass at depth, or mulitiple passes to final depth.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <location filename="PathWaterline.py" line="164"/>
         <source>Set the start point for the cut pattern.</source>
         <translation type="unfinished"></translation>
@@ -126,11 +136,6 @@
     <message>
         <location filename="PathWaterline.py" line="166"/>
         <source>Choose location of the center point for starting the cut pattern.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="PathSurface.py" line="179"/>
-        <source>Profile the edges of the selection.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -154,11 +159,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="PathSurface.py" line="190"/>
-        <source>Convert co-planar arcs to G2/G3 gcode commands for `Circular` and `CircularZigZag` cut patterns.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <location filename="PathWaterline.py" line="177"/>
         <source>Collinear and co-radial artifact gaps that are smaller than this threshold are closed in the path.</source>
         <translation type="unfinished"></translation>
@@ -169,8 +169,8 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="PathSlot.py" line="138"/>
-        <source>The custom start point for the path of this operation</source>
+        <location filename="PathSurface.py" line="179"/>
+        <source>Profile the edges of the selection.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -181,11 +181,6 @@
     <message>
         <location filename="PathCopy.py" line="37"/>
         <source>The path to be copied</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="PathArray.py" line="64"/>
-        <source>The tool controller that will be used to calculate the path</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -299,6 +294,11 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="PathCustom.py" line="56"/>
+        <source>The gcode to be inserted</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="PathDressupRampEntry.py" line="71"/>
         <source>Ramping Method</source>
         <translation type="unfinished"></translation>
@@ -374,26 +374,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="PathWaterline.py" line="124"/>
-        <source>Smaller values yield a finer, more accurate the mesh. Smaller values increase processing time a lot.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="PathWaterline.py" line="126"/>
-        <source>Smaller values yield a finer, more accurate the mesh. Smaller values do not increase processing time much.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="PathWaterline.py" line="144"/>
-        <source>Select the algorithm to use: OCL Dropcutter*, or Experimental (Not OCL based).</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="PathWaterline.py" line="148"/>
-        <source>Set to clear last layer in a `Multi-pass` operation.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <location filename="PathWaterline.py" line="160"/>
         <source>Ignore outer waterlines above this height.</source>
         <translation type="unfinished"></translation>
@@ -401,6 +381,11 @@
     <message>
         <location filename="PathCollision.py" line="59"/>
         <source>The base object this collision refers to</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="PathSlot.py" line="112"/>
+        <source>Show the temporary path construction objects when module is in DEBUG mode.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -414,6 +399,11 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="PathSlot.py" line="119"/>
+        <source>Set the geometric clearing pattern to use for the operation.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="PathSlot.py" line="121"/>
         <source>Positive extends the beginning of the path, negative shortens.</source>
         <translation type="unfinished"></translation>
@@ -421,6 +411,11 @@
     <message>
         <location filename="PathSlot.py" line="123"/>
         <source>Positive extends the end of the path, negative shortens.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="PathSlot.py" line="125"/>
+        <source>Complete the operation in a single pass at depth, or mulitiple passes to final depth.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -449,6 +444,11 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="PathSlot.py" line="138"/>
+        <source>The custom start point for the path of this operation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="PathPocket.py" line="65"/>
         <source>Use adaptive algorithm to eliminate excessive air milling above planar pocket top.</source>
         <translation type="unfinished"></translation>
@@ -461,6 +461,51 @@
     <message>
         <location filename="PathPocket.py" line="69"/>
         <source>Process the model and stock in an operation with no Base Geometry selected.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="PathComment.py" line="41"/>
+        <source>Comment or note for CNC program</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="PathSetupSheet.py" line="119"/>
+        <source>Default speed for horizontal rapid moves.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="PathSetupSheet.py" line="127"/>
+        <source>Default speed for vertical rapid moves.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="PathSetupSheet.py" line="415"/>
+        <source>Coolant Modes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="PathSetupSheet.py" line="424"/>
+        <source>Default coolant mode.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="PathSetupSheet.py" line="156"/>
+        <source>Expression set for the SafeHeight of new operations.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="PathSetupSheet.py" line="182"/>
+        <source>Expression used for StartDepth of new operations.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="PathSetupSheet.py" line="190"/>
+        <source>Expression used for FinalDepth of new operations.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="PathSetupSheet.py" line="198"/>
+        <source>Expression used for StepDown of new operations.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -524,6 +569,11 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="PathArray.py" line="64"/>
+        <source>The tool controller that will be used to calculate the path</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="PathArray.py" line="48"/>
         <source>The number of copies in X direction in Linear pattern</source>
         <translation type="unfinished"></translation>
@@ -564,8 +614,48 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="PathArray.py" line="169"/>
+        <source>Seed value for jitter randomness</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="PathStock.py" line="111"/>
+        <source>The base object this stock is derived from</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="PathStock.py" line="105"/>
         <source>A material for this object</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="PathStock.py" line="243"/>
+        <source>Length of this stock box</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="PathStock.py" line="249"/>
+        <source>Width of this stock box</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="PathStock.py" line="255"/>
+        <source>Height of this stock box</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="PathStock.py" line="295"/>
+        <source>Radius of this stock cylinder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="PathStock.py" line="301"/>
+        <source>Height of this stock cylinder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="PathStock.py" line="337"/>
+        <source>Internal representation of stock type</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -619,6 +709,11 @@
     <message>
         <location filename="PathJobGui.py" line="282"/>
         <source>Edit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="PathUtils.py" line="184"/>
+        <source>Issue determine drillability: {}</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -702,28 +797,13 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="PathOpGui.py" line="785"/>
-        <source>Heights</source>
+        <location filename="PathProfileGui.py" line="165"/>
+        <source>Profile</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="PathOpGui.py" line="966"/>
-        <source>Diameters</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="PathOpGui.py" line="997"/>
-        <source>AreaOp Operation</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="PathOpGui.py" line="1122"/>
-        <source>Uncreate AreaOp Operation</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="PathOpGui.py" line="1262"/>
-        <source>Pick Start Point</source>
+        <location filename="PathProfileGui.py" line="168"/>
+        <source>Profile entire model, selected face(s) or selected edge(s)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -744,11 +824,6 @@
     <message>
         <location filename="PathCircularHoleBase.py" line="80"/>
         <source>List of disabled features</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="PathProfile.py" line="456"/>
-        <source>Unable to create path for face(s).</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -811,6 +886,36 @@
         <source>Utils</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <location filename="PathOpGui.py" line="785"/>
+        <source>Heights</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="PathOpGui.py" line="966"/>
+        <source>Diameters</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="PathOpGui.py" line="997"/>
+        <source>AreaOp Operation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="PathOpGui.py" line="1122"/>
+        <source>Uncreate AreaOp Operation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="PathOpGui.py" line="1262"/>
+        <source>Pick Start Point</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="PathProfile.py" line="456"/>
+        <source>Unable to create path for face(s).</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>PathAdaptive</name>
@@ -843,14 +948,6 @@
     <message>
         <location filename="PathArray.py" line="258"/>
         <source>Arrays of paths having different tool controllers are handled according to the tool controller of the first path.</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>PathCustom</name>
-    <message>
-        <location filename="PathCustom.py" line="52"/>
-        <source>The gcode to be inserted</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -959,6 +1056,19 @@
     <message>
         <location filename="PathFeatureExtensions.py" line="421"/>
         <source>Waterline error</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>PathFixture</name>
+    <message>
+        <location filename="PathFixture.py" line="156"/>
+        <source>Fixture</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="PathFixture.py" line="159"/>
+        <source>Creates a Fixture Offset object</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -1282,8 +1392,33 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="PathOpGui.py" line="194"/>
+        <source>Edit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="PathOpGui.py" line="475"/>
         <source>Base Geometry</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="PathOpGui.py" line="576"/>
+        <source>Vertexes are not supported</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="PathOpGui.py" line="583"/>
+        <source>Edges are not supported</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="PathOpGui.py" line="590"/>
+        <source>Faces are not supported</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="PathOpGui.py" line="657"/>
+        <source>Mulitiple operations are labeled as</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1298,13 +1433,38 @@ If it is necessary to set the FinalDepth manually please select a different oper
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="PathOpGui.py" line="855"/>
+        <source>Heights</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="PathOpGui.py" line="869"/>
         <source>Depths</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="PathOpGui.py" line="1061"/>
+        <source>Diameters</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="PathOpGui.py" line="1093"/>
+        <source>AreaOp Operation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="PathOpGui.py" line="1058"/>
         <source>Operation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="PathOpGui.py" line="1224"/>
+        <source>Uncreate AreaOp Operation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="PathOpGui.py" line="1371"/>
+        <source>Pick Start Point</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1314,10 +1474,15 @@ If it is necessary to set the FinalDepth manually please select a different oper
     </message>
 </context>
 <context>
-    <name>PathOpGui</name>
+    <name>PathPlane</name>
     <message>
-        <location filename="PathOpGui.py" line="603"/>
-        <source>Mulitiple operations are labeled as</source>
+        <location filename="PathPlane.py" line="118"/>
+        <source>Selection Plane</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="PathPlane.py" line="121"/>
+        <source>Create a Selection Plane object</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -1405,26 +1570,63 @@ If it is necessary to set the FinalDepth manually please select a different oper
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="PathProfile.py" line="196"/>
+        <source>CW</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="PathProfile.py" line="197"/>
+        <source>CCW</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="PathProfile.py" line="200"/>
+        <source>Collectively</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="PathProfile.py" line="201"/>
+        <source>Individually</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="PathProfile.py" line="204"/>
+        <source>Round</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="PathProfile.py" line="205"/>
+        <source>Square</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="PathProfile.py" line="206"/>
+        <source>Miter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="PathProfile.py" line="209"/>
+        <source>Outside</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="PathProfile.py" line="210"/>
+        <source>Inside</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="PathProfile.py" line="479"/>
+        <source>Unable to create path for face(s).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="PathProfile.py" line="622"/>
+        <source>Check edge selection and Final Depth requirements for profiling open edge(s).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="PathProfile.py" line="663"/>
         <source>For open edges, verify Final Depth for this operation.</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>PathProject</name>
-    <message>
-        <location filename="PathOpGui.py" line="533"/>
-        <source>Vertexes are not supported</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="PathOpGui.py" line="537"/>
-        <source>Edges are not supported</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="PathOpGui.py" line="541"/>
-        <source>Faces are not supported</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -1453,64 +1655,6 @@ If it is necessary to set the FinalDepth manually please select a different oper
     <message>
         <location filename="PathPropertyBag.py" line="62"/>
         <source>List of custom property groups</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>PathSetupSheet</name>
-    <message>
-        <location filename="PathSetupSheet.py" line="102"/>
-        <source>Default speed for horizontal rapid moves.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="PathSetupSheet.py" line="103"/>
-        <source>Default speed for vertical rapid moves.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="PathSetupSheet.py" line="287"/>
-        <source>Coolant Modes</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="PathSetupSheet.py" line="291"/>
-        <source>Default coolant mode.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="PathSetupSheet.py" line="108"/>
-        <source>The usage of this field depends on SafeHeightExpression - by default its value is added to StartDepth and used for SafeHeight of an operation.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="PathSetupSheet.py" line="109"/>
-        <source>Expression set for the SafeHeight of new operations.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="PathSetupSheet.py" line="110"/>
-        <source>The usage of this field depends on ClearanceHeightExpression - by default is value is added to StartDepth and used for ClearanceHeight of an operation.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="PathSetupSheet.py" line="111"/>
-        <source>Expression set for the ClearanceHeight of new operations.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="PathSetupSheet.py" line="113"/>
-        <source>Expression used for StartDepth of new operations.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="PathSetupSheet.py" line="114"/>
-        <source>Expression used for FinalDepth of new operations.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="PathSetupSheet.py" line="115"/>
-        <source>Expression used for StepDown of new operations.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -2207,14 +2351,6 @@ If it is necessary to set the FinalDepth manually please select a different oper
     </message>
 </context>
 <context>
-    <name>PathUtils</name>
-    <message>
-        <location filename="PathUtils.py" line="150"/>
-        <source>Issue determine drillability: {}</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
     <name>PathVcarve</name>
     <message>
         <location filename="PathVcarve.py" line="211"/>
@@ -2510,11 +2646,6 @@ If it is necessary to set the FinalDepth manually please select a different oper
 <context>
     <name>Path_DressupDragKnife</name>
     <message>
-        <location filename="PathDressupAxisMap.py" line="149"/>
-        <source>Edit Dragknife Dress-up</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <location filename="PathDressupDragknife.py" line="541"/>
         <source>DragKnife Dress-up</source>
         <translation type="unfinished"></translation>
@@ -2542,6 +2673,11 @@ If it is necessary to set the FinalDepth manually please select a different oper
     <message>
         <location filename="PathDressupDragknife.py" line="569"/>
         <source>Create Dress-up</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="PathDressupAxisMap.py" line="149"/>
+        <source>Edit Dragknife Dress-up</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -2825,24 +2961,6 @@ If it is necessary to set the FinalDepth manually please select a different oper
     </message>
 </context>
 <context>
-    <name>Path_Fixture</name>
-    <message>
-        <location filename="PathFixture.py" line="115"/>
-        <source>Fixture</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="PathFixture.py" line="118"/>
-        <source>Creates a Fixture Offset object</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="PathFixture.py" line="126"/>
-        <source>Create a Fixture Offset</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
     <name>Path_Helix</name>
     <message>
         <location filename="PathHelixGui.py" line="91"/>
@@ -2929,11 +3047,6 @@ If it is necessary to set the FinalDepth manually please select a different oper
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="PathJobGui.py" line="1559"/>
-        <source>Create Job</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <location filename="PathJobGui.py" line="609"/>
         <source>Edit Job</source>
         <translation type="unfinished"></translation>
@@ -2958,6 +3071,11 @@ If it is necessary to set the FinalDepth manually please select a different oper
         <source>Model Selection</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <location filename="PathJobGui.py" line="1559"/>
+        <source>Create Job</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>Path_OpActiveToggle</name>
@@ -2972,19 +3090,6 @@ If it is necessary to set the FinalDepth manually please select a different oper
     <message>
         <location filename="PathCommands.py" line="170"/>
         <source>Copy the operation in the job</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>Path_Plane</name>
-    <message>
-        <location filename="PathPlane.py" line="110"/>
-        <source>Selection Plane</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="PathPlane.py" line="122"/>
-        <source>Create a Selection Plane object</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -3320,14 +3425,6 @@ If it is necessary to set the FinalDepth manually please select a different oper
     </message>
 </context>
 <context>
-    <name>Path_SetupSheet</name>
-    <message>
-        <location filename="PathSetupSheetGui.py" line="371"/>
-        <source>Edit SetupSheet</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
     <name>Path_SimpleCopy</name>
     <message>
         <location filename="PathSimpleCopy.py" line="65"/>
@@ -3507,6 +3604,145 @@ If it is necessary to set the FinalDepth manually please select a different oper
     <message>
         <location filename="PathToolLibraryEditor.py" line="387"/>
         <source>Rename Selected Tool Table</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>PathCustom</name>
+    <message>
+        <location filename="PathCustom.py" line="52"/>
+        <source>The gcode to be inserted</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>PathSetupSheet</name>
+    <message>
+        <location filename="PathSetupSheet.py" line="102"/>
+        <source>Default speed for horizontal rapid moves.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="PathSetupSheet.py" line="103"/>
+        <source>Default speed for vertical rapid moves.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="PathSetupSheet.py" line="108"/>
+        <source>The usage of this field depends on SafeHeightExpression - by default its value is added to StartDepth and used for SafeHeight of an operation.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="PathSetupSheet.py" line="109"/>
+        <source>Expression set for the SafeHeight of new operations.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="PathSetupSheet.py" line="110"/>
+        <source>The usage of this field depends on ClearanceHeightExpression - by default is value is added to StartDepth and used for ClearanceHeight of an operation.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="PathSetupSheet.py" line="111"/>
+        <source>Expression set for the ClearanceHeight of new operations.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="PathSetupSheet.py" line="113"/>
+        <source>Expression used for StartDepth of new operations.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="PathSetupSheet.py" line="114"/>
+        <source>Expression used for FinalDepth of new operations.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="PathSetupSheet.py" line="115"/>
+        <source>Expression used for StepDown of new operations.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="PathSetupSheet.py" line="287"/>
+        <source>Coolant Modes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="PathSetupSheet.py" line="291"/>
+        <source>Default coolant mode.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>PathUtils</name>
+    <message>
+        <location filename="PathUtils.py" line="150"/>
+        <source>Issue determine drillability: {}</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>Path_Fixture</name>
+    <message>
+        <location filename="PathFixture.py" line="115"/>
+        <source>Fixture</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="PathFixture.py" line="118"/>
+        <source>Creates a Fixture Offset object</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="PathFixture.py" line="126"/>
+        <source>Create a Fixture Offset</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>Path_Plane</name>
+    <message>
+        <location filename="PathPlane.py" line="110"/>
+        <source>Selection Plane</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="PathPlane.py" line="122"/>
+        <source>Create a Selection Plane object</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>Path_SetupSheet</name>
+    <message>
+        <location filename="PathSetupSheetGui.py" line="371"/>
+        <source>Edit SetupSheet</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>PathOpGui</name>
+    <message>
+        <location filename="PathOpGui.py" line="603"/>
+        <source>Mulitiple operations are labeled as</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>PathProject</name>
+    <message>
+        <location filename="PathOpGui.py" line="533"/>
+        <source>Vertexes are not supported</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="PathOpGui.py" line="537"/>
+        <source>Edges are not supported</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="PathOpGui.py" line="541"/>
+        <source>Faces are not supported</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

@@ -59,7 +59,6 @@ using namespace Gui::Dialog;
 DlgCustomActionsImp::DlgCustomActionsImp( QWidget* parent )
   : CustomizeActionPage(parent)
   , ui(new Ui_DlgCustomActions)
-  , bShown(false)
 {
     ui->setupUi(this);
     // search for all macros
@@ -71,7 +70,7 @@ DlgCustomActionsImp::DlgCustomActionsImp( QWidget* parent )
     for (unsigned int i=0; i<d.count(); i++ )
         ui->actionMacros->insertItem(0,d[i],QVariant(false));
 
-    QString systemMacroDirStr = QString::fromUtf8(App::GetApplication().getHomePath()) + QString::fromUtf8("Macro");
+    QString systemMacroDirStr = QString::fromStdString(App::Application::getHomePath()) + QString::fromLatin1("Macro");
     d = QDir(systemMacroDirStr, QLatin1String("*.FCMacro *.py"));
     if (d.exists()) {
         for (unsigned int i=0; i<d.count(); i++ ) {
@@ -91,20 +90,6 @@ DlgCustomActionsImp::DlgCustomActionsImp( QWidget* parent )
 /** Destroys the object and frees any allocated resources */
 DlgCustomActionsImp::~DlgCustomActionsImp()
 {
-}
-
-/**
- * Displays this page. If no macros were found a message box
- * appears.
- */
-void DlgCustomActionsImp::showEvent(QShowEvent* e)
-{
-    QWidget::showEvent(e);
-    if (ui->actionMacros->count() == 0 && bShown == false)
-    {
-        bShown = true;
-        QMessageBox::warning(this, tr("No macro"),tr("No macros found."));
-    }
 }
 
 bool DlgCustomActionsImp::event(QEvent* e)

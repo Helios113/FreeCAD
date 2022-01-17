@@ -73,10 +73,14 @@ SET(Datatypes_SRCS
     Constraint.h
     Sketch.cpp
     Sketch.h
+    GeoList.h
+    GeoList.cpp
     GeometryFacade.cpp
     GeometryFacade.h
     ExternalGeometryFacade.cpp
     ExternalGeometryFacade.h
+    GeoEnum.cpp
+    GeoEnum.h
 )
 SOURCE_GROUP("Datatypes" FILES ${Datatypes_SRCS})
 

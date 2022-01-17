@@ -142,7 +142,12 @@
 #include <Mod/Part/App/GeomPlate/BuildPlateSurfacePy.h>
 #include <Mod/Part/App/GeomPlate/CurveConstraintPy.h>
 #include <Mod/Part/App/GeomPlate/PointConstraintPy.h>
+#include <Mod/Part/App/HLRBRep/HLRBRep_AlgoPy.h>
+#include <Mod/Part/App/HLRBRep/HLRToShapePy.h>
+#include <Mod/Part/App/HLRBRep/HLRBRep_PolyAlgoPy.h>
+#include <Mod/Part/App/HLRBRep/PolyHLRToShapePy.h>
 #include <Mod/Part/App/ShapeUpgrade/UnifySameDomainPy.h>
+#include <Mod/Part/App/PrecisionPy.h>
 #include "PropertyGeometryList.h"
 #include "DatumFeature.h"
 #include "Attacher.h"
@@ -285,6 +290,7 @@ PyMOD_INIT_FUNC(Part)
     Base::Interpreter().addType(&Part::GeometryStringExtensionPy ::Type,partModule,"GeometryStringExtension");
     Base::Interpreter().addType(&Part::GeometryBoolExtensionPy ::Type,partModule,"GeometryBoolExtension");
     Base::Interpreter().addType(&Part::GeometryDoubleExtensionPy ::Type,partModule,"GeometryDoubleExtension");
+    Base::Interpreter().addType(&Part::PrecisionPy ::Type,partModule,"Precision");
 
     // BRepFeat package
     PyObject* brepfeatModule(module.getAttr("BRepFeat").ptr());
@@ -294,6 +300,13 @@ PyMOD_INIT_FUNC(Part)
     PyObject* brepOffsetApiModule(module.getAttr("BRepOffsetAPI").ptr());
     Base::Interpreter().addType(&Part::BRepOffsetAPI_MakePipeShellPy::Type,brepOffsetApiModule,"MakePipeShell");
     Base::Interpreter().addType(&Part::BRepOffsetAPI_MakeFillingPy::Type,brepOffsetApiModule,"MakeFilling");
+
+    // HLRBRep package
+    PyObject* hlrfeatModule(module.getAttr("HLRBRep").ptr());
+    Base::Interpreter().addType(&Part::HLRBRep_AlgoPy::Type,hlrfeatModule,"Algo");
+    Base::Interpreter().addType(&Part::HLRToShapePy::Type,hlrfeatModule,"HLRToShape");
+    Base::Interpreter().addType(&Part::HLRBRep_PolyAlgoPy::Type,hlrfeatModule,"PolyAlgo");
+    Base::Interpreter().addType(&Part::PolyHLRToShapePy::Type,hlrfeatModule,"PolyHLRToShape");
 
     // Geom2d package
     PyObject* geom2dModule(module.getAttr("Geom2d").ptr());

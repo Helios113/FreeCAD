@@ -131,12 +131,12 @@ Cell::Cell(PropertySheet *_owner, const Cell &other)
     , foregroundColor(other.foregroundColor)
     , backgroundColor(other.backgroundColor)
     , displayUnit(other.displayUnit)
-    , alias(other.alias)
     , computedUnit(other.computedUnit)
     , rowSpan(other.rowSpan)
     , colSpan(other.colSpan)
 {
     setUsed(MARK_SET, false);
+    setAlias(other.alias);
     setDirty();
 }
 
@@ -247,7 +247,10 @@ const App::Expression *Cell::getExpression(bool withFormat) const
 bool Cell::getStringContent(std::string & s, bool persistent) const
 {
     if (expression) {
-        if (freecad_dynamic_cast<App::StringExpression>(expression.get())) {
+        s.clear();
+        if(expression->hasComponent())
+            s = "=" + expression->toString(persistent);
+        else if (freecad_dynamic_cast<App::StringExpression>(expression.get())) {
             s = static_cast<App::StringExpression*>(expression.get())->getText();
             char * end;
             errno = 0;

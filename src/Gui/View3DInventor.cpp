@@ -38,6 +38,7 @@
 # include <QPainter>
 # include <QPrinter>
 # include <QPrintDialog>
+# include <QPrinterInfo>
 # include <QPrintPreviewDialog>
 # include <QStackedWidget>
 # include <QTimer>
@@ -161,6 +162,7 @@ View3DInventor::View3DInventor(Gui::Document* pcDocument, QWidget* parent,
     // apply the user settings
     OnChange(*hGrp,"EyeDistance");
     OnChange(*hGrp,"CornerCoordSystem");
+    OnChange(*hGrp,"CornerCoordSystemSize");
     OnChange(*hGrp,"ShowAxisCross");
     OnChange(*hGrp,"UseAutoRotation");
     OnChange(*hGrp,"Gradient");
@@ -223,7 +225,7 @@ View3DInventor::~View3DInventor()
     }
 
     if (_viewerPy) {
-        static_cast<View3DInventorPy*>(_viewerPy)->_view = 0;
+        Base::PyGILStateLocker lock;
         Py_DECREF(_viewerPy);
     }
 
@@ -377,6 +379,9 @@ void View3DInventor::OnChange(ParameterGrp::SubjectType &rCaller,ParameterGrp::M
     else if (strcmp(Reason,"CornerCoordSystem") == 0) {
         _viewer->setFeedbackVisibility(rGrp.GetBool("CornerCoordSystem",true));
     }
+    else if (strcmp(Reason,"CornerCoordSystemSize") == 0) {
+        _viewer->setFeedbackSize(rGrp.GetInt("CornerCoordSystemSize",10));
+    }
     else if (strcmp(Reason,"ShowAxisCross") == 0) {
         _viewer->setAxisCross(rGrp.GetBool("ShowAxisCross",false));
     }
@@ -513,13 +518,19 @@ void View3DInventor::printPreview()
 {
     QPrinter printer(QPrinter::ScreenResolution);
     printer.setFullPage(true);
-    printer.setPageSize(QPageSize(QPageSize::A4));
-    printer.setPageOrientation(QPageLayout::Landscape);
+    hGrp = App::GetApplication().GetParameterGroupByPath("User parameter:BaseApp/Preferences/View");
+    int initialDefaultPageSize = !QPrinterInfo::defaultPrinter().isNull() ? QPrinterInfo::defaultPrinter().defaultPageSize().id() : QPageSize::A4;
+    int defaultPageSize = hGrp->GetInt("DefaultPageSize", initialDefaultPageSize);
+    int defaultPageOrientation = hGrp->GetInt("DefaultPageOrientation", QPageLayout::Portrait);
+    printer.setPageSize(QPageSize(static_cast<QPageSize::PageSizeId>(defaultPageSize)));
+    printer.setPageOrientation(static_cast<QPageLayout::Orientation>(defaultPageOrientation));
 
     QPrintPreviewDialog dlg(&printer, this);
     connect(&dlg, SIGNAL(paintRequested (QPrinter *)),
             this, SLOT(print(QPrinter *)));
     dlg.exec();
+    hGrp -> SetInt("DefaultPageSize", printer.pageLayout().pageSize().id());
+    hGrp -> SetInt("DefaultPageOrientation", static_cast<int>(printer.pageLayout().orientation()));
 }
 
 void View3DInventor::print(QPrinter* printer)

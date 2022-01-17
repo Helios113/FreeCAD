@@ -127,6 +127,7 @@ recompute path. Also, it enables more complicated dependencies beyond trees.
 #include "Origin.h"
 #include "OriginGroupExtension.h"
 #include "Link.h"
+#include "DocumentObserver.h"
 #include "GeoFeature.h"
 
 FC_LOG_LEVEL_INIT("App", true, true, true)
@@ -174,6 +175,7 @@ struct DocumentP
     std::unordered_map<std::string,DocumentObject*> objectMap;
     std::unordered_map<long,DocumentObject*> objectIdMap;
     std::unordered_map<std::string, bool> partialLoadObjects;
+    std::vector<DocumentObjectT> pendingRemove;
     long lastObjectId;
     DocumentObject* activeObject;
     Transaction *activeUndoTransaction;
@@ -444,13 +446,14 @@ void Document::exportGraphviz(std::ostream& out) const
                 // Create subgraphs for all documentobjects that it depends on; it will depend on some property there
                 auto i = expressions.begin();
                 while (i != expressions.end()) {
-                    std::set<ObjectIdentifier> deps;
+                    std::map<ObjectIdentifier,bool> deps;
 
                     i->second->getIdentifiers(deps);
 
-                    std::set<ObjectIdentifier>::const_iterator j = deps.begin();
-                    while (j != deps.end()) {
-                        DocumentObject * o = j->getDocumentObject();
+                    for(auto j=deps.begin(); j!=deps.end(); ++j) {
+                        if(j->second)
+                            continue;
+                        DocumentObject * o = j->first.getDocumentObject();
 
                         // Doesn't exist already?
                         if (o && !GraphList[o]) {
@@ -469,7 +472,6 @@ void Document::exportGraphviz(std::ostream& out) const
                             }
 
                         }
-                        ++j;
                     }
                     ++i;
                 }
@@ -554,24 +556,23 @@ void Document::exportGraphviz(std::ostream& out) const
             while (i != expressions.end()) {
 
                 // Get dependencies
-                std::set<ObjectIdentifier> deps;
+                std::map<ObjectIdentifier,bool> deps;
                 i->second->getIdentifiers(deps);
 
                 // Create subgraphs for all documentobjects that it depends on; it will depend on some property there
-                std::set<ObjectIdentifier>::const_iterator j = deps.begin();
-                while (j != deps.end()) {
-                    DocumentObject * depObjDoc = j->getDocumentObject();
-                    std::map<std::string, Vertex>::const_iterator k = GlobalVertexList.find(getId(*j));
+                for(auto j=deps.begin(); j!=deps.end(); ++j) {
+                    if(j->second)
+                        continue;
+                    DocumentObject * depObjDoc = j->first.getDocumentObject();
+                    std::map<std::string, Vertex>::const_iterator k = GlobalVertexList.find(getId(j->first));
 
                     if (k == GlobalVertexList.end()) {
                         Graph * depSgraph = GraphList[depObjDoc] ? GraphList[depObjDoc] : &DepList;
 
-                        LocalVertexList[getId(*j)] = add_vertex(*depSgraph);
-                        GlobalVertexList[getId(*j)] = vertex_no++;
-                        setPropertyVertexAttributes(*depSgraph, LocalVertexList[getId(*j)], j->getPropertyName() + j->getSubPathStr());
+                        LocalVertexList[getId(j->first)] = add_vertex(*depSgraph);
+                        GlobalVertexList[getId(j->first)] = vertex_no++;
+                        setPropertyVertexAttributes(*depSgraph, LocalVertexList[getId(j->first)], j->first.getPropertyName() + j->first.getSubPathStr());
                     }
-
-                    ++j;
                 }
                 ++i;
             }
@@ -703,17 +704,18 @@ void Document::exportGraphviz(std::ostream& out) const
                 auto i = expressions.begin();
 
                 while (i != expressions.end()) {
-                    std::set<ObjectIdentifier> deps;
+                    std::map<ObjectIdentifier,bool> deps;
                     i->second->getIdentifiers(deps);
 
                     // Create subgraphs for all documentobjects that it depends on; it will depend on some property there
-                    std::set<ObjectIdentifier>::const_iterator k = deps.begin();
-                    while (k != deps.end()) {
-                        DocumentObject * depObjDoc = k->getDocumentObject();
+                    for(auto k=deps.begin(); k!=deps.end(); ++k) {
+                        if(k->second)
+                            continue;
+                        DocumentObject * depObjDoc = k->first.getDocumentObject();
                         Edge edge;
                         bool inserted;
 
-                        tie(edge, inserted) = add_edge(GlobalVertexList[getId(i->first)], GlobalVertexList[getId(*k)], DepList);
+                        tie(edge, inserted) = add_edge(GlobalVertexList[getId(i->first)], GlobalVertexList[getId(k->first)], DepList);
 
                         // Add this edge to the set of all expression generated edges
                         existingEdges.insert(std::make_pair(docObj, depObjDoc));
@@ -721,7 +723,6 @@ void Document::exportGraphviz(std::ostream& out) const
                         // Edges between properties should be a bit smaller, and dashed
                         edgeAttrMap[edge]["arrowsize"] = "0.5";
                         edgeAttrMap[edge]["style"] = "dashed";
-                        ++k;
                     }
                     ++i;
                 }
@@ -1685,7 +1686,7 @@ std::string Document::getTransientDirectoryName(const std::string& uuid, const s
     std::stringstream s;
     QCryptographicHash hash(QCryptographicHash::Sha1);
     hash.addData(filename.c_str(), filename.size());
-    s << App::Application::getTempPath() << GetApplication().getExecutableName()
+    s << App::Application::getUserCachePath() << App::Application::getExecutableName()
       << "_Doc_" << uuid
       << "_" << hash.result().toHex().left(6).constData()
       << "_" << QCoreApplication::applicationPid();
@@ -1834,8 +1835,15 @@ void Document::exportObjects(const std::vector<App::DocumentObject*>& obj, std::
 
     if(FC_LOG_INSTANCE.isEnabled(FC_LOGLEVEL_LOG)) {
         for(auto o : obj) {
-            if(o && o->getNameInDocument())
+            if(o && o->getNameInDocument()) {
                 FC_LOG("exporting " << o->getFullName());
+                if (!o->getPropertyByName("_ObjectUUID")) {
+                    auto prop = static_cast<PropertyUUID*>(o->addDynamicProperty(
+                            "App::PropertyUUID", "_ObjectUUID", nullptr, nullptr,
+                            Prop_Output | Prop_Hidden));
+                    prop->setValue(Base::Uuid::createUuid());
+                }
+            }
         }
     }
 
@@ -1866,7 +1874,6 @@ void Document::exportObjects(const std::vector<App::DocumentObject*>& obj, std::
 #define FC_ELEMENT_OBJECT_DEPS "ObjectDeps"
 #define FC_ATTR_DEP_COUNT "Count"
 #define FC_ATTR_DEP_OBJ_NAME "Name"
-#define FC_ATTR_DEP_COUNT "Count"
 #define FC_ATTR_DEP_ALLOW_PARTIAL "AllowPartial"
 #define FC_ELEMENT_OBJECT_DEP "Dep"
 
@@ -2195,6 +2202,19 @@ Document::importObjects(Base::XMLReader& reader)
         if(o && o->getNameInDocument()) {
             o->setStatus(App::ObjImporting,true);
             FC_LOG("importing " << o->getFullName());
+            if (auto propUUID = Base::freecad_dynamic_cast<PropertyUUID>(
+                        o->getPropertyByName("_ObjectUUID")))
+            {
+                auto propSource = Base::freecad_dynamic_cast<PropertyUUID>(
+                        o->getPropertyByName("_SourceUUID"));
+                if (!propSource)
+                    propSource = static_cast<PropertyUUID*>(o->addDynamicProperty(
+                                "App::PropertyUUID", "_SourceUUID", nullptr, nullptr,
+                                Prop_Output | Prop_Hidden));
+                if (propSource)
+                    propSource->setValue(propUUID->getValue());
+                propUUID->setValue(Base::Uuid::createUuid());
+            }
         }
     }
 
@@ -2693,7 +2713,7 @@ bool Document::isAnyRestoring() {
 
 // Open the document
 void Document::restore (const char *filename,
-        bool delaySignal, const std::set<std::string> &objNames)
+        bool delaySignal, const std::vector<std::string> &objNames)
 {
     clearUndos();
     d->activeObject = 0;
@@ -2752,8 +2772,7 @@ void Document::restore (const char *filename,
         d->partialLoadObjects.emplace(name,true);
     try {
         Document::Restore(reader);
-    }
-    catch (const Base::Exception& e) {
+    } catch (const Base::Exception& e) {
         Base::Console().Error("Invalid Document.xml: %s\n", e.what());
         setStatus(Document::RestoreError, true);
     }
@@ -2777,15 +2796,16 @@ void Document::restore (const char *filename,
         afterRestore(true);
 }
 
-void Document::afterRestore(bool checkPartial) {
+bool Document::afterRestore(bool checkPartial) {
     Base::FlagToggler<> flag(_IsRestoring,false);
     if(!afterRestore(d->objectArray,checkPartial)) {
         FC_WARN("Reload partial document " << getName());
-        restore();
-        return;
+        GetApplication().signalPendingReloadDocument(*this);
+        return false;
     }
     GetApplication().signalFinishRestoreDocument(*this);
     setStatus(Document::Restoring, false);
+    return true;
 }
 
 bool Document::afterRestore(const std::vector<DocumentObject *> &objArray, bool checkPartial)
@@ -2861,9 +2881,12 @@ bool Document::afterRestore(const std::vector<DocumentObject *> &objArray, bool 
                 std::string errMsg;
                 if(link && (res=link->checkRestore(&errMsg))) {
                     d->touchedObjs.insert(obj);
-                    if(res==1)
+                    if(res==1 || checkPartial) {
                         FC_WARN(obj->getFullName() << '.' << prop->getName() << ": " << errMsg);
-                    else  {
+                        setStatus(Document::LinkStampChanged, true);
+                        if(checkPartial)
+                            return false;
+                    } else  {
                         FC_ERR(obj->getFullName() << '.' << prop->getName() << ": " << errMsg);
                         d->addRecomputeLog(errMsg,obj);
                         setStatus(Document::PartialRestore, true);
@@ -3557,16 +3580,22 @@ int Document::recompute(const std::vector<App::DocumentObject*> &objs, bool forc
             continue;
         obj->setStatus(ObjectStatus::PendingRecompute,false);
         obj->setStatus(ObjectStatus::Recompute2,false);
-        if(obj->testStatus(ObjectStatus::PendingRemove))
-            obj->getDocument()->removeObject(obj->getNameInDocument());
     }
 
     signalRecomputed(*this,topoSortedObjects);
 
     FC_TIME_LOG(t,"Recompute total");
 
-    if (d->_RecomputeLog.size())
-        Base::Console().Log("Recompute failed! Please check report view.\n");
+    if(d->_RecomputeLog.size()) {
+        d->pendingRemove.clear();
+        Base::Console().Error("Recompute failed! Please check report view.\n");
+    } else {
+        for(auto &o : d->pendingRemove) {
+            auto obj = o.getObject();
+            if(obj)
+                obj->getDocument()->removeObject(obj->getNameInDocument());
+        }
+    }
 
     return objectCount;
 }
@@ -4096,7 +4125,7 @@ void Document::removeObject(const char* sName)
     if (pos->second->testStatus(ObjectStatus::PendingRecompute)) {
         // TODO: shall we allow removal if there is active undo transaction?
         FC_LOG("pending remove of " << sName << " after recomputing document " << getName());
-        pos->second->setStatus(ObjectStatus::PendingRemove,true);
+        d->pendingRemove.emplace_back(pos->second);
         return;
     }
 

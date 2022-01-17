@@ -28,7 +28,7 @@
 #include <Base/Vector3D.h>
 #include <Base/Handle.h>
 
-#include "Core/Elements.h"
+#include <Mod/Mesh/App/Edge.h>
 
 namespace Mesh
 {
@@ -49,6 +49,7 @@ public:
 
     bool isBound() const {return Index != MeshCore::FACET_INDEX_MAX;}
     void operator = (const Facet& f);
+    Edge getEdge(int) const;
 
     MeshCore::FacetIndex Index;
     MeshCore::PointIndex PIndex[3];

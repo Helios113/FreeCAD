@@ -43,6 +43,7 @@
 #include <Gui/WaitCursor.h>
 #include <Gui/Selection.h>
 #include <Gui/Command.h>
+#include <Gui/CommandT.h>
 
 #include <Mod/Part/App/DatumFeature.h>
 #include <Mod/PartDesign/App/FeatureSketchBased.h>
@@ -63,7 +64,8 @@ TaskSketchBasedParameters::TaskSketchBasedParameters(PartDesignGui::ViewProvider
                                                      const std::string& pixmapname, const QString& parname)
     : TaskFeatureParameters(vp, parent, pixmapname, parname)
 {
-
+    // disable selection
+    this->blockSelection(true);
 }
 
 const QString TaskSketchBasedParameters::onAddSelection(const Gui::SelectionChanges& msg)
@@ -112,7 +114,7 @@ void TaskSketchBasedParameters::finishReferenceSelection(App::DocumentObject* pr
     }
 }
 
-void TaskSketchBasedParameters::onSelectReference(const bool pressed, const bool edge, const bool face, const bool planar, const bool circle) {
+void TaskSketchBasedParameters::onSelectReference(AllowSelectionFlags allow) {
     // Note: Even if there is no solid, App::Plane and Part::Datum can still be selected
 
     PartDesign::ProfileBased* pcSketchBased = dynamic_cast<PartDesign::ProfileBased*>(vp->getObject());
@@ -120,14 +122,16 @@ void TaskSketchBasedParameters::onSelectReference(const bool pressed, const bool
         // The solid this feature will be fused to
         App::DocumentObject* prevSolid = pcSketchBased->getBaseObject( /* silent =*/ true );
 
-        if (pressed) {
+        if (AllowSelectionFlags::Int(allow) != int(AllowSelection::NONE)) {
             startReferenceSelection(pcSketchBased, prevSolid);
+            this->blockSelection(false);
             Gui::Selection().clearSelection();
-            Gui::Selection().addSelectionGate
-                (new ReferenceSelection(prevSolid, edge, face, planar, false, false, circle));
-        } else {
+            Gui::Selection().addSelectionGate(new ReferenceSelection(prevSolid, allow));
+        }
+        else {
             Gui::Selection().rmvSelectionGate();
             finishReferenceSelection(pcSketchBased, prevSolid);
+            this->blockSelection(true);
         }
     }
 }
@@ -135,7 +139,7 @@ void TaskSketchBasedParameters::onSelectReference(const bool pressed, const bool
 
 void TaskSketchBasedParameters::exitSelectionMode()
 {
-    onSelectReference(false, false, false, false);
+    onSelectReference(AllowSelection::NONE);
 }
 
 QVariant TaskSketchBasedParameters::setUpToFace(const QString& text)
@@ -220,6 +224,21 @@ QString TaskSketchBasedParameters::getFaceReference(const QString& obj, const QS
             .arg(QString::fromLatin1(doc->getName()), o, sub);
 }
 
+QString TaskSketchBasedParameters::make2DLabel(const App::DocumentObject* section,
+                                               const std::vector<std::string>& subValues)
+{
+    if (section->isDerivedFrom(Part::Part2DObject::getClassTypeId())) {
+        return QString::fromUtf8(section->Label.getValue());
+    }
+    else if (subValues.empty()) {
+        Base::Console().Error("No valid subelement linked in %s\n", section->Label.getValue());
+        return QString();
+    }
+    else {
+        return QString::fromStdString((std::string(section->getNameInDocument()) + ":" + subValues[0]));
+    }
+}
+
 TaskSketchBasedParameters::~TaskSketchBasedParameters()
 {
     Gui::Selection().rmvSelectionGate();
@@ -249,15 +268,19 @@ bool TaskDlgSketchBasedParameters::accept() {
 
     // Make sure the feature is what we are expecting
     // Should be fine but you never know...
-    if ( !feature->getTypeId().isDerivedFrom(PartDesign::ProfileBased::getClassTypeId()) ) {
+    if (!feature->getTypeId().isDerivedFrom(PartDesign::ProfileBased::getClassTypeId())) {
         throw Base::TypeError("Bad object processed in the sketch based dialog.");
     }
 
-    App::DocumentObject* sketch = static_cast<PartDesign::ProfileBased*>(feature)->Profile.getValue();
+    // First verify that the feature can be built and then hide the profile as otherwise
+    // it will remain hidden if the feature's recompute fails
+    if (TaskDlgFeatureParameters::accept()) {
+        App::DocumentObject* sketch = static_cast<PartDesign::ProfileBased*>(feature)->Profile.getValue();
+        Gui::cmdAppObjectHide(sketch);
+        return true;
+    }
 
-    FCMD_OBJ_HIDE(sketch);
-
-    return TaskDlgFeatureParameters::accept();
+    return false;
 }
 
 bool TaskDlgSketchBasedParameters::reject()
